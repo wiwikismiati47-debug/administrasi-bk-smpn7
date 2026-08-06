@@ -113,39 +113,6 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     badge: 'CLOUD',
     colorGradient: 'from-emerald-600 via-teal-600 to-emerald-800',
   },
-  {
-    id: 'link-drive-bk',
-    title: 'Google Drive Dokumen BK',
-    url: 'https://drive.google.com',
-    iconName: 'FolderKanban',
-    category: 'Penyimpanan Berkas',
-    description: 'Folder penyimpanan sertifikat, foto kegiatan, dan laporan fisik BK',
-    isInternal: false,
-    badge: 'DRIVE',
-    colorGradient: 'from-amber-500 via-orange-500 to-amber-700',
-  },
-  {
-    id: 'link-kemdikbud-smp',
-    title: 'Portal Rapor Pendidikan SMP',
-    url: 'https://raporpendidikan.kemdikbud.go.id',
-    iconName: 'GraduationCap',
-    category: 'Kedinasan',
-    description: 'Evaluasi & Rapor Pendidikan SMP Kemdikbudristek',
-    isInternal: false,
-    badge: 'KEMDIKBUD',
-    colorGradient: 'from-sky-600 via-blue-600 to-indigo-800',
-  },
-  {
-    id: 'link-canva-bk',
-    title: 'Canva Design Poster BK',
-    url: 'https://www.canva.com',
-    iconName: 'Palette',
-    category: 'Media Layanan',
-    description: 'Pembuatan media bimbingan klasikal, poster, dan infografis siswa',
-    isInternal: false,
-    badge: 'MEDIA',
-    colorGradient: 'from-fuchsia-600 via-purple-600 to-violet-800',
-  },
 ];
 
 export function getSavedAppLinks(): AppLink[] {
@@ -155,8 +122,12 @@ export function getSavedAppLinks(): AppLink[] {
     return INITIAL_DEFAULT_LINKS;
   }
   try {
-    const parsed = JSON.parse(dataStr);
+    let parsed = JSON.parse(dataStr);
     if (Array.isArray(parsed) && parsed.length > 0) {
+      // Exclude removed default links
+      const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk']);
+      parsed = parsed.filter((item: AppLink) => !removedIds.has(item.id));
+
       const existingMap = new Map<string, AppLink>(parsed.map((item: AppLink) => [item.id, item]));
       let updated = false;
 
