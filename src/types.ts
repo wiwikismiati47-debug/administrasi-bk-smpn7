@@ -213,6 +213,52 @@ export interface SuratPernyataan {
 
 export type FormSuratPernyataanData = Omit<SuratPernyataan, 'id' | 'created_at' | 'updated_at'>;
 
+export interface DaftarHadirRow {
+  no: number;
+  nama: string;
+  jabatan: string;
+  kelas: string;
+  asal_sekolah: string;
+  ttd: string;
+}
+
+export interface KonferensiKasus {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  nama_konseli: string;
+  kelas_ta: string;
+  jenis_masalah: string;
+  hari_tgl_jam: string;
+  pemandu_konferensi: string;
+  pemandu_nama: string;
+  pemandu_jabatan: string;
+  data_ingin_diperoleh: string;
+  uraian_kegiatan_inti: string;
+  data_diperoleh_simpulan: string;
+  keterpenuhan_kebutuhan_data: string; // e.g., 'terpenuhi' | 'belum_terpenuhi'
+  rujukan_pelayanan: string; // e.g., "Guru Mata Pelajaran, Wali Kelas"
+  rapat_nama_sekolah: string;
+  rapat_alamat: string;
+  rapat_tempat: string;
+  rapat_ketua: string;
+  rapat_jumlah_hadir: string;
+  rapat_dimulai_pukul: string;
+  rapat_diakhiri_pukul: string;
+  rapat_hasil_pertemuan: string;
+  daftar_hadir_peserta_singkat: string;
+  daftar_hadir_rows: string; // JSON string of DaftarHadirRow[]
+  tanggal_surat: string;
+  tempat_surat: string;
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+  keterangan?: string;
+}
+
+export type FormKonferensiKasusData = Omit<KonferensiKasus, 'id' | 'created_at' | 'updated_at'>;
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;

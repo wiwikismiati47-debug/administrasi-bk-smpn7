@@ -81,6 +81,17 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     colorGradient: 'from-amber-600 via-orange-600 to-red-800',
   },
   {
+    id: 'link-internal-konferensi-kasus',
+    title: 'H. Konferensi Kasus Siswa',
+    url: 'internal:konferensi_kasus',
+    iconName: 'ClipboardList',
+    category: 'Administrasi Utama',
+    description: 'Form & Cetak Notula, Notulen Rapat, dan Daftar Hadir Konferensi Kasus Siswa (Terhubung Supabase)',
+    isInternal: true,
+    badge: 'FORM H',
+    colorGradient: 'from-rose-600 via-red-600 to-orange-800',
+  },
+  {
     id: 'link-supabase-console',
     title: 'Console Supabase Database',
     url: 'https://supabase.com/dashboard',

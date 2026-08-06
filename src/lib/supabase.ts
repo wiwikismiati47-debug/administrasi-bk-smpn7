@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus } from '../types';
 
 const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
 const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
@@ -9,6 +9,7 @@ const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_data_local';
 const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
 const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
 const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
+const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -17,6 +18,7 @@ export const DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME = 'rekam_permasalahan_siswa';
 export const DEFAULT_KONSELING_INDIVIDU_TABLE_NAME = 'rencana_konseling_individu';
 export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok';
 export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
+export const DEFAULT_KONFERENSI_KASUS_TABLE_NAME = 'konferensi_kasus_siswa';
 
 // Get active config from localStorage or import.meta.env
 export function getSavedSupabaseConfig(): SupabaseConfig {
@@ -1259,6 +1261,197 @@ export async function deleteSuratPernyataanItem(id: string): Promise<{ success: 
   return { success: true, isSupabase: false };
 }
 
+// Local Storage Helpers - Konferensi Kasus Siswa
+export function getLocalKonferensiKasusList(): KonferensiKasus[] {
+  const str = localStorage.getItem(STORAGE_KEY_KONFERENSI_KASUS);
+  if (!str) {
+    const demoData: KonferensiKasus[] = [
+      {
+        id: 'demo-kk1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        nama_konseli: 'Syahnaz (IXE)',
+        kelas_ta: '9E / 2016-2017',
+        jenis_masalah: 'Berkelahi karena salah paham',
+        hari_tgl_jam: 'Kamis, 8 September 2016 Jam 10.30 wib',
+        pemandu_konferensi: 'Konselor Sekolah',
+        pemandu_nama: 'Wiwik Ismiati, S.Pd',
+        pemandu_jabatan: 'Konselor',
+        data_ingin_diperoleh: 'Identifikasi permasalahan siswa',
+        uraian_kegiatan_inti: 'Untuk mengetahui tentang kejadian yang sebenarnya dari siswa yang terlibat permasalahan tersebut di sekolah, baik dari pihak sekolah dengan siswa yang berseteru. Dan mencari solusi yang terbaik diantara siswa dengan teman-temannya.',
+        data_diperoleh_simpulan: 'Dari informasi yang terkumpul bahwa Syahnaz terlibat perseteruan karena membela sahabatnya yaitu Aminah. Karena membela sahabatnya maka Syahnaz yang di bully oleh anak-anak kelas 7C. Karena merasa tersinggung dengan perlakuan siswa kelas 7C maka Syahnaz tidak terima dan terjadi perkelahian sampai akan melempar batu. Ketika mereka berseteru dan ditemukan penyelesaiannya maka persoalan bisa dengan mudah terselesaikan.',
+        keterpenuhan_kebutuhan_data: 'terpenuhi',
+        rujukan_pelayanan: 'Guru Mata Pelajaran, Wali Kelas, Konselor Sekolah',
+        rapat_nama_sekolah: 'UPT SMPN 7 PASURUAN',
+        rapat_alamat: 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo',
+        rapat_tempat: 'UPT SMPN 7 PASURUAN',
+        rapat_ketua: 'Konselor',
+        rapat_jumlah_hadir: '9 orang',
+        rapat_dimulai_pukul: '10.30 WIB',
+        rapat_diakhiri_pukul: '11.00 WIB',
+        rapat_hasil_pertemuan: 'A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena anak kelas 7C yang bermasalah sering mengolok-olok Aminah.\nB. Dari peristiwa tersebut temannya Aminah tidak terima dan terjadi pertengkaran/adu mulut dengan Syahnaz.\nC. Syahnaz yang membela Aminah akhirnya kena tampar oleh M. Badru dan tidak terima sehingga membawa batu bata mau dilemparkan.\nD. Setelah terjadi konferensi kasus, maka masing-masing pihak mau menerima keputusan bersama dan saling memaafkan. Akhirnya permasalahan selesai dengan saling memaafkan dan untuk kelas 7C semua panggilan orang tua untuk selanjutnya diberi pengarahan.',
+        daftar_hadir_peserta_singkat: '1. Konselor, 2. M. Badru T (VIIC), 3. M. Usman (VIIC), 4. M. Amyak (VIIC), 5. M. Nabil (VIIC), 6. Aminah Husain (VIIIB), 7. Syahnaz (IXE)',
+        daftar_hadir_rows: JSON.stringify([
+          { no: 1, nama: 'Ibu Citra Dwi W', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+          { no: 2, nama: 'Ibu Wiwik Ismiati', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+          { no: 3, nama: 'Ibu Eki', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+          { no: 4, nama: 'M. Badru', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 5, nama: 'M. Usman', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 6, nama: 'M. Amyak', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 7, nama: 'M. Nabil', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 8, nama: 'Syahnaz', jabatan: 'Siswa', kelas: '9E', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 9, nama: 'Aminah', jabatan: 'Siswa', kelas: '8B', asal_sekolah: '-', ttd: 'Ada' },
+          { no: 10, nama: 'Naval R.', jabatan: 'Siswa', kelas: '7C', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' }
+        ]),
+        tanggal_surat: '2026-08-06',
+        tempat_surat: 'Pasuruan',
+        nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
+        nip_guru_bk: '19831116 200904 2 003',
+        nama_kepala_sekolah: 'Drs. H. AGUNG ARDI TIGO',
+        nip_kepala_sekolah: '19621212 198712 1 002',
+        keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_KONFERENSI_KASUS, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalKonferensiKasusList(data: KonferensiKasus[]) {
+  localStorage.setItem(STORAGE_KEY_KONFERENSI_KASUS, JSON.stringify(data));
+}
+
+// Unified API Functions - Konferensi Kasus Siswa
+export async function fetchAllKonferensiKasus(): Promise<{ data: KonferensiKasus[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
+        .select('*')
+        .order('tanggal_surat', { ascending: false });
+
+      if (!error && data) {
+        saveLocalKonferensiKasusList(data as KonferensiKasus[]);
+        return { data: data as KonferensiKasus[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch konferensi kasus error:', error.message);
+        return {
+          data: getLocalKonferensiKasusList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalKonferensiKasusList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalKonferensiKasusList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateKonferensiKasus(
+  item: Partial<KonferensiKasus> & Omit<KonferensiKasus, 'id'>
+): Promise<{ success: boolean; data?: KonferensiKasus; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
+
+  const payload: KonferensiKasus = {
+    ...item,
+    id: idToUse,
+    created_at: item.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const currentLocal = getLocalKonferensiKasusList();
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as KonferensiKasus;
+        } else {
+          currentLocal.unshift(data as KonferensiKasus);
+        }
+        saveLocalKonferensiKasusList(currentLocal);
+
+        return { success: true, data: data as KonferensiKasus, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save konferensi kasus error:', error.message);
+        saveToLocalKonferensiKasusFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalKonferensiKasusFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalKonferensiKasusFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalKonferensiKasusFallback(item: KonferensiKasus) {
+  const current = getLocalKonferensiKasusList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.unshift(item);
+  }
+  saveLocalKonferensiKasusList(current);
+}
+
+export async function deleteKonferensiKasusItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalKonferensiKasusList().filter((i) => i.id !== id);
+        saveLocalKonferensiKasusList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalKonferensiKasusList().filter((i) => i.id !== id);
+  saveLocalKonferensiKasusList(current);
+  return { success: true, isSupabase: false };
+}
+
 // SQL Script generator for user setup in Supabase SQL Editor
 export function getSupabaseSqlSetup(
   tableName: string = DEFAULT_TABLE_NAME,
@@ -1267,7 +1460,8 @@ export function getSupabaseSqlSetup(
   rekamPermasalahanTableName: string = DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME,
   konselingIndividuTableName: string = DEFAULT_KONSELING_INDIVIDU_TABLE_NAME,
   konselingKelompokTableName: string = DEFAULT_KONSELING_KELOMPOK_TABLE_NAME,
-  suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME
+  suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME,
+  konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME
 ): string {
   return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
@@ -1477,6 +1671,51 @@ create policy "Akses Baca Publik Surat Pernyataan" on public.${suratPernyataanTa
 create policy "Akses Tambah Publik Surat Pernyataan" on public.${suratPernyataanTableName} for insert with check (true);
 create policy "Akses Update Publik Surat Pernyataan" on public.${suratPernyataanTableName} for update using (true);
 create policy "Akses Hapus Publik Surat Pernyataan" on public.${suratPernyataanTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 8. TABEL H: KONFERENSI KASUS SISWA (${konferensiKasusTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${konferensiKasusTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  nama_konseli text not null,
+  kelas_ta text default '',
+  jenis_masalah text default '',
+  hari_tgl_jam text default '',
+  pemandu_konferensi text default '',
+  pemandu_nama text default '',
+  pemandu_jabatan text default '',
+  data_ingin_diperoleh text default '',
+  uraian_kegiatan_inti text default '',
+  data_diperoleh_simpulan text default '',
+  keterpenuhan_kebutuhan_data text default '',
+  rujukan_pelayanan text default '',
+  rapat_nama_sekolah text default '',
+  rapat_alamat text default '',
+  rapat_tempat text default '',
+  rapat_ketua text default '',
+  rapat_jumlah_hadir text default '',
+  rapat_dimulai_pukul text default '',
+  rapat_diakhiri_pukul text default '',
+  rapat_hasil_pertemuan text default '',
+  daftar_hadir_peserta_singkat text default '',
+  daftar_hadir_rows text default '[]',
+  tanggal_surat date default current_date,
+  tempat_surat text default 'Pasuruan',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default '',
+  keterangan text default ''
+);
+
+alter table public.${konferensiKasusTableName} enable row level security;
+
+create policy "Akses Baca Publik Konferensi Kasus" on public.${konferensiKasusTableName} for select using (true);
+create policy "Akses Tambah Publik Konferensi Kasus" on public.${konferensiKasusTableName} for insert with check (true);
+create policy "Akses Update Publik Konferensi Kasus" on public.${konferensiKasusTableName} for update using (true);
+create policy "Akses Hapus Publik Konferensi Kasus" on public.${konferensiKasusTableName} for delete using (true);
 `;
 }
 

@@ -14,6 +14,8 @@ import {
   FormKonselingKelompokData,
   SuratPernyataan,
   FormSuratPernyataanData,
+  KonferensiKasus,
+  FormKonferensiKasusData,
   AppLink
 } from './types';
 import {
@@ -38,6 +40,9 @@ import {
   fetchAllSuratPernyataan,
   saveOrUpdateSuratPernyataan,
   deleteSuratPernyataanItem,
+  fetchAllKonferensiKasus,
+  saveOrUpdateKonferensiKasus,
+  deleteKonferensiKasusItem,
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -95,6 +100,11 @@ export default function App() {
   const [suratPernyataanItems, setSuratPernyataanItems] = useState<SuratPernyataan[]>([]);
   const [isLoadingSuratPernyataan, setIsLoadingSuratPernyataan] = useState<boolean>(true);
   const [isSubmittingSuratPernyataan, setIsSubmittingSuratPernyataan] = useState<boolean>(false);
+
+  // Konferensi Kasus state
+  const [konferensiKasusItems, setKonferensiKasusItems] = useState<KonferensiKasus[]>([]);
+  const [isLoadingKonferensiKasus, setIsLoadingKonferensiKasus] = useState<boolean>(true);
+  const [isSubmittingKonferensiKasus, setIsSubmittingKonferensiKasus] = useState<boolean>(false);
 
   // Connection state
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
@@ -238,6 +248,22 @@ export default function App() {
     }
   }, []);
 
+  const loadKonferensiKasusData = useCallback(async () => {
+    setIsLoadingKonferensiKasus(true);
+    try {
+      const res = await fetchAllKonferensiKasus();
+      setKonferensiKasusItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data konferensi kasus siswa.', 'error');
+    } finally {
+      setIsLoadingKonferensiKasus(false);
+    }
+  }, []);
+
   const refreshAllData = useCallback(async () => {
     await Promise.all([
       loadAgendaData(),
@@ -246,9 +272,10 @@ export default function App() {
       loadRekamPermasalahanData(),
       loadKonselingIndividuData(),
       loadKonselingKelompokData(),
-      loadSuratPernyataanData()
+      loadSuratPernyataanData(),
+      loadKonferensiKasusData()
     ]);
-  }, [loadAgendaData, loadUndanganData, loadHomeVisitData, loadRekamPermasalahanData, loadKonselingIndividuData, loadKonselingKelompokData, loadSuratPernyataanData]);
+  }, [loadAgendaData, loadUndanganData, loadHomeVisitData, loadRekamPermasalahanData, loadKonselingIndividuData, loadKonselingKelompokData, loadSuratPernyataanData, loadKonferensiKasusData]);
 
   useEffect(() => {
     refreshAllData();
@@ -510,6 +537,42 @@ export default function App() {
     }
   };
 
+  // Handle Konferensi Kasus submit & delete
+  const handleSubmitKonferensiKasus = async (data: Partial<KonferensiKasus> & FormKonferensiKasusData) => {
+    setIsSubmittingKonferensiKasus(true);
+    try {
+      const res = await saveOrUpdateKonferensiKasus(data);
+      if (res.success) {
+        await loadKonferensiKasusData();
+        showToast(
+          data.id
+            ? 'Data Konferensi Kasus berhasil diperbarui!'
+            : 'Data Konferensi Kasus berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data konferensi kasus.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingKonferensiKasus(false);
+    }
+  };
+
+  const handleDeleteKonferensiKasus = async (id: string) => {
+    try {
+      const res = await deleteKonferensiKasusItem(id);
+      if (res.success) {
+        await loadKonferensiKasusData();
+        showToast('Data Konferensi Kasus berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data konferensi kasus.', 'error');
+    }
+  };
+
   // --- APP LINK MANAGER HANDLERS ---
   const handleSaveLink = (linkToSave: AppLink) => {
     const existingIndex = links.findIndex((l) => l.id === linkToSave.id);
@@ -697,6 +760,11 @@ export default function App() {
           isSubmittingSuratPernyataan={isSubmittingSuratPernyataan}
           onSubmitSuratPernyataan={handleSubmitSuratPernyataan}
           onDeleteSuratPernyataan={handleDeleteSuratPernyataan}
+          konferensiKasusItems={konferensiKasusItems}
+          isLoadingKonferensiKasus={isLoadingKonferensiKasus}
+          isSubmittingKonferensiKasus={isSubmittingKonferensiKasus}
+          onSubmitKonferensiKasus={handleSubmitKonferensiKasus}
+          onDeleteKonferensiKasus={handleDeleteKonferensiKasus}
           isSupabaseConnected={isSupabaseConnected}
           onRefreshData={refreshAllData}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}

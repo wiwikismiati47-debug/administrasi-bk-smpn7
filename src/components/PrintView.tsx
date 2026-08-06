@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
 import {
   downloadSuratUndanganWord,
@@ -39,7 +39,12 @@ interface PrintViewProps {
     | 'konseling_kelompok_tabel'
     | 'konseling_kelompok_dokumen'
     | 'surat_pernyataan_tabel'
-    | 'surat_pernyataan_dokumen';
+    | 'surat_pernyataan_dokumen'
+    | 'konferensi_kasus_tabel'
+    | 'konferensi_kasus_notula'
+    | 'konferensi_kasus_notulen_rapat'
+    | 'konferensi_kasus_daftar_hadir'
+    | 'konferensi_kasus_gabungan';
   agendaItems?: AgendaKerja[];
   undanganItems?: UndanganOrangTua[];
   selectedUndangan?: UndanganOrangTua | null;
@@ -53,6 +58,8 @@ interface PrintViewProps {
   selectedKonselingKelompok?: KonselingKelompok | null;
   suratPernyataanItems?: SuratPernyataan[];
   selectedSuratPernyataan?: SuratPernyataan | null;
+  konferensiKasusItems?: KonferensiKasus[];
+  selectedKonferensiKasus?: KonferensiKasus | null;
   onBack: () => void;
 }
 
@@ -71,6 +78,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
   selectedKonselingKelompok = null,
   suratPernyataanItems = [],
   selectedSuratPernyataan = null,
+  konferensiKasusItems = [],
+  selectedKonferensiKasus = null,
   onBack,
 }) => {
   const todayStr = new Date().toLocaleDateString('id-ID', {
@@ -97,6 +106,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
   const currentKonselingIndividu = selectedKonselingIndividu || (konselingIndividuItems.length > 0 ? konselingIndividuItems[0] : null);
   const currentKonselingKelompok = selectedKonselingKelompok || (konselingKelompokItems.length > 0 ? konselingKelompokItems[0] : null);
   const currentSuratPernyataan = selectedSuratPernyataan || (suratPernyataanItems.length > 0 ? suratPernyataanItems[0] : null);
+  const currentKonferensiKasus = selectedKonferensiKasus || (konferensiKasusItems.length > 0 ? konferensiKasusItems[0] : null);
 
   const handleTriggerPrint = () => {
     try {
@@ -1616,8 +1626,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                           </tbody>
                         </table>
 
-                        <p className="pt-2 font-semibold">Untuk memenuhi Peraturan Sekolah sebagai berikut:</p>
-                        <div className="ml-5 p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                        <p className="pt-2 font-semibold text-black">Untuk memenuhi Peraturan Sekolah sebagai berikut:</p>
+                        <div className="ml-5 py-2 text-black whitespace-pre-wrap leading-relaxed text-sm">
                           {sp.peraturan_diketahui || '-'}
                         </div>
 
@@ -1671,8 +1681,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                           </tbody>
                         </table>
 
-                        <p className="pt-2 font-semibold">Pernyataan / Komitmen Orang Tua:</p>
-                        <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                        <p className="pt-2 font-semibold text-black">Pernyataan / Komitmen Orang Tua:</p>
+                        <div className="py-2 text-black whitespace-pre-wrap leading-relaxed text-sm pl-4">
                           {sp.peraturan_diketahui || '-'}
                         </div>
 
@@ -1737,8 +1747,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                           </tbody>
                         </table>
 
-                        <p className="pt-2 font-semibold">Pernyataan / Komitmen Orang Tua:</p>
-                        <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                        <p className="pt-2 font-semibold text-black">Pernyataan / Komitmen Orang Tua:</p>
+                        <div className="py-2 text-black whitespace-pre-wrap leading-relaxed text-sm pl-4">
                           {sp.peraturan_diketahui || '-'}
                         </div>
 
@@ -1907,6 +1917,637 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* 15. TABEL REKAP KONFERENSI KASUS */}
+        {docType === 'konferensi_kasus_tabel' && (
+          <div className="overflow-x-auto my-4 font-serif">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+              REKAPITULASI DOKUMEN KONFERENSI KASUS SISWA
+            </h3>
+            <table className="w-full text-left text-[11px] border-collapse border border-slate-900">
+              <thead>
+                <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 uppercase text-center">
+                  <th className="p-2 border border-slate-900 w-8">NO</th>
+                  <th className="p-2 border border-slate-900 w-32">KONSILI / KELAS</th>
+                  <th className="p-2 border border-slate-900 w-36">HARI / TGL / WAKTU</th>
+                  <th className="p-2 border border-slate-900 w-44">MASALAH / PEMANDU</th>
+                  <th className="p-2 border border-slate-900">SIMPULAN & HASIL RAPAT</th>
+                  <th className="p-2 border border-slate-900 w-28">JUMLAH HADIR</th>
+                  <th className="p-2 border border-slate-900 w-24">KETERANGAN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {konferensiKasusItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                      Belum ada data Konferensi Kasus Siswa.
+                    </td>
+                  </tr>
+                ) : (
+                  konferensiKasusItems.map((item, idx) => {
+                    let count = 0;
+                    try {
+                      if (item.daftar_hadir_rows) {
+                        const rows = JSON.parse(item.daftar_hadir_rows);
+                        if (Array.isArray(rows)) count = rows.length;
+                      }
+                    } catch (e) {}
+                    return (
+                      <tr key={item.id} className="border-b border-slate-900 align-top">
+                        <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                        <td className="p-2 border border-slate-900">
+                          <div className="font-bold">{item.nama_konseli}</div>
+                          <div className="text-slate-700 text-[10px] mt-0.5">Kelas: {item.kelas_ta || '-'}</div>
+                        </td>
+                        <td className="p-2 border border-slate-900 text-center font-medium">
+                          <div>{item.hari_tgl_jam || '-'}</div>
+                          <div className="text-slate-500 text-[9px] mt-1">Surat: {formatIndoDate(item.tanggal_surat)}</div>
+                        </td>
+                        <td className="p-2 border border-slate-900">
+                          <div className="font-bold text-rose-900">{item.jenis_masalah}</div>
+                          <div className="text-slate-600 text-[10px] mt-1">Pemandu: {item.pemandu_nama || '-'} ({item.pemandu_jabatan || '-'})</div>
+                        </td>
+                        <td className="p-2 border border-slate-900 text-[10px]">
+                          <div className="font-semibold text-slate-800">Simpulan:</div>
+                          <p className="line-clamp-2 italic mb-1 text-slate-700">"{item.data_diperoleh_simpulan || '-'}"</p>
+                          <div className="font-semibold text-slate-800 mt-1">Hasil Rapat:</div>
+                          <p className="line-clamp-2 font-sans text-slate-600">{item.rapat_hasil_pertemuan || '-'}</p>
+                        </td>
+                        <td className="p-2 border border-slate-900 text-center font-medium">
+                          <div>{count || item.rapat_jumlah_hadir || '0'} orang</div>
+                          <div className="text-[9px] text-slate-500 line-clamp-1 mt-1">{item.daftar_hadir_peserta_singkat || '-'}</div>
+                        </td>
+                        <td className="p-2 border border-slate-900 text-center font-semibold">
+                          <span className={`px-1.5 py-0.5 rounded text-[9px] border inline-block ${
+                            item.keterpenuhan_kebutuhan_data === 'terpenuhi' 
+                              ? 'bg-green-50 text-green-800 border-green-200' 
+                              : 'bg-amber-50 text-amber-800 border-amber-200'
+                          }`}>
+                            {item.keterpenuhan_kebutuhan_data === 'terpenuhi' ? 'Terpenuhi' : 'Belum Terpenuhi'}
+                          </span>
+                          <div className="text-[9px] text-slate-500 font-normal mt-1">{item.keterangan || '-'}</div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 16. NOTULA KONFERENSI KASUS */}
+        {docType === 'konferensi_kasus_notula' && currentKonferensiKasus && (
+          <div className="space-y-4 text-sm leading-relaxed text-slate-950 font-serif">
+            <div className="text-center my-3">
+              <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                NOTULA KONFERENSI KASUS SISWA
+              </h2>
+              <p className="text-xs font-bold uppercase mt-1">
+                BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+              </p>
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4">
+              <tbody>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center w-8">1</td>
+                  <td className="p-2.5 border-r border-black font-bold w-56 sm:w-64">Nama Konseli / Siswa</td>
+                  <td className="p-2.5 font-bold uppercase">{currentKonferensiKasus.nama_konseli}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">2</td>
+                  <td className="p-2.5 border-r border-black font-bold">Kelas / Tahun Ajaran</td>
+                  <td className="p-2.5 font-semibold">{currentKonferensiKasus.kelas_ta || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">3</td>
+                  <td className="p-2.5 border-r border-black font-bold">Jenis Permasalahan</td>
+                  <td className="p-2.5 font-bold text-rose-900">{currentKonferensiKasus.jenis_masalah}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">4</td>
+                  <td className="p-2.5 border-r border-black font-bold">Hari / Tanggal / Jam Pelaksanaan</td>
+                  <td className="p-2.5">{currentKonferensiKasus.hari_tgl_jam || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">5</td>
+                  <td className="p-2.5 border-r border-black font-bold">Pemandu Konferensi Kasus</td>
+                  <td className="p-2.5 font-semibold">
+                    {currentKonferensiKasus.pemandu_nama || '-'} ({currentKonferensiKasus.pemandu_jabatan || '-'})
+                  </td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">6</td>
+                  <td className="p-2.5 border-r border-black font-bold">Data yang Ingin Diperoleh</td>
+                  <td className="p-2.5 whitespace-pre-wrap leading-relaxed">{currentKonferensiKasus.data_ingin_diperoleh || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">7</td>
+                  <td className="p-2.5 border-r border-black font-bold">Uraian Singkat Kegiatan Inti</td>
+                  <td className="p-2.5 whitespace-pre-wrap leading-relaxed">{currentKonferensiKasus.uraian_kegiatan_inti || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">8</td>
+                  <td className="p-2.5 border-r border-black font-bold">Kesimpulan / Data yang Diperoleh</td>
+                  <td className="p-2.5 whitespace-pre-wrap leading-relaxed italic">{currentKonferensiKasus.data_diperoleh_simpulan || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border-r border-black font-bold text-center">9</td>
+                  <td className="p-2.5 border-r border-black font-bold">Keterpenuhan Kebutuhan Data</td>
+                  <td className="p-2.5">
+                    <span className="font-bold uppercase">
+                      {currentKonferensiKasus.keterpenuhan_kebutuhan_data === 'terpenuhi' ? 'Terpenuhi' : 'Belum Terpenuhi'}
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-2.5 border-r border-black font-bold text-center">10</td>
+                  <td className="p-2.5 border-r border-black font-bold">Rujukan Pelayanan Lanjutan</td>
+                  <td className="p-2.5 font-semibold">{currentKonferensiKasus.rujukan_pelayanan || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            {/* Signatures */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui,</div>
+                <div>Kepala Sekolah</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                </div>
+                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+              </div>
+              <div>
+                <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                <div>Notulis / Guru BK</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                </div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 17. NOTULEN RAPAT KONFERENSI KASUS */}
+        {docType === 'konferensi_kasus_notulen_rapat' && currentKonferensiKasus && (
+          <div className="space-y-4 text-sm leading-relaxed text-slate-950 font-serif">
+            <div className="text-center my-3">
+              <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                NOTULEN RAPAT / PERTEMUAN KONFERENSI KASUS
+              </h2>
+              <p className="text-xs font-bold uppercase mt-1">
+                {currentKonferensiKasus.rapat_nama_sekolah || 'UPT SMP NEGERI 7 PASURUAN'}
+              </p>
+              <p className="text-[11px] font-medium mt-0.5 italic text-slate-700">
+                {currentKonferensiKasus.rapat_alamat || 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo'}
+              </p>
+            </div>
+
+            <div className="border-t border-black my-2 pt-2" />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-serif leading-relaxed mb-4">
+              <div>
+                <table className="w-full">
+                  <tbody>
+                    <tr>
+                      <td className="w-32 font-bold py-1">Sidang / Rapat</td>
+                      <td className="w-4 py-1">:</td>
+                      <td className="py-1">Rapat Koordinasi Konferensi Kasus Siswa</td>
+                    </tr>
+                    <tr>
+                      <td className="font-bold py-1">Hari / Tanggal</td>
+                      <td className="py-1">:</td>
+                      <td className="py-1">{currentKonferensiKasus.hari_tgl_jam || '-'}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-bold py-1">Tempat</td>
+                      <td className="py-1">:</td>
+                      <td className="py-1">{currentKonferensiKasus.rapat_tempat || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div>
+                <table className="w-full">
+                  <tbody>
+                    <tr>
+                      <td className="w-32 font-bold py-1">Ketua Sidang</td>
+                      <td className="w-4 py-1">:</td>
+                      <td className="py-1">{currentKonferensiKasus.rapat_ketua || 'Konselor'}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-bold py-1">Waktu Pelaksanaan</td>
+                      <td className="py-1">:</td>
+                      <td className="py-1">{currentKonferensiKasus.rapat_dimulai_pukul || '10.30'} s/d {currentKonferensiKasus.rapat_diakhiri_pukul || '11.00'}</td>
+                    </tr>
+                    <tr>
+                      <td className="font-bold py-1">Jumlah Hadir</td>
+                      <td className="py-1">:</td>
+                      <td className="py-1 font-semibold">{currentKonferensiKasus.rapat_jumlah_hadir || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="space-y-2 border border-black p-4 rounded-lg bg-slate-50/20 text-xs">
+              <h4 className="font-bold uppercase tracking-wide border-b border-black pb-1 mb-2">HASIL RAPAT / PERTEMUAN:</h4>
+              <div className="whitespace-pre-wrap leading-relaxed font-sans text-slate-900 text-sm pl-2">
+                {currentKonferensiKasus.rapat_hasil_pertemuan || 'Tidak ada uraian hasil pertemuan.'}
+              </div>
+            </div>
+
+            {/* Signatures */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui / Pimpinan Sidang,</div>
+                <div>Ketua Rapat</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.pemandu_nama || 'WIWIK ISMIATI, S.Pd'}
+                </div>
+                <div>Jabatan: {currentKonferensiKasus.pemandu_jabatan || 'Konselor'}</div>
+              </div>
+              <div>
+                <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                <div>Notulis Rapat</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                </div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 18. DAFTAR HADIR KONFERENSI KASUS */}
+        {docType === 'konferensi_kasus_daftar_hadir' && currentKonferensiKasus && (
+          <div className="space-y-4 text-sm leading-relaxed text-slate-950 font-serif">
+            <div className="text-center my-3">
+              <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                DAFTAR HADIR PESERTA KONFERENSI KASUS
+              </h2>
+              <p className="text-xs font-bold uppercase mt-1">
+                BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+              </p>
+              <div className="mt-3 text-xs text-slate-800 space-y-1 text-left border border-slate-300 p-3 rounded-lg bg-slate-50/10">
+                <p>Hari / Tanggal / Jam: <span className="font-semibold text-slate-900">{currentKonferensiKasus.hari_tgl_jam || '-'}</span></p>
+                <p>Nama Konseli: <span className="font-semibold text-slate-900 uppercase">{currentKonferensiKasus.nama_konseli}</span> &nbsp;|&nbsp; Kelas: <span className="font-semibold text-slate-900">{currentKonferensiKasus.kelas_ta || '-'}</span></p>
+                <p>Kasus: <span className="font-semibold italic text-rose-950">"{currentKonferensiKasus.jenis_masalah}"</span></p>
+              </div>
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4 text-left">
+              <thead>
+                <tr className="bg-slate-100 border-b border-black text-center font-bold">
+                  <th className="p-2 border border-black w-10">No</th>
+                  <th className="p-2 border border-black">Nama Lengkap</th>
+                  <th className="p-2 border border-black w-40">Jabatan / Peran</th>
+                  <th className="p-2 border border-black w-16 text-center">Kelas</th>
+                  <th className="p-2 border border-black">Instansi / Asal Sekolah</th>
+                  <th className="p-2 border border-black w-32 text-center">Tanda Tangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  let parsedRows: DaftarHadirRow[] = [];
+                  try {
+                    if (currentKonferensiKasus.daftar_hadir_rows) {
+                      parsedRows = JSON.parse(currentKonferensiKasus.daftar_hadir_rows);
+                    }
+                  } catch (e) {}
+
+                  if (!Array.isArray(parsedRows) || parsedRows.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={6} className="p-4 text-center italic text-slate-500 border border-black">
+                          Belum ada data peserta rapat.
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return parsedRows.map((row, index) => (
+                    <tr key={index} className="border-b border-black">
+                      <td className="p-2 border border-black text-center font-bold">{row.no || (index + 1)}</td>
+                      <td className="p-2 border border-black font-semibold uppercase">{row.nama || '-'}</td>
+                      <td className="p-2 border border-black">{row.jabatan || '-'}</td>
+                      <td className="p-2 border border-black text-center">{row.kelas || '-'}</td>
+                      <td className="p-2 border border-black">{row.asal_sekolah || '-'}</td>
+                      <td className="p-2 border border-black font-semibold text-center italic text-green-900 bg-emerald-50/10">
+                        {row.ttd === 'Ada' ? `${index + 1}. .........` : '-'}
+                      </td>
+                    </tr>
+                  ));
+                })()}
+              </tbody>
+            </table>
+
+            {/* Signatures */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui,</div>
+                <div>Kepala Sekolah</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                </div>
+                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+              </div>
+              <div>
+                <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                <div>Guru BK / Notulis</div>
+                <div className="h-16" />
+                <div className="font-bold underline uppercase">
+                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                </div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 19. GABUNGAN SELURUH DOKUMEN KONFERENSI KASUS */}
+        {docType === 'konferensi_kasus_gabungan' && currentKonferensiKasus && (
+          <div className="space-y-12 font-serif text-sm">
+            {/* Halaman 1: Notula */}
+            <div className="print:break-after-page border-b-2 border-dashed border-slate-300 pb-10 print:border-none print:pb-0">
+              <div className="text-center my-3">
+                <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                  NOTULA KONFERENSI KASUS SISWA
+                </h2>
+                <p className="text-xs font-bold uppercase mt-1">
+                  BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+                </p>
+              </div>
+
+              <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4 text-left">
+                <tbody>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center w-8">1</td>
+                    <td className="p-2.5 border-r border-black font-bold w-56 sm:w-64">Nama Konseli / Siswa</td>
+                    <td className="p-2.5 font-bold uppercase">{currentKonferensiKasus.nama_konseli}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">2</td>
+                    <td className="p-2.5 border-r border-black font-bold">Kelas / Tahun Ajaran</td>
+                    <td className="p-2.5 font-semibold">{currentKonferensiKasus.kelas_ta || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">3</td>
+                    <td className="p-2.5 border-r border-black font-bold">Jenis Permasalahan</td>
+                    <td className="p-2.5 font-bold text-rose-900">{currentKonferensiKasus.jenis_masalah}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">4</td>
+                    <td className="p-2.5 border-r border-black font-bold">Hari / Tanggal / Jam Pelaksanaan</td>
+                    <td className="p-2.5">{currentKonferensiKasus.hari_tgl_jam || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">5</td>
+                    <td className="p-2.5 border-r border-black font-bold">Pemandu Konferensi Kasus</td>
+                    <td className="p-2.5 font-semibold">
+                      {currentKonferensiKasus.pemandu_nama || '-'} ({currentKonferensiKasus.pemandu_jabatan || '-'})
+                    </td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">6</td>
+                    <td className="p-2.5 border-r border-black font-bold">Data yang Ingin Diperoleh</td>
+                    <td className="p-2.5 whitespace-pre-wrap leading-relaxed">{currentKonferensiKasus.data_ingin_diperoleh || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">7</td>
+                    <td className="p-2.5 border-r border-black font-bold">Uraian Singkat Kegiatan Inti</td>
+                    <td className="p-2.5 whitespace-pre-wrap leading-relaxed">{currentKonferensiKasus.uraian_kegiatan_inti || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">8</td>
+                    <td className="p-2.5 border-r border-black font-bold">Kesimpulan / Data yang Diperoleh</td>
+                    <td className="p-2.5 whitespace-pre-wrap leading-relaxed italic">{currentKonferensiKasus.data_diperoleh_simpulan || '-'}</td>
+                  </tr>
+                  <tr className="border-b border-black">
+                    <td className="p-2.5 border-r border-black font-bold text-center">9</td>
+                    <td className="p-2.5 border-r border-black font-bold">Keterpenuhan Kebutuhan Data</td>
+                    <td className="p-2.5">
+                      <span className="font-bold uppercase">
+                        {currentKonferensiKasus.keterpenuhan_kebutuhan_data === 'terpenuhi' ? 'Terpenuhi' : 'Belum Terpenuhi'}
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="p-2.5 border-r border-black font-bold text-center">10</td>
+                    <td className="p-2.5 border-r border-black font-bold">Rujukan Pelayanan Lanjutan</td>
+                    <td className="p-2.5 font-semibold">{currentKonferensiKasus.rujukan_pelayanan || '-'}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              {/* Signatures 1 */}
+              <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
+                <div>
+                  <div>Mengetahui,</div>
+                  <div>Kepala Sekolah</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                  </div>
+                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                </div>
+                <div>
+                  <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                  <div>Notulis / Guru BK</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  </div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Halaman 2: Notulen Rapat */}
+            <div className="print:break-after-page border-b-2 border-dashed border-slate-300 pb-10 print:border-none print:pb-0 pt-10 print:pt-0">
+              <div className="text-center my-3">
+                <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                  NOTULEN RAPAT / PERTEMUAN KONFERENSI KASUS
+                </h2>
+                <p className="text-xs font-bold uppercase mt-1">
+                  {currentKonferensiKasus.rapat_nama_sekolah || 'UPT SMP NEGERI 7 PASURUAN'}
+                </p>
+                <p className="text-[11px] font-medium mt-0.5 italic text-slate-700">
+                  {currentKonferensiKasus.rapat_alamat || 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo'}
+                </p>
+              </div>
+
+              <div className="border-t border-black my-2 pt-2" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-serif leading-relaxed mb-4 text-left">
+                <div>
+                  <table className="w-full">
+                    <tbody>
+                      <tr>
+                        <td className="w-32 font-bold py-1">Sidang / Rapat</td>
+                        <td className="w-4 py-1">:</td>
+                        <td className="py-1">Rapat Koordinasi Konferensi Kasus Siswa</td>
+                      </tr>
+                      <tr>
+                        <td className="font-bold py-1">Hari / Tanggal</td>
+                        <td className="py-1">:</td>
+                        <td className="py-1">{currentKonferensiKasus.hari_tgl_jam || '-'}</td>
+                      </tr>
+                      <tr>
+                        <td className="font-bold py-1">Tempat</td>
+                        <td className="py-1">:</td>
+                        <td className="py-1">{currentKonferensiKasus.rapat_tempat || '-'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div>
+                  <table className="w-full">
+                    <tbody>
+                      <tr>
+                        <td className="w-32 font-bold py-1">Ketua Sidang</td>
+                        <td className="w-4 py-1">:</td>
+                        <td className="py-1">{currentKonferensiKasus.rapat_ketua || 'Konselor'}</td>
+                      </tr>
+                      <tr>
+                        <td className="font-bold py-1">Waktu Pelaksanaan</td>
+                        <td className="py-1">:</td>
+                        <td className="py-1">{currentKonferensiKasus.rapat_dimulai_pukul || '10.30'} s/d {currentKonferensiKasus.rapat_diakhiri_pukul || '11.00'}</td>
+                      </tr>
+                      <tr>
+                        <td className="font-bold py-1">Jumlah Hadir</td>
+                        <td className="py-1">:</td>
+                        <td className="py-1 font-semibold">{currentKonferensiKasus.rapat_jumlah_hadir || '-'}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="space-y-2 border border-black p-4 rounded-lg bg-slate-50/20 text-xs text-left">
+                <h4 className="font-bold uppercase tracking-wide border-b border-black pb-1 mb-2">HASIL RAPAT / PERTEMUAN:</h4>
+                <div className="whitespace-pre-wrap leading-relaxed font-sans text-slate-900 text-sm pl-2">
+                  {currentKonferensiKasus.rapat_hasil_pertemuan || 'Tidak ada uraian hasil pertemuan.'}
+                </div>
+              </div>
+
+              {/* Signatures 2 */}
+              <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+                <div>
+                  <div>Mengetahui / Pimpinan Sidang,</div>
+                  <div>Ketua Rapat</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.pemandu_nama || 'WIWIK ISMIATI, S.Pd'}
+                  </div>
+                  <div>Jabatan: {currentKonferensiKasus.pemandu_jabatan || 'Konselor'}</div>
+                </div>
+                <div>
+                  <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                  <div>Notulis Rapat</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  </div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Halaman 3: Daftar Hadir */}
+            <div className="pt-10 print:pt-0">
+              <div className="text-center my-3">
+                <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                  DAFTAR HADIR PESERTA KONFERENSI KASUS
+                </h2>
+                <p className="text-xs font-bold uppercase mt-1">
+                  BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+                </p>
+                <div className="mt-3 text-xs text-slate-800 space-y-1 text-left border border-slate-300 p-3 rounded-lg bg-slate-50/10">
+                  <p>Hari / Tanggal / Jam: <span className="font-semibold text-slate-900">{currentKonferensiKasus.hari_tgl_jam || '-'}</span></p>
+                  <p>Nama Konseli: <span className="font-semibold text-slate-900 uppercase">{currentKonferensiKasus.nama_konseli}</span> &nbsp;|&nbsp; Kelas: <span className="font-semibold text-slate-900">{currentKonferensiKasus.kelas_ta || '-'}</span></p>
+                  <p>Kasus: <span className="font-semibold italic text-rose-950">"{currentKonferensiKasus.jenis_masalah}"</span></p>
+                </div>
+              </div>
+
+              <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4 text-left">
+                <thead>
+                  <tr className="bg-slate-100 border-b border-black text-center font-bold">
+                    <th className="p-2 border border-black w-10">No</th>
+                    <th className="p-2 border border-black">Nama Lengkap</th>
+                    <th className="p-2 border border-black w-40">Jabatan / Peran</th>
+                    <th className="p-2 border border-black w-16 text-center">Kelas</th>
+                    <th className="p-2 border border-black">Instansi / Asal Sekolah</th>
+                    <th className="p-2 border border-black w-32 text-center">Tanda Tangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    let parsedRows: DaftarHadirRow[] = [];
+                    try {
+                      if (currentKonferensiKasus.daftar_hadir_rows) {
+                        parsedRows = JSON.parse(currentKonferensiKasus.daftar_hadir_rows);
+                      }
+                    } catch (e) {}
+
+                    if (!Array.isArray(parsedRows) || parsedRows.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={6} className="p-4 text-center italic text-slate-500 border border-black">
+                            Belum ada data peserta rapat.
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return parsedRows.map((row, index) => (
+                      <tr key={index} className="border-b border-black">
+                        <td className="p-2 border border-black text-center font-bold">{row.no || (index + 1)}</td>
+                        <td className="p-2 border border-black font-semibold uppercase">{row.nama || '-'}</td>
+                        <td className="p-2 border border-black">{row.jabatan || '-'}</td>
+                        <td className="p-2 border border-black text-center">{row.kelas || '-'}</td>
+                        <td className="p-2 border border-black">{row.asal_sekolah || '-'}</td>
+                        <td className="p-2 border border-black font-semibold text-center italic text-green-900 bg-emerald-50/10">
+                          {row.ttd === 'Ada' ? `${index + 1}. .........` : '-'}
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+
+              {/* Signatures 3 */}
+              <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+                <div>
+                  <div>Mengetahui,</div>
+                  <div>Kepala Sekolah</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                  </div>
+                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                </div>
+                <div>
+                  <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
+                  <div>Guru BK / Notulis</div>
+                  <div className="h-16" />
+                  <div className="font-bold underline uppercase">
+                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  </div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

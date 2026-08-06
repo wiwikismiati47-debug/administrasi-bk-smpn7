@@ -24,7 +24,8 @@ import {
   FileSpreadsheet,
   UserCheck,
   UserPlus,
-  FileCheck2
+  FileCheck2,
+  ClipboardList
 } from 'lucide-react';
 
 interface SidebarMenuProps {
@@ -64,6 +65,8 @@ const getIconComponent = (iconName?: string) => {
       return UserPlus;
     case 'FileCheck2':
       return FileCheck2;
+    case 'ClipboardList':
+      return ClipboardList;
     default:
       return Layers;
   }

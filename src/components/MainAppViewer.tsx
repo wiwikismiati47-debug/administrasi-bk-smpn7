@@ -14,7 +14,9 @@ import {
   KonselingKelompok,
   FormKonselingKelompokData,
   SuratPernyataan,
-  FormSuratPernyataanData
+  FormSuratPernyataanData,
+  KonferensiKasus,
+  FormKonferensiKasusData
 } from '../types';
 import { FormAgenda } from './FormAgenda';
 import { TabelAgenda } from './TabelAgenda';
@@ -31,6 +33,8 @@ import { FormKonselingKelompok } from './FormKonselingKelompok';
 import { TabelKonselingKelompok } from './TabelKonselingKelompok';
 import { FormSuratPernyataan } from './FormSuratPernyataan';
 import { TabelSuratPernyataan } from './TabelSuratPernyataan';
+import { FormKonferensiKasus } from './FormKonferensiKasus';
+import { TabelKonferensiKasus } from './TabelKonferensiKasus';
 import { PrintView } from './PrintView';
 import {
   ExternalLink,
@@ -106,6 +110,13 @@ interface MainAppViewerProps {
   onSubmitSuratPernyataan: (data: Partial<SuratPernyataan> & FormSuratPernyataanData) => Promise<void>;
   onDeleteSuratPernyataan: (id: string) => Promise<void>;
 
+  // Konferensi Kasus Props
+  konferensiKasusItems: KonferensiKasus[];
+  isLoadingKonferensiKasus: boolean;
+  isSubmittingKonferensiKasus: boolean;
+  onSubmitKonferensiKasus: (data: Partial<KonferensiKasus> & FormKonferensiKasusData) => Promise<void>;
+  onDeleteKonferensiKasus: (id: string) => Promise<void>;
+
   // Common Props
   isSupabaseConnected: boolean;
   onRefreshData: () => void;
@@ -149,6 +160,11 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   isSubmittingSuratPernyataan = false,
   onSubmitSuratPernyataan,
   onDeleteSuratPernyataan,
+  konferensiKasusItems = [],
+  isLoadingKonferensiKasus = false,
+  isSubmittingKonferensiKasus = false,
+  onSubmitKonferensiKasus,
+  onDeleteKonferensiKasus,
   isSupabaseConnected = false,
   onRefreshData,
   onOpenSupabaseConfig,
@@ -161,6 +177,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [editingKonselingIndividu, setEditingKonselingIndividu] = useState<KonselingIndividu | null>(null);
   const [editingKonselingKelompok, setEditingKonselingKelompok] = useState<KonselingKelompok | null>(null);
   const [editingSuratPernyataan, setEditingSuratPernyataan] = useState<SuratPernyataan | null>(null);
+  const [editingKonferensiKasus, setEditingKonferensiKasus] = useState<KonferensiKasus | null>(null);
   
   // Printing states
   const [isPrintMode, setIsPrintMode] = useState(false);
@@ -181,6 +198,11 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     | 'konseling_kelompok_dokumen'
     | 'surat_pernyataan_tabel'
     | 'surat_pernyataan_dokumen'
+    | 'konferensi_kasus_tabel'
+    | 'konferensi_kasus_notula'
+    | 'konferensi_kasus_notulen_rapat'
+    | 'konferensi_kasus_daftar_hadir'
+    | 'konferensi_kasus_gabungan'
   >('agenda');
   const [selectedForPrint, setSelectedForPrint] = useState<UndanganOrangTua | null>(null);
   const [selectedHomeVisitForPrint, setSelectedHomeVisitForPrint] = useState<HomeVisit | null>(null);
@@ -188,6 +210,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [selectedKonselingIndividuForPrint, setSelectedKonselingIndividuForPrint] = useState<KonselingIndividu | null>(null);
   const [selectedKonselingKelompokForPrint, setSelectedKonselingKelompokForPrint] = useState<KonselingKelompok | null>(null);
   const [selectedSuratPernyataanForPrint, setSelectedSuratPernyataanForPrint] = useState<SuratPernyataan | null>(null);
+  const [selectedKonferensiKasusForPrint, setSelectedKonferensiKasusForPrint] = useState<KonferensiKasus | null>(null);
   
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -200,6 +223,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const isInternalKonselingIndividu = linkUrl === 'internal:konseling_individu';
   const isInternalKonselingKelompok = linkUrl === 'internal:konseling_kelompok';
   const isInternalSuratPernyataan = linkUrl === 'internal:surat_pernyataan';
+  const isInternalKonferensiKasus = linkUrl === 'internal:konferensi_kasus';
   const isInternal =
     isInternalAgenda ||
     isInternalUndangan ||
@@ -207,7 +231,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     isInternalRekamPermasalahan ||
     isInternalKonselingIndividu ||
     isInternalKonselingKelompok ||
-    isInternalSuratPernyataan;
+    isInternalSuratPernyataan ||
+    isInternalKonferensiKasus;
 
   const handleOpenPrint = (
     docType:
@@ -226,13 +251,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
       | 'konseling_kelompok_tabel'
       | 'konseling_kelompok_dokumen'
       | 'surat_pernyataan_tabel'
-      | 'surat_pernyataan_dokumen',
+      | 'surat_pernyataan_dokumen'
+      | 'konferensi_kasus_tabel'
+      | 'konferensi_kasus_notula'
+      | 'konferensi_kasus_notulen_rapat'
+      | 'konferensi_kasus_daftar_hadir'
+      | 'konferensi_kasus_gabungan',
     itemUndangan: UndanganOrangTua | null = null,
     itemHomeVisit: HomeVisit | null = null,
     itemRekamPermasalahan: RekamPermasalahan | null = null,
     itemKonselingIndividu: KonselingIndividu | null = null,
     itemKonselingKelompok: KonselingKelompok | null = null,
-    itemSuratPernyataan: SuratPernyataan | null = null
+    itemSuratPernyataan: SuratPernyataan | null = null,
+    itemKonferensiKasus: KonferensiKasus | null = null
   ) => {
     setPrintDocType(docType);
     setSelectedForPrint(itemUndangan);
@@ -241,6 +272,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     setSelectedKonselingIndividuForPrint(itemKonselingIndividu);
     setSelectedKonselingKelompokForPrint(itemKonselingKelompok);
     setSelectedSuratPernyataanForPrint(itemSuratPernyataan);
+    setSelectedKonferensiKasusForPrint(itemKonferensiKasus);
     setIsPrintMode(true);
   };
 
@@ -261,6 +293,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
         selectedKonselingKelompok={selectedKonselingKelompokForPrint}
         suratPernyataanItems={suratPernyataanItems}
         selectedSuratPernyataan={selectedSuratPernyataanForPrint}
+        konferensiKasusItems={konferensiKasusItems}
+        selectedKonferensiKasus={selectedKonferensiKasusForPrint}
         onBack={() => setIsPrintMode(false)}
       />
     );
@@ -289,6 +323,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
               <UserPlus className="w-6 h-6" />
             ) : isInternalSuratPernyataan ? (
               <FileCheck2 className="w-6 h-6" />
+            ) : isInternalKonferensiKasus ? (
+              <Users className="w-6 h-6" />
             ) : (
               <Globe className="w-6 h-6" />
             )}
@@ -297,6 +333,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <div className="flex items-center gap-2">
               <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
                 {selectedLink?.badge || (
+                  isInternalKonferensiKasus ? 'FORM H' :
                   isInternalSuratPernyataan ? 'FORM G' :
                   isInternalKonselingKelompok ? 'FORM F' :
                   isInternalKonselingIndividu ? 'FORM E' :
@@ -336,6 +373,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     if (editingKonselingIndividu) setEditingKonselingIndividu(null);
                     if (editingKonselingKelompok) setEditingKonselingKelompok(null);
                     if (editingSuratPernyataan) setEditingSuratPernyataan(null);
+                    if (editingKonferensiKasus) setEditingKonferensiKasus(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                     internalTab === 'form'
@@ -345,10 +383,10 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
                   <span>
-                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan) ? 'Edit Form' : 'Input Form'}
+                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan || editingKonferensiKasus) ? 'Edit Form' : 'Input Form'}
                   </span>
                 </button>
-
+ 
                 <button
                   onClick={() => setInternalTab('table')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -359,7 +397,9 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 >
                   <ListFilter className="w-3.5 h-3.5" />
                   <span>
-                    {isInternalSuratPernyataan
+                    {isInternalKonferensiKasus
+                      ? `Daftar Konferensi Kasus (${(konferensiKasusItems || []).length})`
+                      : isInternalSuratPernyataan
                       ? `Daftar Surat Pernyataan (${(suratPernyataanItems || []).length})`
                       : isInternalKonselingKelompok
                       ? `Daftar Konseling Kelompok (${(konselingKelompokItems || []).length})`
@@ -548,6 +588,29 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onClick={() => handleOpenPrint('surat_pernyataan_tabel')}
                     className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
                     title="Cetak Rekap Tabel Surat Pernyataan"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form H Konferensi Kasus Quick Document Shortcut Actions */}
+              {isInternalKonferensiKasus && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('konferensi_kasus_gabungan')}
+                    className="px-2.5 py-1.5 bg-white text-teal-900 hover:bg-teal-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Seluruh Dokumen Konferensi Kasus"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Cetak Gabungan</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('konferensi_kasus_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Konferensi Kasus"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
                     <span>Cetak Tabel</span>
@@ -870,6 +933,51 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onDelete={onDeleteSuratPernyataan}
                     onPrintTableRekap={() => handleOpenPrint('surat_pernyataan_tabel')}
                     onPrintItem={(item) => handleOpenPrint('surat_pernyataan_dokumen', null, null, null, null, null, item)}
+                    isFromSupabase={isSupabaseConnected}
+                  />
+                )}
+              </>
+            )}
+
+            {/* H. NOTULEN RAPAT KONFERENSI KASUS SISWA CONTROLLER */}
+            {isInternalKonferensiKasus && (
+              <>
+                {internalTab === 'form' && (
+                  <FormKonferensiKasus
+                    initialData={editingKonferensiKasus}
+                    onSubmit={async (data) => {
+                      await onSubmitKonferensiKasus(data);
+                      setEditingKonferensiKasus(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingKonferensiKasus(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingKonferensiKasus}
+                    existingItems={konferensiKasusItems}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelKonferensiKasus
+                    items={konferensiKasusItems}
+                    onEdit={(item) => {
+                      setEditingKonferensiKasus(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteKonferensiKasus}
+                    onPrintTableRekap={() => handleOpenPrint('konferensi_kasus_tabel')}
+                    onPrintItem={(item, docType) => {
+                      const printTypeMap: Record<string, string> = {
+                        'notula': 'konferensi_kasus_notula',
+                        'notulen': 'konferensi_kasus_notulen_rapat',
+                        'daftar_hadir': 'konferensi_kasus_daftar_hadir',
+                        'gabungan': 'konferensi_kasus_gabungan'
+                      };
+                      const mappedType = printTypeMap[docType] || 'konferensi_kasus_gabungan';
+                      handleOpenPrint(mappedType as any, null, null, null, null, null, null, item);
+                    }}
                     isFromSupabase={isSupabaseConnected}
                   />
                 )}
