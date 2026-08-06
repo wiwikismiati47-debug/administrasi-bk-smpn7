@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { AgendaKerja, FormAgendaData, UndanganOrangTua, FormUndanganData, HomeVisit, FormHomeVisitData, AppLink } from './types';
+import {
+  AgendaKerja,
+  FormAgendaData,
+  UndanganOrangTua,
+  FormUndanganData,
+  HomeVisit,
+  FormHomeVisitData,
+  RekamPermasalahan,
+  FormRekamPermasalahanData,
+  KonselingIndividu,
+  FormKonselingIndividuData,
+  KonselingKelompok,
+  FormKonselingKelompokData,
+  SuratPernyataan,
+  FormSuratPernyataanData,
+  AppLink
+} from './types';
 import {
   fetchAllAgenda,
   saveOrUpdateAgenda,
@@ -10,6 +26,18 @@ import {
   fetchAllHomeVisit,
   saveOrUpdateHomeVisit,
   deleteHomeVisitItem,
+  fetchAllRekamPermasalahan,
+  saveOrUpdateRekamPermasalahan,
+  deleteRekamPermasalahanItem,
+  fetchAllKonselingIndividu,
+  saveOrUpdateKonselingIndividu,
+  deleteKonselingIndividuItem,
+  fetchAllKonselingKelompok,
+  saveOrUpdateKonselingKelompok,
+  deleteKonselingKelompokItem,
+  fetchAllSuratPernyataan,
+  saveOrUpdateSuratPernyataan,
+  deleteSuratPernyataanItem,
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -47,6 +75,26 @@ export default function App() {
   const [homeVisitItems, setHomeVisitItems] = useState<HomeVisit[]>([]);
   const [isLoadingHomeVisit, setIsLoadingHomeVisit] = useState<boolean>(true);
   const [isSubmittingHomeVisit, setIsSubmittingHomeVisit] = useState<boolean>(false);
+
+  // Rekam Permasalahan state
+  const [rekamPermasalahanItems, setRekamPermasalahanItems] = useState<RekamPermasalahan[]>([]);
+  const [isLoadingRekamPermasalahan, setIsLoadingRekamPermasalahan] = useState<boolean>(true);
+  const [isSubmittingRekamPermasalahan, setIsSubmittingRekamPermasalahan] = useState<boolean>(false);
+
+  // Konseling Individu state
+  const [konselingIndividuItems, setKonselingIndividuItems] = useState<KonselingIndividu[]>([]);
+  const [isLoadingKonselingIndividu, setIsLoadingKonselingIndividu] = useState<boolean>(true);
+  const [isSubmittingKonselingIndividu, setIsSubmittingKonselingIndividu] = useState<boolean>(false);
+
+  // Konseling Kelompok state
+  const [konselingKelompokItems, setKonselingKelompokItems] = useState<KonselingKelompok[]>([]);
+  const [isLoadingKonselingKelompok, setIsLoadingKonselingKelompok] = useState<boolean>(true);
+  const [isSubmittingKonselingKelompok, setIsSubmittingKonselingKelompok] = useState<boolean>(false);
+
+  // Surat Pernyataan Siswa state
+  const [suratPernyataanItems, setSuratPernyataanItems] = useState<SuratPernyataan[]>([]);
+  const [isLoadingSuratPernyataan, setIsLoadingSuratPernyataan] = useState<boolean>(true);
+  const [isSubmittingSuratPernyataan, setIsSubmittingSuratPernyataan] = useState<boolean>(false);
 
   // Connection state
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
@@ -126,9 +174,81 @@ export default function App() {
     }
   }, []);
 
+  const loadRekamPermasalahanData = useCallback(async () => {
+    setIsLoadingRekamPermasalahan(true);
+    try {
+      const res = await fetchAllRekamPermasalahan();
+      setRekamPermasalahanItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data rekam permasalahan siswa.', 'error');
+    } finally {
+      setIsLoadingRekamPermasalahan(false);
+    }
+  }, []);
+
+  const loadKonselingIndividuData = useCallback(async () => {
+    setIsLoadingKonselingIndividu(true);
+    try {
+      const res = await fetchAllKonselingIndividu();
+      setKonselingIndividuItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data konseling individu.', 'error');
+    } finally {
+      setIsLoadingKonselingIndividu(false);
+    }
+  }, []);
+
+  const loadKonselingKelompokData = useCallback(async () => {
+    setIsLoadingKonselingKelompok(true);
+    try {
+      const res = await fetchAllKonselingKelompok();
+      setKonselingKelompokItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data konseling kelompok.', 'error');
+    } finally {
+      setIsLoadingKonselingKelompok(false);
+    }
+  }, []);
+
+  const loadSuratPernyataanData = useCallback(async () => {
+    setIsLoadingSuratPernyataan(true);
+    try {
+      const res = await fetchAllSuratPernyataan();
+      setSuratPernyataanItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data surat pernyataan siswa.', 'error');
+    } finally {
+      setIsLoadingSuratPernyataan(false);
+    }
+  }, []);
+
   const refreshAllData = useCallback(async () => {
-    await Promise.all([loadAgendaData(), loadUndanganData(), loadHomeVisitData()]);
-  }, [loadAgendaData, loadUndanganData, loadHomeVisitData]);
+    await Promise.all([
+      loadAgendaData(),
+      loadUndanganData(),
+      loadHomeVisitData(),
+      loadRekamPermasalahanData(),
+      loadKonselingIndividuData(),
+      loadKonselingKelompokData(),
+      loadSuratPernyataanData()
+    ]);
+  }, [loadAgendaData, loadUndanganData, loadHomeVisitData, loadRekamPermasalahanData, loadKonselingIndividuData, loadKonselingKelompokData, loadSuratPernyataanData]);
 
   useEffect(() => {
     refreshAllData();
@@ -245,6 +365,151 @@ export default function App() {
     }
   };
 
+  // Handle Rekam Permasalahan submit
+  const handleSubmitRekamPermasalahan = async (data: Partial<RekamPermasalahan> & FormRekamPermasalahanData) => {
+    setIsSubmittingRekamPermasalahan(true);
+    try {
+      const res = await saveOrUpdateRekamPermasalahan(data);
+      if (res.success) {
+        await loadRekamPermasalahanData();
+        showToast(
+          data.id
+            ? 'Data Rekam Permasalahan Siswa berhasil diperbarui!'
+            : 'Data Rekam Permasalahan Siswa berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data rekam permasalahan.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingRekamPermasalahan(false);
+    }
+  };
+
+  // Handle Rekam Permasalahan delete
+  const handleDeleteRekamPermasalahan = async (id: string) => {
+    try {
+      const res = await deleteRekamPermasalahanItem(id);
+      if (res.success) {
+        await loadRekamPermasalahanData();
+        showToast('Data Rekam Permasalahan berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data rekam permasalahan.', 'error');
+    }
+  };
+
+  // Handle Konseling Individu submit & delete
+  const handleSubmitKonselingIndividu = async (data: Partial<KonselingIndividu> & FormKonselingIndividuData) => {
+    setIsSubmittingKonselingIndividu(true);
+    try {
+      const res = await saveOrUpdateKonselingIndividu(data);
+      if (res.success) {
+        await loadKonselingIndividuData();
+        showToast(
+          data.id
+            ? 'Data Konseling Individu berhasil diperbarui!'
+            : 'Data Konseling Individu berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data konseling individu.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingKonselingIndividu(false);
+    }
+  };
+
+  const handleDeleteKonselingIndividu = async (id: string) => {
+    try {
+      const res = await deleteKonselingIndividuItem(id);
+      if (res.success) {
+        await loadKonselingIndividuData();
+        showToast('Data Konseling Individu berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data konseling individu.', 'error');
+    }
+  };
+
+  // Handle Konseling Kelompok submit & delete
+  const handleSubmitKonselingKelompok = async (data: Partial<KonselingKelompok> & FormKonselingKelompokData) => {
+    setIsSubmittingKonselingKelompok(true);
+    try {
+      const res = await saveOrUpdateKonselingKelompok(data);
+      if (res.success) {
+        await loadKonselingKelompokData();
+        showToast(
+          data.id
+            ? 'Data Konseling Kelompok berhasil diperbarui!'
+            : 'Data Konseling Kelompok berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data konseling kelompok.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingKonselingKelompok(false);
+    }
+  };
+
+  const handleDeleteKonselingKelompok = async (id: string) => {
+    try {
+      const res = await deleteKonselingKelompokItem(id);
+      if (res.success) {
+        await loadKonselingKelompokData();
+        showToast('Data Konseling Kelompok berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data konseling kelompok.', 'error');
+    }
+  };
+
+  // Handle Surat Pernyataan submit & delete
+  const handleSubmitSuratPernyataan = async (data: Partial<SuratPernyataan> & FormSuratPernyataanData) => {
+    setIsSubmittingSuratPernyataan(true);
+    try {
+      const res = await saveOrUpdateSuratPernyataan(data);
+      if (res.success) {
+        await loadSuratPernyataanData();
+        showToast(
+          data.id
+            ? 'Data Surat Pernyataan berhasil diperbarui!'
+            : 'Data Surat Pernyataan berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data surat pernyataan.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingSuratPernyataan(false);
+    }
+  };
+
+  const handleDeleteSuratPernyataan = async (id: string) => {
+    try {
+      const res = await deleteSuratPernyataanItem(id);
+      if (res.success) {
+        await loadSuratPernyataanData();
+        showToast('Data Surat Pernyataan berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data surat pernyataan.', 'error');
+    }
+  };
+
   // --- APP LINK MANAGER HANDLERS ---
   const handleSaveLink = (linkToSave: AppLink) => {
     const existingIndex = links.findIndex((l) => l.id === linkToSave.id);
@@ -322,7 +587,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 flex flex-col font-sans antialiased selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
+      {/* Subtle Background Decorative Blur Effects */}
+      <div className="fixed -top-40 -left-40 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed top-1/3 -right-40 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed -bottom-40 left-1/3 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
       
       {/* Hidden File Input for JSON Backup */}
       <input
@@ -408,6 +677,26 @@ export default function App() {
           isSubmittingHomeVisit={isSubmittingHomeVisit}
           onSubmitHomeVisit={handleSubmitHomeVisit}
           onDeleteHomeVisit={handleDeleteHomeVisit}
+          rekamPermasalahanItems={rekamPermasalahanItems}
+          isLoadingRekamPermasalahan={isLoadingRekamPermasalahan}
+          isSubmittingRekamPermasalahan={isSubmittingRekamPermasalahan}
+          onSubmitRekamPermasalahan={handleSubmitRekamPermasalahan}
+          onDeleteRekamPermasalahan={handleDeleteRekamPermasalahan}
+          konselingIndividuItems={konselingIndividuItems}
+          isLoadingKonselingIndividu={isLoadingKonselingIndividu}
+          isSubmittingKonselingIndividu={isSubmittingKonselingIndividu}
+          onSubmitKonselingIndividu={handleSubmitKonselingIndividu}
+          onDeleteKonselingIndividu={handleDeleteKonselingIndividu}
+          konselingKelompokItems={konselingKelompokItems}
+          isLoadingKonselingKelompok={isLoadingKonselingKelompok}
+          isSubmittingKonselingKelompok={isSubmittingKonselingKelompok}
+          onSubmitKonselingKelompok={handleSubmitKonselingKelompok}
+          onDeleteKonselingKelompok={handleDeleteKonselingKelompok}
+          suratPernyataanItems={suratPernyataanItems}
+          isLoadingSuratPernyataan={isLoadingSuratPernyataan}
+          isSubmittingSuratPernyataan={isSubmittingSuratPernyataan}
+          onSubmitSuratPernyataan={handleSubmitSuratPernyataan}
+          onDeleteSuratPernyataan={handleDeleteSuratPernyataan}
           isSupabaseConnected={isSupabaseConnected}
           onRefreshData={refreshAllData}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}

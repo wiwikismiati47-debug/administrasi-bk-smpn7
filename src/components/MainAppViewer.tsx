@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
-import { AppLink, AgendaKerja, FormAgendaData, UndanganOrangTua, FormUndanganData, HomeVisit, FormHomeVisitData } from '../types';
+import {
+  AppLink,
+  AgendaKerja,
+  FormAgendaData,
+  UndanganOrangTua,
+  FormUndanganData,
+  HomeVisit,
+  FormHomeVisitData,
+  RekamPermasalahan,
+  FormRekamPermasalahanData,
+  KonselingIndividu,
+  FormKonselingIndividuData,
+  KonselingKelompok,
+  FormKonselingKelompokData,
+  SuratPernyataan,
+  FormSuratPernyataanData
+} from '../types';
 import { FormAgenda } from './FormAgenda';
 import { TabelAgenda } from './TabelAgenda';
 import { StatistikRekap } from './StatistikRekap';
@@ -7,12 +23,15 @@ import { FormUndangan } from './FormUndangan';
 import { TabelUndangan } from './TabelUndangan';
 import { FormHomeVisit } from './FormHomeVisit';
 import { TabelHomeVisit } from './TabelHomeVisit';
+import { FormRekamPermasalahan } from './FormRekamPermasalahan';
+import { TabelRekamPermasalahan } from './TabelRekamPermasalahan';
+import { FormKonselingIndividu } from './FormKonselingIndividu';
+import { TabelKonselingIndividu } from './TabelKonselingIndividu';
+import { FormKonselingKelompok } from './FormKonselingKelompok';
+import { TabelKonselingKelompok } from './TabelKonselingKelompok';
+import { FormSuratPernyataan } from './FormSuratPernyataan';
+import { TabelSuratPernyataan } from './TabelSuratPernyataan';
 import { PrintView } from './PrintView';
-import {
-  downloadBulkSuratUndanganWord,
-  downloadBulkLaporanKonsultasiWord,
-  downloadBulkLaporanHomeVisitWord
-} from '../lib/wordExporter';
 import {
   ExternalLink,
   RefreshCw,
@@ -29,7 +48,10 @@ import {
   FileCheck,
   FileText,
   Printer,
-  Download
+  AlertTriangle,
+  UserCheck,
+  UserPlus,
+  FileCheck2
 } from 'lucide-react';
 
 interface MainAppViewerProps {
@@ -56,6 +78,34 @@ interface MainAppViewerProps {
   onSubmitHomeVisit: (data: Partial<HomeVisit> & FormHomeVisitData) => Promise<void>;
   onDeleteHomeVisit: (id: string) => Promise<void>;
 
+  // Rekam Permasalahan Props
+  rekamPermasalahanItems: RekamPermasalahan[];
+  isLoadingRekamPermasalahan: boolean;
+  isSubmittingRekamPermasalahan: boolean;
+  onSubmitRekamPermasalahan: (data: Partial<RekamPermasalahan> & FormRekamPermasalahanData) => Promise<void>;
+  onDeleteRekamPermasalahan: (id: string) => Promise<void>;
+
+  // Konseling Individu Props
+  konselingIndividuItems: KonselingIndividu[];
+  isLoadingKonselingIndividu: boolean;
+  isSubmittingKonselingIndividu: boolean;
+  onSubmitKonselingIndividu: (data: Partial<KonselingIndividu> & FormKonselingIndividuData) => Promise<void>;
+  onDeleteKonselingIndividu: (id: string) => Promise<void>;
+
+  // Konseling Kelompok Props
+  konselingKelompokItems: KonselingKelompok[];
+  isLoadingKonselingKelompok: boolean;
+  isSubmittingKonselingKelompok: boolean;
+  onSubmitKonselingKelompok: (data: Partial<KonselingKelompok> & FormKonselingKelompokData) => Promise<void>;
+  onDeleteKonselingKelompok: (id: string) => Promise<void>;
+
+  // Surat Pernyataan Siswa Props
+  suratPernyataanItems: SuratPernyataan[];
+  isLoadingSuratPernyataan: boolean;
+  isSubmittingSuratPernyataan: boolean;
+  onSubmitSuratPernyataan: (data: Partial<SuratPernyataan> & FormSuratPernyataanData) => Promise<void>;
+  onDeleteSuratPernyataan: (id: string) => Promise<void>;
+
   // Common Props
   isSupabaseConnected: boolean;
   onRefreshData: () => void;
@@ -64,22 +114,42 @@ interface MainAppViewerProps {
 
 export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   selectedLink,
-  agendaItems,
-  isLoadingAgenda,
-  isSubmittingAgenda,
+  agendaItems = [],
+  isLoadingAgenda = false,
+  isSubmittingAgenda = false,
   onSubmitAgenda,
   onDeleteAgenda,
-  undanganItems,
-  isLoadingUndangan,
-  isSubmittingUndangan,
+  undanganItems = [],
+  isLoadingUndangan = false,
+  isSubmittingUndangan = false,
   onSubmitUndangan,
   onDeleteUndangan,
-  homeVisitItems,
-  isLoadingHomeVisit,
-  isSubmittingHomeVisit,
+  homeVisitItems = [],
+  isLoadingHomeVisit = false,
+  isSubmittingHomeVisit = false,
   onSubmitHomeVisit,
   onDeleteHomeVisit,
-  isSupabaseConnected,
+  rekamPermasalahanItems = [],
+  isLoadingRekamPermasalahan = false,
+  isSubmittingRekamPermasalahan = false,
+  onSubmitRekamPermasalahan,
+  onDeleteRekamPermasalahan,
+  konselingIndividuItems = [],
+  isLoadingKonselingIndividu = false,
+  isSubmittingKonselingIndividu = false,
+  onSubmitKonselingIndividu,
+  onDeleteKonselingIndividu,
+  konselingKelompokItems = [],
+  isLoadingKonselingKelompok = false,
+  isSubmittingKonselingKelompok = false,
+  onSubmitKonselingKelompok,
+  onDeleteKonselingKelompok,
+  suratPernyataanItems = [],
+  isLoadingSuratPernyataan = false,
+  isSubmittingSuratPernyataan = false,
+  onSubmitSuratPernyataan,
+  onDeleteSuratPernyataan,
+  isSupabaseConnected = false,
   onRefreshData,
   onOpenSupabaseConfig,
 }) => {
@@ -87,14 +157,37 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [editingAgenda, setEditingAgenda] = useState<AgendaKerja | null>(null);
   const [editingUndangan, setEditingUndangan] = useState<UndanganOrangTua | null>(null);
   const [editingHomeVisit, setEditingHomeVisit] = useState<HomeVisit | null>(null);
+  const [editingRekamPermasalahan, setEditingRekamPermasalahan] = useState<RekamPermasalahan | null>(null);
+  const [editingKonselingIndividu, setEditingKonselingIndividu] = useState<KonselingIndividu | null>(null);
+  const [editingKonselingKelompok, setEditingKonselingKelompok] = useState<KonselingKelompok | null>(null);
+  const [editingSuratPernyataan, setEditingSuratPernyataan] = useState<SuratPernyataan | null>(null);
   
   // Printing states
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [printDocType, setPrintDocType] = useState<
-    'agenda' | 'undangan_tabel' | 'surat_undangan' | 'laporan_konsultasi' | 'home_visit_tabel' | 'laporan_home_visit' | 'surat_tugas_home_visit' | 'surat_kesediaan_ortu'
+    | 'agenda'
+    | 'undangan_tabel'
+    | 'surat_undangan'
+    | 'laporan_konsultasi'
+    | 'home_visit_tabel'
+    | 'laporan_home_visit'
+    | 'surat_tugas_home_visit'
+    | 'surat_kesediaan_ortu'
+    | 'rekam_permasalahan_tabel'
+    | 'rekam_permasalahan_dokumen'
+    | 'konseling_individu_tabel'
+    | 'konseling_individu_dokumen'
+    | 'konseling_kelompok_tabel'
+    | 'konseling_kelompok_dokumen'
+    | 'surat_pernyataan_tabel'
+    | 'surat_pernyataan_dokumen'
   >('agenda');
   const [selectedForPrint, setSelectedForPrint] = useState<UndanganOrangTua | null>(null);
   const [selectedHomeVisitForPrint, setSelectedHomeVisitForPrint] = useState<HomeVisit | null>(null);
+  const [selectedRekamPermasalahanForPrint, setSelectedRekamPermasalahanForPrint] = useState<RekamPermasalahan | null>(null);
+  const [selectedKonselingIndividuForPrint, setSelectedKonselingIndividuForPrint] = useState<KonselingIndividu | null>(null);
+  const [selectedKonselingKelompokForPrint, setSelectedKonselingKelompokForPrint] = useState<KonselingKelompok | null>(null);
+  const [selectedSuratPernyataanForPrint, setSelectedSuratPernyataanForPrint] = useState<SuratPernyataan | null>(null);
   
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -103,16 +196,51 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const isInternalAgenda = linkUrl === 'internal:agenda_bk';
   const isInternalUndangan = linkUrl === 'internal:undangan_ortu';
   const isInternalHomeVisit = linkUrl === 'internal:home_visit';
-  const isInternal = isInternalAgenda || isInternalUndangan || isInternalHomeVisit;
+  const isInternalRekamPermasalahan = linkUrl === 'internal:rekam_permasalahan';
+  const isInternalKonselingIndividu = linkUrl === 'internal:konseling_individu';
+  const isInternalKonselingKelompok = linkUrl === 'internal:konseling_kelompok';
+  const isInternalSuratPernyataan = linkUrl === 'internal:surat_pernyataan';
+  const isInternal =
+    isInternalAgenda ||
+    isInternalUndangan ||
+    isInternalHomeVisit ||
+    isInternalRekamPermasalahan ||
+    isInternalKonselingIndividu ||
+    isInternalKonselingKelompok ||
+    isInternalSuratPernyataan;
 
   const handleOpenPrint = (
-    docType: 'agenda' | 'undangan_tabel' | 'surat_undangan' | 'laporan_konsultasi' | 'home_visit_tabel' | 'laporan_home_visit' | 'surat_tugas_home_visit' | 'surat_kesediaan_ortu',
+    docType:
+      | 'agenda'
+      | 'undangan_tabel'
+      | 'surat_undangan'
+      | 'laporan_konsultasi'
+      | 'home_visit_tabel'
+      | 'laporan_home_visit'
+      | 'surat_tugas_home_visit'
+      | 'surat_kesediaan_ortu'
+      | 'rekam_permasalahan_tabel'
+      | 'rekam_permasalahan_dokumen'
+      | 'konseling_individu_tabel'
+      | 'konseling_individu_dokumen'
+      | 'konseling_kelompok_tabel'
+      | 'konseling_kelompok_dokumen'
+      | 'surat_pernyataan_tabel'
+      | 'surat_pernyataan_dokumen',
     itemUndangan: UndanganOrangTua | null = null,
-    itemHomeVisit: HomeVisit | null = null
+    itemHomeVisit: HomeVisit | null = null,
+    itemRekamPermasalahan: RekamPermasalahan | null = null,
+    itemKonselingIndividu: KonselingIndividu | null = null,
+    itemKonselingKelompok: KonselingKelompok | null = null,
+    itemSuratPernyataan: SuratPernyataan | null = null
   ) => {
     setPrintDocType(docType);
     setSelectedForPrint(itemUndangan);
     setSelectedHomeVisitForPrint(itemHomeVisit);
+    setSelectedRekamPermasalahanForPrint(itemRekamPermasalahan);
+    setSelectedKonselingIndividuForPrint(itemKonselingIndividu);
+    setSelectedKonselingKelompokForPrint(itemKonselingKelompok);
+    setSelectedSuratPernyataanForPrint(itemSuratPernyataan);
     setIsPrintMode(true);
   };
 
@@ -125,36 +253,59 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
         selectedUndangan={selectedForPrint}
         homeVisitItems={homeVisitItems}
         selectedHomeVisit={selectedHomeVisitForPrint}
+        rekamPermasalahanItems={rekamPermasalahanItems}
+        selectedRekamPermasalahan={selectedRekamPermasalahanForPrint}
+        konselingIndividuItems={konselingIndividuItems}
+        selectedKonselingIndividu={selectedKonselingIndividuForPrint}
+        konselingKelompokItems={konselingKelompokItems}
+        selectedKonselingKelompok={selectedKonselingKelompokForPrint}
+        suratPernyataanItems={suratPernyataanItems}
+        selectedSuratPernyataan={selectedSuratPernyataanForPrint}
         onBack={() => setIsPrintMode(false)}
       />
     );
   }
 
   return (
-    <section className="flex-1 min-w-0 bg-slate-900/40 rounded-3xl border border-slate-800/80 shadow-[0_20px_50px_rgba(0,0,0,0.3)] backdrop-blur-xl flex flex-col overflow-hidden">
+    <section className="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden">
       
       {/* Viewer Header Bar */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 text-white p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 sm:p-5 border-b border-blue-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
         
         {/* Title & Badge */}
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 rounded-2xl font-black shadow-md shadow-amber-500/20 shrink-0">
+          <div className="p-2.5 bg-white text-blue-700 rounded-2xl font-black shadow-md shrink-0">
             {isInternalAgenda ? (
               <BookOpen className="w-6 h-6" />
             ) : isInternalUndangan ? (
               <Users className="w-6 h-6" />
             ) : isInternalHomeVisit ? (
               <Home className="w-6 h-6" />
+            ) : isInternalRekamPermasalahan ? (
+              <AlertTriangle className="w-6 h-6" />
+            ) : isInternalKonselingIndividu ? (
+              <UserCheck className="w-6 h-6" />
+            ) : isInternalKonselingKelompok ? (
+              <UserPlus className="w-6 h-6" />
+            ) : isInternalSuratPernyataan ? (
+              <FileCheck2 className="w-6 h-6" />
             ) : (
               <Globe className="w-6 h-6" />
             )}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow">
-                {selectedLink?.badge || (isInternalHomeVisit ? 'FORM C' : isInternalUndangan ? 'FORM B' : 'FORM A')}
+              <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
+                {selectedLink?.badge || (
+                  isInternalSuratPernyataan ? 'FORM G' :
+                  isInternalKonselingKelompok ? 'FORM F' :
+                  isInternalKonselingIndividu ? 'FORM E' :
+                  isInternalRekamPermasalahan ? 'FORM D' :
+                  isInternalHomeVisit ? 'FORM C' :
+                  isInternalUndangan ? 'FORM B' : 'FORM A'
+                )}
               </span>
-              <span className="text-xs text-purple-300 font-semibold">
+              <span className="text-xs text-blue-100 font-semibold">
                 {selectedLink?.category || 'Administrasi BK'}
               </span>
             </div>
@@ -162,7 +313,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
               {selectedLink
                 ? selectedLink.title
-                : 'A. AGENDA KERJA BK SMPN 7 PASURAN'}
+                : 'A. AGENDA KERJA BK SMPN 7 PASURUAN'}
             </h2>
           </div>
         </div>
@@ -174,23 +325,27 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               
               {/* Core Tabs */}
-              <div className="bg-slate-950/80 p-1 rounded-xl border border-slate-800 flex items-center gap-1">
+              <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20 flex items-center gap-1">
                 <button
                   onClick={() => {
                     setInternalTab('form');
                     if (editingAgenda) setEditingAgenda(null);
                     if (editingUndangan) setEditingUndangan(null);
                     if (editingHomeVisit) setEditingHomeVisit(null);
+                    if (editingRekamPermasalahan) setEditingRekamPermasalahan(null);
+                    if (editingKonselingIndividu) setEditingKonselingIndividu(null);
+                    if (editingKonselingKelompok) setEditingKonselingKelompok(null);
+                    if (editingSuratPernyataan) setEditingSuratPernyataan(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                     internalTab === 'form'
-                      ? 'bg-purple-600 text-white shadow'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white text-blue-700 shadow-sm'
+                      : 'text-white/90 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <PlusCircle className="w-3.5 h-3.5 text-amber-300" />
+                  <PlusCircle className="w-3.5 h-3.5" />
                   <span>
-                    {(editingAgenda || editingUndangan || editingHomeVisit) ? 'Edit Form' : 'Input Form'}
+                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan) ? 'Edit Form' : 'Input Form'}
                   </span>
                 </button>
 
@@ -198,17 +353,25 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                   onClick={() => setInternalTab('table')}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                     internalTab === 'table'
-                      ? 'bg-purple-600 text-white shadow'
-                      : 'text-slate-400 hover:text-white'
+                      ? 'bg-white text-blue-700 shadow-sm'
+                      : 'text-white/90 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <ListFilter className="w-3.5 h-3.5 text-amber-300" />
+                  <ListFilter className="w-3.5 h-3.5" />
                   <span>
-                    {isInternalHomeVisit
-                      ? `Daftar Home Visit (${homeVisitItems.length})`
+                    {isInternalSuratPernyataan
+                      ? `Daftar Surat Pernyataan (${(suratPernyataanItems || []).length})`
+                      : isInternalKonselingKelompok
+                      ? `Daftar Konseling Kelompok (${(konselingKelompokItems || []).length})`
+                      : isInternalKonselingIndividu
+                      ? `Daftar Konseling Individu (${(konselingIndividuItems || []).length})`
+                      : isInternalRekamPermasalahan
+                      ? `Daftar Rekam (${(rekamPermasalahanItems || []).length})`
+                      : isInternalHomeVisit
+                      ? `Daftar Home Visit (${(homeVisitItems || []).length})`
                       : isInternalUndangan
-                      ? `Daftar Undangan (${undanganItems.length})`
-                      : `Daftar Agenda (${agendaItems.length})`}
+                      ? `Daftar Undangan (${(undanganItems || []).length})`
+                      : `Daftar Agenda (${(agendaItems || []).length})`}
                   </span>
                 </button>
 
@@ -217,40 +380,40 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onClick={() => setInternalTab('stats')}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                       internalTab === 'stats'
-                        ? 'bg-purple-600 text-white shadow'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-white text-blue-700 shadow-sm'
+                        : 'text-white/90 hover:text-white hover:bg-white/10'
                     }`}
                   >
-                    <BarChart2 className="w-3.5 h-3.5 text-amber-300" />
+                    <BarChart2 className="w-3.5 h-3.5" />
                     <span>Rekap</span>
                   </button>
                 )}
               </div>
 
-              {/* Form B Quick Document Shortcut Actions (Highlighted in Red Boxes) */}
+              {/* Form B Quick Document Shortcut Actions */}
               {isInternalUndangan && (
-                <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800/80">
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
                   <button
                     onClick={() => handleOpenPrint('surat_undangan')}
-                    className="px-2.5 py-1.5 bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-blue-700/60"
+                    className="px-2.5 py-1.5 bg-white text-blue-900 hover:bg-blue-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                     title="Cetak / Preview Surat Undangan Orang Tua"
                   >
-                    <Mail className="w-3.5 h-3.5 text-blue-300" />
+                    <Mail className="w-3.5 h-3.5 text-blue-600" />
                     <span>Surat Undangan</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('laporan_konsultasi')}
-                    className="px-2.5 py-1.5 bg-emerald-900/60 hover:bg-emerald-800/80 text-emerald-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-emerald-700/60"
+                    className="px-2.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                     title="Cetak / Preview Laporan Konsultasi Orang Tua"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-300" />
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Laporan Konsultasi</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('undangan_tabel')}
-                    className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 border border-slate-700"
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
                     title="Cetak Rekap Tabel Undangan"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -261,38 +424,130 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form C Home Visit Quick Document Shortcut Actions */}
               {isInternalHomeVisit && (
-                <div className="flex items-center gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800/80">
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
                   <button
                     onClick={() => handleOpenPrint('surat_tugas_home_visit')}
-                    className="px-2.5 py-1.5 bg-amber-900/60 hover:bg-amber-800/80 text-amber-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-amber-700/60"
+                    className="px-2.5 py-1.5 bg-white text-amber-900 hover:bg-amber-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                     title="Cetak / Preview Surat Tugas Kunjungan Rumah"
                   >
-                    <FileText className="w-3.5 h-3.5 text-amber-300" />
+                    <FileText className="w-3.5 h-3.5 text-amber-600" />
                     <span>Surat Tugas</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('surat_kesediaan_ortu')}
-                    className="px-2.5 py-1.5 bg-emerald-900/60 hover:bg-emerald-800/80 text-emerald-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-emerald-700/60"
+                    className="px-2.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                     title="Cetak / Preview Surat Kesediaan Menerima Kunjungan Orang Tua"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-300" />
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Surat Kesediaan Ortu</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('laporan_home_visit')}
-                    className="px-2.5 py-1.5 bg-blue-900/60 hover:bg-blue-800/80 text-blue-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 border border-blue-700/60"
+                    className="px-2.5 py-1.5 bg-white text-blue-900 hover:bg-blue-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
                     title="Cetak / Preview Laporan Home Visit"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-blue-300" />
+                    <FileCheck className="w-3.5 h-3.5 text-blue-600" />
                     <span>Laporan Home Visit</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('home_visit_tabel')}
-                    className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 border border-slate-700"
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
                     title="Cetak Rekap Tabel Home Visit"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form D Rekam Permasalahan Quick Document Shortcut Actions */}
+              {isInternalRekamPermasalahan && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('rekam_permasalahan_dokumen')}
+                    className="px-2.5 py-1.5 bg-white text-purple-900 hover:bg-purple-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Rekam Permasalahan Siswa"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Laporan Rekam</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('rekam_permasalahan_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Rekam Permasalahan"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form E Konseling Individu Quick Document Shortcut Actions */}
+              {isInternalKonselingIndividu && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('konseling_individu_dokumen')}
+                    className="px-2.5 py-1.5 bg-white text-teal-900 hover:bg-teal-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Dokumen Rencana Konseling Individu"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-teal-600" />
+                    <span>Cetak Rencana</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('konseling_individu_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Konseling Individu"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form F Konseling Kelompok Quick Document Shortcut Actions */}
+              {isInternalKonselingKelompok && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('konseling_kelompok_dokumen')}
+                    className="px-2.5 py-1.5 bg-white text-indigo-900 hover:bg-indigo-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Dokumen Rencana Konseling Kelompok"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Cetak Rencana</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('konseling_kelompok_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Konseling Kelompok"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form G Surat Pernyataan Quick Document Shortcut Actions */}
+              {isInternalSuratPernyataan && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('surat_pernyataan_dokumen')}
+                    className="px-2.5 py-1.5 bg-white text-violet-900 hover:bg-violet-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Dokumen Surat Pernyataan"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-violet-600" />
+                    <span>Cetak Surat</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('surat_pernyataan_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Surat Pernyataan"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
                     <span>Cetak Tabel</span>
@@ -306,7 +561,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIframeKey((prev) => prev + 1)}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5"
                 title="Muat Ulang Halaman Web"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -318,10 +573,10 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                   href={selectedLink.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="px-4 py-1.5 bg-white text-blue-900 hover:bg-blue-50 text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <span>Buka Tab Baru</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-amber-300" />
+                  <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
                 </a>
               )}
             </div>
@@ -331,17 +586,17 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
       </div>
 
       {/* Main View Area */}
-      <div className="flex-1 p-4 sm:p-6 overflow-y-auto min-h-[550px]">
+      <div className="flex-1 p-4 sm:p-6 overflow-y-auto min-h-[550px] bg-slate-50/50">
         {isInternal ? (
           <div className="space-y-6">
             
             {/* Supabase Status Pill Banner */}
-            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-300">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700 shadow-sm">
               <div className="flex items-center gap-2.5">
-                <Database className={`w-4 h-4 ${isSupabaseConnected ? 'text-emerald-400' : 'text-amber-400'}`} />
+                <Database className={`w-4 h-4 ${isSupabaseConnected ? 'text-emerald-600' : 'text-amber-600'}`} />
                 <span>
                   Status Database Cloud:{' '}
-                  <strong className={isSupabaseConnected ? 'text-emerald-400' : 'text-amber-300'}>
+                  <strong className={isSupabaseConnected ? 'text-emerald-700' : 'text-amber-700'}>
                     {isSupabaseConnected ? 'Terhubung Supabase (Realtime)' : 'Penyimpanan Lokal Browser'}
                   </strong>
                 </span>
@@ -351,15 +606,15 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 <button
                   onClick={onRefreshData}
                   disabled={isLoadingAgenda || isLoadingUndangan}
-                  className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
                 >
-                  <RefreshCw className={`w-3 h-3 ${(isLoadingAgenda || isLoadingUndangan) ? 'animate-spin text-purple-400' : ''}`} />
+                  <RefreshCw className={`w-3 h-3 ${(isLoadingAgenda || isLoadingUndangan) ? 'animate-spin text-blue-600' : ''}`} />
                   <span>Refresh</span>
                 </button>
 
                 <button
                   onClick={onOpenSupabaseConfig}
-                  className="px-3 py-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-lg text-xs transition-colors"
+                  className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs transition-colors shadow-sm"
                 >
                   {isSupabaseConnected ? 'Pengaturan' : 'Hubungkan Supabase'}
                 </button>
@@ -473,6 +728,149 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onPrintSuratKesediaanOrtu={(item) => handleOpenPrint('surat_kesediaan_ortu', null, item)}
                     isSupabase={isSupabaseConnected}
                     isLoading={isLoadingHomeVisit}
+                  />
+                )}
+              </>
+            )}
+
+            {/* D. REKAM PERMASALAHAN SISWA CONTROLLER */}
+            {isInternalRekamPermasalahan && (
+              <>
+                {internalTab === 'form' && (
+                  <FormRekamPermasalahan
+                    initialData={editingRekamPermasalahan}
+                    onSubmit={async (data) => {
+                      await onSubmitRekamPermasalahan(data);
+                      setEditingRekamPermasalahan(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingRekamPermasalahan(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingRekamPermasalahan}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelRekamPermasalahan
+                    items={rekamPermasalahanItems}
+                    onEdit={(item) => {
+                      setEditingRekamPermasalahan(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteRekamPermasalahan}
+                    onPrint={() => handleOpenPrint('rekam_permasalahan_tabel')}
+                    onPrintRekamPermasalahan={(item) => handleOpenPrint('rekam_permasalahan_dokumen', null, null, item)}
+                    isSupabase={isSupabaseConnected}
+                    isLoading={isLoadingRekamPermasalahan}
+                  />
+                )}
+              </>
+            )}
+
+            {/* E. RENCANA KONSELING INDIVIDU CONTROLLER */}
+            {isInternalKonselingIndividu && (
+              <>
+                {internalTab === 'form' && (
+                  <FormKonselingIndividu
+                    initialData={editingKonselingIndividu}
+                    onSubmit={async (data) => {
+                      await onSubmitKonselingIndividu(data);
+                      setEditingKonselingIndividu(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingKonselingIndividu(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingKonselingIndividu}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelKonselingIndividu
+                    items={konselingIndividuItems}
+                    onEdit={(item) => {
+                      setEditingKonselingIndividu(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteKonselingIndividu}
+                    onPrint={() => handleOpenPrint('konseling_individu_tabel')}
+                    onPrintKonselingIndividu={(item) => handleOpenPrint('konseling_individu_dokumen', null, null, null, item)}
+                    isSupabase={isSupabaseConnected}
+                    isLoading={isLoadingKonselingIndividu}
+                  />
+                )}
+              </>
+            )}
+
+            {/* F. RENCANA KONSELING KELOMPOK CONTROLLER */}
+            {isInternalKonselingKelompok && (
+              <>
+                {internalTab === 'form' && (
+                  <FormKonselingKelompok
+                    initialData={editingKonselingKelompok}
+                    onSubmit={async (data) => {
+                      await onSubmitKonselingKelompok(data);
+                      setEditingKonselingKelompok(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingKonselingKelompok(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingKonselingKelompok}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelKonselingKelompok
+                    items={konselingKelompokItems}
+                    onEdit={(item) => {
+                      setEditingKonselingKelompok(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteKonselingKelompok}
+                    onPrint={() => handleOpenPrint('konseling_kelompok_tabel')}
+                    onPrintKonselingKelompok={(item) => handleOpenPrint('konseling_kelompok_dokumen', null, null, null, null, item)}
+                    isSupabase={isSupabaseConnected}
+                    isLoading={isLoadingKonselingKelompok}
+                  />
+                )}
+              </>
+            )}
+
+            {/* G. SURAT PERNYATAAN SISWA CONTROLLER */}
+            {isInternalSuratPernyataan && (
+              <>
+                {internalTab === 'form' && (
+                  <FormSuratPernyataan
+                    initialData={editingSuratPernyataan}
+                    onSubmit={async (data) => {
+                      await onSubmitSuratPernyataan(data);
+                      setEditingSuratPernyataan(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingSuratPernyataan(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingSuratPernyataan}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelSuratPernyataan
+                    items={suratPernyataanItems}
+                    onEdit={(item) => {
+                      setEditingSuratPernyataan(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteSuratPernyataan}
+                    onPrintTableRekap={() => handleOpenPrint('surat_pernyataan_tabel')}
+                    onPrintItem={(item) => handleOpenPrint('surat_pernyataan_dokumen', null, null, null, null, null, item)}
+                    isFromSupabase={isSupabaseConnected}
                   />
                 )}
               </>

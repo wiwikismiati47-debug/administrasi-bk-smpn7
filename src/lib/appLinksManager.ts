@@ -37,6 +37,50 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     colorGradient: 'from-amber-600 via-orange-600 to-amber-800',
   },
   {
+    id: 'link-internal-rekam-permasalahan',
+    title: 'D. Rekam Permasalahan Siswa',
+    url: 'internal:rekam_permasalahan',
+    iconName: 'FileSpreadsheet',
+    category: 'Administrasi Utama',
+    description: 'Form & Tabel Rekam Permasalahan Siswa BK SMPN 7 Pasuruan (Terhubung Supabase)',
+    isInternal: true,
+    badge: 'FORM D',
+    colorGradient: 'from-emerald-600 via-teal-600 to-emerald-800',
+  },
+  {
+    id: 'link-internal-konseling-individu',
+    title: 'E. Rencana Konseling Individu',
+    url: 'internal:konseling_individu',
+    iconName: 'UserCheck',
+    category: 'Administrasi Utama',
+    description: 'Form & Tabel Rencana Konseling Individu BK SMPN 7 Pasuruan (Terhubung Supabase)',
+    isInternal: true,
+    badge: 'FORM E',
+    colorGradient: 'from-indigo-600 via-violet-600 to-indigo-800',
+  },
+  {
+    id: 'link-internal-konseling-kelompok',
+    title: 'F. Rencana Konseling Kelompok',
+    url: 'internal:konseling_kelompok',
+    iconName: 'UserPlus',
+    category: 'Administrasi Utama',
+    description: 'Form & Tabel Rencana Konseling Kelompok BK SMPN 7 Pasuruan (Terhubung Supabase)',
+    isInternal: true,
+    badge: 'FORM F',
+    colorGradient: 'from-pink-600 via-rose-600 to-red-800',
+  },
+  {
+    id: 'link-internal-surat-pernyataan',
+    title: 'G. Surat Pernyataan Siswa',
+    url: 'internal:surat_pernyataan',
+    iconName: 'FileCheck2',
+    category: 'Administrasi Utama',
+    description: 'Form & Tabel Surat Pernyataan Siswa & Orang Tua (SP 1, SP 2, SP 3, Ortu 1, Ortu 2, Pengunduran Diri)',
+    isInternal: true,
+    badge: 'FORM G',
+    colorGradient: 'from-amber-600 via-orange-600 to-red-800',
+  },
+  {
     id: 'link-supabase-console',
     title: 'Console Supabase Database',
     url: 'https://supabase.com/dashboard',
@@ -91,24 +135,38 @@ export function getSavedAppLinks(): AppLink[] {
   try {
     const parsed = JSON.parse(dataStr);
     if (Array.isArray(parsed) && parsed.length > 0) {
-      const existingIds = new Set(parsed.map((item: AppLink) => item.id));
+      const existingMap = new Map<string, AppLink>(parsed.map((item: AppLink) => [item.id, item]));
       let updated = false;
 
-      const result = [...parsed];
-
-      // Ensure all INITIAL_DEFAULT_LINKS exist (especially internal links like B. Undangan Orang Tua)
-      INITIAL_DEFAULT_LINKS.forEach((defaultLink, defaultIdx) => {
-        if (!existingIds.has(defaultLink.id)) {
-          if (defaultIdx < result.length) {
-            result.splice(defaultIdx, 0, defaultLink);
-          } else {
-            result.push(defaultLink);
-          }
+      // Ensure all INITIAL_DEFAULT_LINKS are present and up to date
+      const mergedDefaults = INITIAL_DEFAULT_LINKS.map((defaultLink) => {
+        const existing = existingMap.get(defaultLink.id);
+        if (!existing) {
           updated = true;
+          return defaultLink;
         }
+        if (defaultLink.isInternal) {
+          if (
+            existing.title !== defaultLink.title ||
+            existing.url !== defaultLink.url ||
+            existing.badge !== defaultLink.badge ||
+            existing.iconName !== defaultLink.iconName ||
+            existing.category !== defaultLink.category
+          ) {
+            updated = true;
+            return { ...existing, ...defaultLink };
+          }
+        }
+        return existing;
       });
 
-      if (updated) {
+      // Retain custom user-added non-default links
+      const defaultIds = new Set(INITIAL_DEFAULT_LINKS.map((d) => d.id));
+      const customLinks = parsed.filter((item: AppLink) => !defaultIds.has(item.id));
+
+      const result = [...mergedDefaults, ...customLinks];
+
+      if (updated || result.length !== parsed.length) {
         saveAppLinksToStorage(result);
       }
       return result;

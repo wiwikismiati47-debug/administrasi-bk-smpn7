@@ -128,17 +128,17 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
     <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
       
       {/* Header Bar */}
-      <div className="bg-slate-900 text-white p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800">
+      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-amber-400 font-extrabold text-sm tracking-wider uppercase">
+            <span className="bg-amber-400 text-slate-950 font-black text-xs px-2.5 py-0.5 rounded uppercase shadow-sm">
               DAFTAR ADMINISTRASI
             </span>
-            <span className="bg-blue-600/60 text-blue-200 text-xs px-2.5 py-0.5 rounded-full font-medium">
+            <span className="bg-white/20 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">
               {filteredItems.length} Data Agenda
             </span>
           </div>
-          <h3 className="text-lg font-bold text-white mt-0.5">
+          <h3 className="text-lg font-bold text-white mt-1">
             A. AGENDA KERJA BK SMPN 7 PASURAN
           </h3>
         </div>

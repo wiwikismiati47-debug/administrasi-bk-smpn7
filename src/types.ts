@@ -100,6 +100,119 @@ export interface HomeVisit {
 
 export type FormHomeVisitData = Omit<HomeVisit, 'id' | 'created_at' | 'updated_at'>;
 
+export interface RekamPermasalahan {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  hari: string; // e.g. "Senin", "Selasa"
+  tanggal: string; // YYYY-MM-DD
+  bulan: string; // e.g. "Agustus"
+  tahun: string; // e.g. "2026"
+  waktu: string; // e.g. "08:00 WIB"
+  kelas: string; // e.g. "VIII A"
+  nama_siswa: string;
+  nama_orang_tua: string;
+  pekerjaan_orang_tua: string;
+  alamat: string;
+  ringkasan_uraian_permasalahan: string; // RINGKASAN URAIAN PERMASALAHAN SISWA
+  upaya_konselor_walikelas: string; // UPAYA YANG SUDAH DILAKUKAN OLEH KONSELOR, WALI KELAS
+  hasil_dan_kesimpulan: string; // HASIL DAN KESIMPULAN
+  link_foto_kegiatan: string; // LINK FOTO KEGIATAN
+  keterangan: string; // KETERANGAN
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+  tanggal_surat?: string;
+  tempat_surat?: string;
+}
+
+export type FormRekamPermasalahanData = Omit<RekamPermasalahan, 'id' | 'created_at' | 'updated_at'>;
+
+export interface KonselingIndividu {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  hari: string; // e.g. "Senin", "Selasa"
+  tanggal: string; // YYYY-MM-DD
+  bulan: string; // e.g. "Agustus"
+  tahun: string; // e.g. "2026"
+  waktu: string; // e.g. "08:00 WIB"
+  kelas: string; // e.g. "VIII A"
+  nama_siswa: string;
+  topik_permasalahan: string; // Topik Permasalahan
+  media_yang_diperlukan: string; // Media yang diperlukan
+  ringkasan_uraian_permasalahan: string; // RINGKASAN URAIAN PERMASALAHAN SISWA
+  pendekatan_dan_teknik_konseling: string; // Pendekatan dan teknik konseling
+  hasil_yang_dicapai: string; // Hasil yang dicapai
+  link_foto_kegiatan: string; // LINK FOTO KEGIATAN
+  keterangan: string; // KETERANGAN
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+}
+
+export type FormKonselingIndividuData = Omit<KonselingIndividu, 'id' | 'created_at' | 'updated_at'>;
+
+export interface KonselingKelompok {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  hari: string; // e.g. "Senin", "Selasa"
+  tanggal: string; // YYYY-MM-DD
+  bulan: string; // e.g. "Agustus"
+  tahun: string; // e.g. "2026"
+  waktu: string; // e.g. "08:00 WIB"
+  kelas: string; // e.g. "VIII A"
+  nama_siswa: string; // Daftar / Nama-nama Siswa Anggota Kelompok
+  topik_permasalahan: string; // Topik Permasalahan
+  media_yang_diperlukan: string; // Media yang diperlukan
+  ringkasan_uraian_permasalahan: string; // RINGKASAN URAIAN PERMASALAHAN SISWA
+  pendekatan_dan_teknik_konseling: string; // Pendekatan dan teknik konseling
+  hasil_yang_dicapai: string; // Hasil yang dicapai
+  link_foto_kegiatan: string; // LINK FOTO KEGIATAN
+  keterangan: string; // KETERANGAN
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+}
+
+export type FormKonselingKelompokData = Omit<KonselingKelompok, 'id' | 'created_at' | 'updated_at'>;
+
+export type JenisSuratPernyataan =
+  | 'SP_1'
+  | 'SP_2'
+  | 'SP_3'
+  | 'SP_ORTU_1'
+  | 'SP_ORTU_2'
+  | 'SP_PENGUNDURAN_DIRI';
+
+export interface SuratPernyataan {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  jenis_sp: JenisSuratPernyataan;
+  nama_siswa: string;
+  kelas: string;
+  nama_orang_tua: string;
+  pekerjaan_orang_tua: string;
+  alamat_orang_tua: string;
+  hubungan_keluarga: string;
+  peraturan_diketahui: string;
+  alasan_pengunduran: string;
+  tanggal_surat: string;
+  tempat_surat: string;
+  keterangan: string;
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+}
+
+export type FormSuratPernyataanData = Omit<SuratPernyataan, 'id' | 'created_at' | 'updated_at'>;
+
 export interface SupabaseConfig {
   url: string;
   anonKey: string;

@@ -1,14 +1,22 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, SupabaseConfig } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig } from '../types';
 
 const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
 const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
 const STORAGE_KEY_UNDANGAN = 'bk_smpn7_undangan_data_local';
 const STORAGE_KEY_HOME_VISIT = 'bk_smpn7_home_visit_data_local';
+const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_data_local';
+const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
+const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
+const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
 export const DEFAULT_HOME_VISIT_TABLE_NAME = 'home_visit_bk';
+export const DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME = 'rekam_permasalahan_siswa';
+export const DEFAULT_KONSELING_INDIVIDU_TABLE_NAME = 'rencana_konseling_individu';
+export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok';
+export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
 
 // Get active config from localStorage or import.meta.env
 export function getSavedSupabaseConfig(): SupabaseConfig {
@@ -573,11 +581,693 @@ export async function deleteHomeVisitItem(id: string): Promise<{ success: boolea
   return { success: true, isSupabase: false };
 }
 
+// Local Storage Helpers - Rekam Permasalahan Siswa
+export function getLocalRekamPermasalahanList(): RekamPermasalahan[] {
+  const str = localStorage.getItem(STORAGE_KEY_REKAM_PERMASALAHAN);
+  if (!str) {
+    const demoData: RekamPermasalahan[] = [
+      {
+        id: 'demo-rp1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        hari: 'Kamis',
+        tanggal: '2026-08-06',
+        bulan: 'Agustus',
+        tahun: '2026',
+        waktu: '08:00 WIB',
+        kelas: 'VIII B',
+        nama_siswa: 'Dion Saputra',
+        nama_orang_tua: 'Bapak Mulyono',
+        pekerjaan_orang_tua: 'Karyawan Swasta',
+        alamat: 'Jl. Panglima Sudirman No. 88, Pasuruan',
+        ringkasan_uraian_permasalahan: 'Siswa mengalami penurunan motivasi belajar dan beberapa kali tidak mengumpulkan tugas mata pelajaran Matematika & IPA.',
+        upaya_konselor_walikelas: 'Konseling individual oleh Guru BK, diskusi intensif dengan Wali Kelas VIII B, serta pemanggilan orang tua untuk koordinasi jam belajar rumah.',
+        hasil_dan_kesimpulan: 'Siswa berkomitmen membuat jadwal belajar mandiri di rumah dan wali kelas serta orang tua melakukan pemantauan berkala. Hasil evaluasi awal menunjukkan respons positif.',
+        link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
+        keterangan: 'Proses pendampingan berjalan lancar, dijadwalkan evaluasi lanjutan bulan depan.',
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_REKAM_PERMASALAHAN, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalRekamPermasalahanList(data: RekamPermasalahan[]) {
+  localStorage.setItem(STORAGE_KEY_REKAM_PERMASALAHAN, JSON.stringify(data));
+}
+
+// Local Storage Helpers - Konseling Individu
+export function getLocalKonselingIndividuList(): KonselingIndividu[] {
+  const str = localStorage.getItem(STORAGE_KEY_KONSELING_INDIVIDU);
+  if (!str) {
+    const demoData: KonselingIndividu[] = [
+      {
+        id: 'demo-ki1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        hari: 'Kamis',
+        tanggal: '2026-08-06',
+        bulan: 'Agustus',
+        tahun: '2026',
+        waktu: '08:30 WIB',
+        kelas: 'VIII A',
+        nama_siswa: 'Ahmad Rizky Pratama',
+        topik_permasalahan: 'Kesulitan Pengelolaan Waktu Belajar dan Kecanduan Game Online',
+        media_yang_diperlukan: 'Format Jadwal Harian, Lembar Kontrak Perilaku (Behavioral Contract)',
+        ringkasan_uraian_permasalahan: 'Siswa sering tidur larut malam karena bermain game online sehingga sering mengantuk di kelas dan prestasi belajar menurun.',
+        pendekatan_dan_teknik_konseling: 'Pendekatan Behavioral dengan Teknik Kontrak Perilaku (Behavioral Contracting) & Manajemen Diri (Self Management)',
+        hasil_yang_dicapai: 'Siswa menyepakati jadwal batasan bermain game maksimal 1 jam per hari dan menyusun target belajar harian.',
+        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+        keterangan: 'Siswa kooperatif, akan dilakukan pemantauan berkala minggu depan.'
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_KONSELING_INDIVIDU, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalKonselingIndividuList(data: KonselingIndividu[]) {
+  localStorage.setItem(STORAGE_KEY_KONSELING_INDIVIDU, JSON.stringify(data));
+}
+
+// Local Storage Helpers - Konseling Kelompok
+export function getLocalKonselingKelompokList(): KonselingKelompok[] {
+  const str = localStorage.getItem(STORAGE_KEY_KONSELING_KELOMPOK);
+  if (!str) {
+    const demoData: KonselingKelompok[] = [
+      {
+        id: 'demo-kk1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        hari: 'Jumat',
+        tanggal: '2026-08-07',
+        bulan: 'Agustus',
+        tahun: '2026',
+        waktu: '09:00 WIB',
+        kelas: 'VII C',
+        nama_siswa: '1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana',
+        topik_permasalahan: 'Peningkatan Sikap Asertif dan Kedisiplinan Kehadiran Sekolah',
+        media_yang_diperlukan: 'Kartu Peran (Role Play Cards), Modul Sikap Asertif, Flipchart',
+        ringkasan_uraian_permasalahan: 'Anggota kelompok memiliki kecenderungan kurang disiplin masuk kelas tepat waktu dan mudah terpengaruh ajakan membolos.',
+        pendekatan_dan_teknik_konseling: 'Pendekatan Kelompok dengan Teknik Simulation Game / Role Playing & Diskusi Kelompok Interaktif',
+        hasil_yang_dicapai: 'Anggota kelompok menyadari dampak perilaku kurang disiplin, saling mendukung untuk mengingatkan kehadiran, dan melatih komunikasi asertif.',
+        link_foto_kegiatan: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
+        keterangan: 'Dinamika kelompok berjalan aktif, direncanakan sesi tindak lanjut 2 minggu ke depan.'
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_KONSELING_KELOMPOK, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalKonselingKelompokList(data: KonselingKelompok[]) {
+  localStorage.setItem(STORAGE_KEY_KONSELING_KELOMPOK, JSON.stringify(data));
+}
+
+// Unified API Functions - Rekam Permasalahan Siswa
+export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasalahan[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && data) {
+        saveLocalRekamPermasalahanList(data as RekamPermasalahan[]);
+        return { data: data as RekamPermasalahan[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch rekam permasalahan error:', error.message);
+        return {
+          data: getLocalRekamPermasalahanList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalRekamPermasalahanList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalRekamPermasalahanList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateRekamPermasalahan(
+  item: Partial<RekamPermasalahan> & Omit<RekamPermasalahan, 'id'>
+): Promise<{ success: boolean; data?: RekamPermasalahan; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `rp-${Date.now()}`);
+
+  const payload: RekamPermasalahan = {
+    ...item,
+    id: idToUse,
+    created_at: item.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const currentLocal = getLocalRekamPermasalahanList();
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as RekamPermasalahan;
+        } else {
+          currentLocal.unshift(data as RekamPermasalahan);
+        }
+        saveLocalRekamPermasalahanList(currentLocal);
+
+        return { success: true, data: data as RekamPermasalahan, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save rekam permasalahan error:', error.message);
+        saveToLocalRekamPermasalahanFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalRekamPermasalahanFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalRekamPermasalahanFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalRekamPermasalahanFallback(item: RekamPermasalahan) {
+  const current = getLocalRekamPermasalahanList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.unshift(item);
+  }
+  saveLocalRekamPermasalahanList(current);
+}
+
+export async function deleteRekamPermasalahanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalRekamPermasalahanList().filter((i) => i.id !== id);
+        saveLocalRekamPermasalahanList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalRekamPermasalahanList().filter((i) => i.id !== id);
+  saveLocalRekamPermasalahanList(current);
+  return { success: true, isSupabase: false };
+}
+
+// Unified API Functions - Konseling Individu
+export async function fetchAllKonselingIndividu(): Promise<{ data: KonselingIndividu[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && data) {
+        saveLocalKonselingIndividuList(data as KonselingIndividu[]);
+        return { data: data as KonselingIndividu[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch konseling individu error:', error.message);
+        return {
+          data: getLocalKonselingIndividuList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalKonselingIndividuList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalKonselingIndividuList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateKonselingIndividu(
+  item: Partial<KonselingIndividu> & Omit<KonselingIndividu, 'id'>
+): Promise<{ success: boolean; data?: KonselingIndividu; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `ki-${Date.now()}`);
+
+  const payload: KonselingIndividu = {
+    ...item,
+    id: idToUse,
+    created_at: item.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const currentLocal = getLocalKonselingIndividuList();
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as KonselingIndividu;
+        } else {
+          currentLocal.unshift(data as KonselingIndividu);
+        }
+        saveLocalKonselingIndividuList(currentLocal);
+
+        return { success: true, data: data as KonselingIndividu, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save konseling individu error:', error.message);
+        saveToLocalKonselingIndividuFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalKonselingIndividuFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalKonselingIndividuFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalKonselingIndividuFallback(item: KonselingIndividu) {
+  const current = getLocalKonselingIndividuList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.unshift(item);
+  }
+  saveLocalKonselingIndividuList(current);
+}
+
+export async function deleteKonselingIndividuItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalKonselingIndividuList().filter((i) => i.id !== id);
+        saveLocalKonselingIndividuList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalKonselingIndividuList().filter((i) => i.id !== id);
+  saveLocalKonselingIndividuList(current);
+  return { success: true, isSupabase: false };
+}
+
+// Unified API Functions - Konseling Kelompok
+export async function fetchAllKonselingKelompok(): Promise<{ data: KonselingKelompok[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && data) {
+        saveLocalKonselingKelompokList(data as KonselingKelompok[]);
+        return { data: data as KonselingKelompok[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch konseling kelompok error:', error.message);
+        return {
+          data: getLocalKonselingKelompokList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalKonselingKelompokList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalKonselingKelompokList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateKonselingKelompok(
+  item: Partial<KonselingKelompok> & Omit<KonselingKelompok, 'id'>
+): Promise<{ success: boolean; data?: KonselingKelompok; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
+
+  const payload: KonselingKelompok = {
+    ...item,
+    id: idToUse,
+    created_at: item.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const currentLocal = getLocalKonselingKelompokList();
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as KonselingKelompok;
+        } else {
+          currentLocal.unshift(data as KonselingKelompok);
+        }
+        saveLocalKonselingKelompokList(currentLocal);
+
+        return { success: true, data: data as KonselingKelompok, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save konseling kelompok error:', error.message);
+        saveToLocalKonselingKelompokFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalKonselingKelompokFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalKonselingKelompokFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalKonselingKelompokFallback(item: KonselingKelompok) {
+  const current = getLocalKonselingKelompokList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.unshift(item);
+  }
+  saveLocalKonselingKelompokList(current);
+}
+
+export async function deleteKonselingKelompokItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalKonselingKelompokList().filter((i) => i.id !== id);
+        saveLocalKonselingKelompokList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalKonselingKelompokList().filter((i) => i.id !== id);
+  saveLocalKonselingKelompokList(current);
+  return { success: true, isSupabase: false };
+}
+
+// Local Storage Helpers - Surat Pernyataan Siswa
+export function getLocalSuratPernyataanList(): SuratPernyataan[] {
+  const str = localStorage.getItem(STORAGE_KEY_SURAT_PERNYATAAN);
+  if (!str) {
+    const demoData: SuratPernyataan[] = [
+      {
+        id: 'demo-sp1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        jenis_sp: 'SP_1',
+        nama_siswa: 'Ahmad Rizky Pratama',
+        kelas: 'VIII A',
+        nama_orang_tua: 'Bapak Santoso',
+        pekerjaan_orang_tua: 'Wiraswasta',
+        alamat_orang_tua: 'Jl. Pahlawan No. 45, Pasuruan',
+        hubungan_keluarga: 'Orang Tua / Wali',
+        peraturan_diketahui:
+          '1. Hadir di sekolah Tepat Waktu\n2. Tidak Absen lagi mulai terhitung Surat Perjanjian ini dibuat\n3. Mengerjakan semua Tugas tertulis /praktek dari Bapak /Ibu Guru Mata Pelajaran yang belum Tuntas',
+        alasan_pengunduran: '',
+        tanggal_surat: '2026-08-06',
+        tempat_surat: 'Pasuruan',
+        keterangan: 'Penerbitan Surat Peringatan 1 (SP 1) Pembinaan Kedisiplinan Siswa.',
+      },
+      {
+        id: 'demo-sp-ortu1',
+        created_at: new Date(Date.now() - 86400000).toISOString(),
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        jenis_sp: 'SP_ORTU_1',
+        nama_siswa: 'Budi Santoso',
+        kelas: 'VIII B',
+        nama_orang_tua: 'Bapak Suparno',
+        pekerjaan_orang_tua: 'PNS',
+        alamat_orang_tua: 'Jl. Veteran No. 12, Pasuruan',
+        hubungan_keluarga: 'Orang Tua Kandung',
+        peraturan_diketahui:
+          'Apabila dikemudian hari nanti di kelas VIII sikap anak saya masih tetap /tidak berubah sehingga mempengaruhi nilai akademis dan non akademis menjadi rendah, sehingga anak saya tidak naik kelas atau mengulang di kelas VIII, maka saya sebagai orang tua tidak akan menuntut kepada pihak sekolah.',
+        alasan_pengunduran: '',
+        tanggal_surat: '2026-08-06',
+        tempat_surat: 'Pasuruan',
+        keterangan: 'Surat Pernyataan Orang Tua / Wali Siswa terkait komitmen disiplin.',
+      },
+    ];
+    localStorage.setItem(STORAGE_KEY_SURAT_PERNYATAAN, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalSuratPernyataanList(data: SuratPernyataan[]) {
+  localStorage.setItem(STORAGE_KEY_SURAT_PERNYATAAN, JSON.stringify(data));
+}
+
+// Unified API Functions - Surat Pernyataan Siswa
+export async function fetchAllSuratPernyataan(): Promise<{ data: SuratPernyataan[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
+        .select('*')
+        .order('tanggal_surat', { ascending: false });
+
+      if (!error && data) {
+        saveLocalSuratPernyataanList(data as SuratPernyataan[]);
+        return { data: data as SuratPernyataan[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch surat pernyataan error:', error.message);
+        return {
+          data: getLocalSuratPernyataanList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalSuratPernyataanList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalSuratPernyataanList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateSuratPernyataan(
+  item: Partial<SuratPernyataan> & Omit<SuratPernyataan, 'id'>
+): Promise<{ success: boolean; data?: SuratPernyataan; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `sp-${Date.now()}`);
+
+  const payload: SuratPernyataan = {
+    ...item,
+    id: idToUse,
+    created_at: item.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const currentLocal = getLocalSuratPernyataanList();
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as SuratPernyataan;
+        } else {
+          currentLocal.unshift(data as SuratPernyataan);
+        }
+        saveLocalSuratPernyataanList(currentLocal);
+
+        return { success: true, data: data as SuratPernyataan, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save surat pernyataan error:', error.message);
+        saveToLocalSuratPernyataanFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalSuratPernyataanFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalSuratPernyataanFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalSuratPernyataanFallback(item: SuratPernyataan) {
+  const current = getLocalSuratPernyataanList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.unshift(item);
+  }
+  saveLocalSuratPernyataanList(current);
+}
+
+export async function deleteSuratPernyataanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalSuratPernyataanList().filter((i) => i.id !== id);
+        saveLocalSuratPernyataanList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalSuratPernyataanList().filter((i) => i.id !== id);
+  saveLocalSuratPernyataanList(current);
+  return { success: true, isSupabase: false };
+}
+
 // SQL Script generator for user setup in Supabase SQL Editor
 export function getSupabaseSqlSetup(
   tableName: string = DEFAULT_TABLE_NAME,
   undanganTableName: string = DEFAULT_UNDANGAN_TABLE_NAME,
-  homeVisitTableName: string = DEFAULT_HOME_VISIT_TABLE_NAME
+  homeVisitTableName: string = DEFAULT_HOME_VISIT_TABLE_NAME,
+  rekamPermasalahanTableName: string = DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME,
+  konselingIndividuTableName: string = DEFAULT_KONSELING_INDIVIDU_TABLE_NAME,
+  konselingKelompokTableName: string = DEFAULT_KONSELING_KELOMPOK_TABLE_NAME,
+  suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME
 ): string {
   return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
@@ -668,6 +1358,125 @@ create policy "Akses Baca Publik Home Visit" on public.${homeVisitTableName} for
 create policy "Akses Tambah Publik Home Visit" on public.${homeVisitTableName} for insert with check (true);
 create policy "Akses Update Publik Home Visit" on public.${homeVisitTableName} for update using (true);
 create policy "Akses Hapus Publik Home Visit" on public.${homeVisitTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 4. TABEL D: REKAM PERMASALAHAN SISWA (${rekamPermasalahanTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${rekamPermasalahanTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  bulan text not null,
+  tahun text not null,
+  waktu text not null,
+  kelas text not null,
+  nama_siswa text not null,
+  nama_orang_tua text default '',
+  pekerjaan_orang_tua text default '',
+  alamat text default '',
+  ringkasan_uraian_permasalahan text default '',
+  upaya_konselor_walikelas text default '',
+  hasil_dan_kesimpulan text default '',
+  link_foto_kegiatan text default '',
+  keterangan text default ''
+);
+
+alter table public.${rekamPermasalahanTableName} enable row level security;
+
+create policy "Akses Baca Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for select using (true);
+create policy "Akses Tambah Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for insert with check (true);
+create policy "Akses Update Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for update using (true);
+create policy "Akses Hapus Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 5. TABEL E: RENCANA KONSELING INDIVIDU (${konselingIndividuTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${konselingIndividuTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  bulan text not null,
+  tahun text not null,
+  waktu text not null,
+  kelas text not null,
+  nama_siswa text not null,
+  topik_permasalahan text default '',
+  media_yang_diperlukan text default '',
+  ringkasan_uraian_permasalahan text default '',
+  pendekatan_dan_teknik_konseling text default '',
+  hasil_yang_dicapai text default '',
+  link_foto_kegiatan text default '',
+  keterangan text default ''
+);
+
+alter table public.${konselingIndividuTableName} enable row level security;
+
+create policy "Akses Baca Publik Konseling Individu" on public.${konselingIndividuTableName} for select using (true);
+create policy "Akses Tambah Publik Konseling Individu" on public.${konselingIndividuTableName} for insert with check (true);
+create policy "Akses Update Publik Konseling Individu" on public.${konselingIndividuTableName} for update using (true);
+create policy "Akses Hapus Publik Konseling Individu" on public.${konselingIndividuTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 6. TABEL F: RENCANA KONSELING KELOMPOK (${konselingKelompokTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${konselingKelompokTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  bulan text not null,
+  tahun text not null,
+  waktu text not null,
+  kelas text not null,
+  nama_siswa text not null,
+  topik_permasalahan text default '',
+  media_yang_diperlukan text default '',
+  ringkasan_uraian_permasalahan text default '',
+  pendekatan_dan_teknik_konseling text default '',
+  hasil_yang_dicapai text default '',
+  link_foto_kegiatan text default '',
+  keterangan text default ''
+);
+
+alter table public.${konselingKelompokTableName} enable row level security;
+
+create policy "Akses Baca Publik Konseling Kelompok" on public.${konselingKelompokTableName} for select using (true);
+create policy "Akses Tambah Publik Konseling Kelompok" on public.${konselingKelompokTableName} for insert with check (true);
+create policy "Akses Update Publik Konseling Kelompok" on public.${konselingKelompokTableName} for update using (true);
+create policy "Akses Hapus Publik Konseling Kelompok" on public.${konselingKelompokTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 7. TABEL G: SURAT PERNYATAAN SISWA / ORANG TUA (${suratPernyataanTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${suratPernyataanTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  jenis_sp text not null,
+  nama_siswa text not null,
+  kelas text default '',
+  nama_orang_tua text default '',
+  pekerjaan_orang_tua text default '',
+  alamat_orang_tua text default '',
+  hubungan_keluarga text default '',
+  peraturan_diketahui text default '',
+  alasan_pengunduran text default '',
+  tanggal_surat date default current_date,
+  tempat_surat text default 'Pasuruan',
+  keterangan text default ''
+);
+
+alter table public.${suratPernyataanTableName} enable row level security;
+
+create policy "Akses Baca Publik Surat Pernyataan" on public.${suratPernyataanTableName} for select using (true);
+create policy "Akses Tambah Publik Surat Pernyataan" on public.${suratPernyataanTableName} for insert with check (true);
+create policy "Akses Update Publik Surat Pernyataan" on public.${suratPernyataanTableName} for update using (true);
+create policy "Akses Hapus Publik Surat Pernyataan" on public.${suratPernyataanTableName} for delete using (true);
 `;
 }
 

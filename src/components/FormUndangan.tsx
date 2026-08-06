@@ -211,35 +211,35 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/90 text-slate-100 rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-xl relative overflow-hidden">
+    <div className="bg-white text-slate-800 rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       
       {/* Top Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-5 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5 mb-6">
         <div className="flex items-center gap-3.5">
-          <div className="p-3 bg-gradient-to-br from-purple-600 via-pink-600 to-rose-700 text-white rounded-2xl shadow-lg shadow-purple-500/20">
+          <div className="p-3 bg-gradient-to-br from-purple-600 via-pink-600 to-rose-600 text-white rounded-2xl shadow-md shadow-purple-500/20">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+              <span className="bg-purple-100 text-purple-800 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded uppercase">
                 FORMULIR B
               </span>
-              <span className="text-xs text-slate-400 font-semibold">
+              <span className="text-xs text-slate-500 font-semibold">
                 Publik • Tanpa Login • Supabase Ready
               </span>
             </div>
-            <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
               B. UNDANGAN ORANG TUA SISWA
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Administrasi Penanganan & Pembinaan Siswa Melalui Undangan Orang Tua BK SMPN 7 Pasuruan
             </p>
           </div>
         </div>
 
         {initialData && (
-          <div className="inline-flex items-center gap-2 bg-amber-500/20 border border-amber-400/40 text-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold">
-            <Pencil className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-300 text-amber-900 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
+            <Pencil className="w-4 h-4 text-amber-600" />
             <span>Mode Edit Data (ID: {initialData.id.slice(0, 8)}...)</span>
           </div>
         )}
@@ -248,9 +248,9 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
       <form onSubmit={handleSubmit} className="space-y-6">
         
         {/* ROW 1: Hari, Tanggal, Waktu, Tempat */}
-        <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider">
-            <Calendar className="w-4 h-4" />
+        <div className="bg-purple-50/40 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-4">
+          <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs uppercase tracking-wider">
+            <Calendar className="w-4 h-4 text-purple-600" />
             <span>1. WAKTU PELAKSANAAN UNDANGAN</span>
           </div>
 

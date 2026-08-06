@@ -1,4 +1,4 @@
-import { UndanganOrangTua, HomeVisit } from '../types';
+import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan } from '../types';
 
 /**
  * Utility to generate Microsoft Word (.doc) document from HTML structure.
@@ -957,5 +957,800 @@ export function downloadBulkSuratKesediaanOrtuWord(items: HomeVisit[]) {
   const combinedHTML = items.map(generateSuratKesediaanOrtuHTML).join('<div style="page-break-before: always;"></div>');
   triggerWordDownload(combinedHTML, `Kumpulan_Surat_Kesediaan_Ortu_Home_Visit_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
 }
+
+export function generateRekamPermasalahanHTML(item: RekamPermasalahan): string {
+  const tanggalIndo = formatTanggalIndo(item.tanggal, item.bulan, item.tahun);
+  const todayIndo = formatTanggalIndo(new Date().toISOString().slice(0, 10));
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>Rekam Permasalahan Siswa - ${item.nama_siswa}</title>
+    <style>
+      @page {
+        size: 8.5in 11in;
+        margin: 0.8in;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        line-height: 1.3;
+        color: #000000;
+      }
+      .title-doc {
+        text-align: center;
+        font-size: 13pt;
+        font-weight: bold;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      .subtitle-doc {
+        text-align: center;
+        font-size: 10pt;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      .report-table td {
+        border: 1px solid #000000;
+        padding: 6px 10px;
+        vertical-align: top;
+        font-size: 11pt;
+      }
+      .report-table td.no-col {
+        width: 30px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .report-table td.label-col {
+        width: 210px;
+        font-weight: bold;
+      }
+      .sig-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+        text-align: center;
+        font-size: 11pt;
+      }
+      .sig-table td {
+        vertical-align: top;
+        padding: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    ${getKopSuratWordHTML()}
+
+    <div class="title-doc">
+      REKAM PERMASALAHAN SISWA
+    </div>
+    <div class="subtitle-doc">
+      BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+    </div>
+
+    <table class="report-table">
+      <tr>
+        <td class="no-col">1</td>
+        <td class="label-col">Hari / Tanggal / Waktu</td>
+        <td><b>${item.hari}, ${tanggalIndo} (${item.waktu || '08.00 WIB'})</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">2</td>
+        <td class="label-col">Kelas</td>
+        <td><b>Kelas ${item.kelas}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">3</td>
+        <td class="label-col">Nama Siswa</td>
+        <td><b>${item.nama_siswa.toUpperCase()}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">4</td>
+        <td class="label-col">Nama Orang Tua / Wali</td>
+        <td>${item.nama_orang_tua || '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">5</td>
+        <td class="label-col">Pekerjaan Orang Tua</td>
+        <td>${item.pekerjaan_orang_tua || '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">6</td>
+        <td class="label-col">Alamat</td>
+        <td>${item.alamat || '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">7</td>
+        <td class="label-col">Ringkasan Uraian Permasalahan Siswa</td>
+        <td>${(item.ringkasan_uraian_permasalahan || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">8</td>
+        <td class="label-col">Upaya Yang Sudah Dilakukan Oleh Konselor, Wali Kelas</td>
+        <td>${(item.upaya_konselor_walikelas || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">9</td>
+        <td class="label-col">Hasil Dan Kesimpulan</td>
+        <td>${(item.hasil_dan_kesimpulan || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">10</td>
+        <td class="label-col">Link Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">11</td>
+        <td class="label-col">Keterangan</td>
+        <td>${item.keterangan || '-'}</td>
+      </tr>
+    </table>
+
+    <table class="sig-table">
+      <tr>
+        <td style="width: 50%;">
+          Mengetahui,<br/>
+          Kepala SMP Negeri 7 Pasuruan<br/><br/><br/><br/>
+          <b><u>${DEFAULT_KEPALA_SEKOLAH}</u></b><br/>
+          NIP. ${DEFAULT_NIP_KEPALA_SEKOLAH}
+        </td>
+        <td style="width: 50%;">
+          Pasuruan, ${todayIndo}<br/>
+          Guru Bimbingan dan Konseling<br/><br/><br/><br/>
+          <b><u>${DEFAULT_GURU_BK}</u></b><br/>
+          NIP. ${DEFAULT_NIP_GURU_BK}
+        </td>
+      </tr>
+    </table>
+
+  </body>
+  </html>
+  `;
+}
+
+export function downloadRekamPermasalahanWord(item: RekamPermasalahan) {
+  const html = generateRekamPermasalahanHTML(item);
+  const cleanName = item.nama_siswa.replace(/[^a-zA-Z0-9]/g, '_');
+  triggerWordDownload(html, `Rekam_Permasalahan_${cleanName}_SMPN7.doc`);
+}
+
+export function downloadBulkRekamPermasalahanWord(items: RekamPermasalahan[]) {
+  if (items.length === 0) return;
+  const combinedHTML = items.map(generateRekamPermasalahanHTML).join('<div style="page-break-before: always;"></div>');
+  triggerWordDownload(combinedHTML, `Kumpulan_Rekam_Permasalahan_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
+// Rencana Konseling Individu Exporters
+export function generateKonselingIndividuHTML(item: KonselingIndividu): string {
+  const tanggalIndo = formatTanggalIndo(item.tanggal, item.bulan, item.tahun);
+  const todayIndo = formatTanggalIndo(new Date().toISOString().slice(0, 10));
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>Rencana Konseling Individu - ${item.nama_siswa}</title>
+    <style>
+      @page {
+        size: 8.5in 11in;
+        margin: 0.8in;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        line-height: 1.3;
+        color: #000000;
+      }
+      .title-doc {
+        text-align: center;
+        font-size: 13pt;
+        font-weight: bold;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      .subtitle-doc {
+        text-align: center;
+        font-size: 10pt;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      .report-table td {
+        border: 1px solid #000000;
+        padding: 6px 10px;
+        vertical-align: top;
+        font-size: 11pt;
+      }
+      .report-table td.no-col {
+        width: 30px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .report-table td.label-col {
+        width: 210px;
+        font-weight: bold;
+      }
+      .sig-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+        text-align: center;
+        font-size: 11pt;
+      }
+      .sig-table td {
+        vertical-align: top;
+        padding: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    ${getKopSuratWordHTML()}
+
+    <div class="title-doc">
+      RENCANA KONSELING INDIVIDU
+    </div>
+    <div class="subtitle-doc">
+      BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+    </div>
+
+    <table class="report-table">
+      <tr>
+        <td class="no-col">1</td>
+        <td class="label-col">Hari / Tanggal / Waktu</td>
+        <td><b>${item.hari}, ${tanggalIndo} (${item.waktu || '08.00 WIB'})</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">2</td>
+        <td class="label-col">Kelas</td>
+        <td><b>Kelas ${item.kelas}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">3</td>
+        <td class="label-col">Nama Siswa</td>
+        <td><b>${item.nama_siswa.toUpperCase()}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">4</td>
+        <td class="label-col">Topik Permasalahan</td>
+        <td><b>${item.topik_permasalahan || '-'}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">5</td>
+        <td class="label-col">Media yang Diperlukan</td>
+        <td>${item.media_yang_diperlukan || '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">6</td>
+        <td class="label-col">Ringkasan Uraian Permasalahan Siswa</td>
+        <td>${(item.ringkasan_uraian_permasalahan || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">7</td>
+        <td class="label-col">Pendekatan dan Teknik Konseling</td>
+        <td>${(item.pendekatan_dan_teknik_konseling || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">8</td>
+        <td class="label-col">Hasil yang Dicapai</td>
+        <td>${(item.hasil_yang_dicapai || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">9</td>
+        <td class="label-col">Link Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">10</td>
+        <td class="label-col">Keterangan</td>
+        <td>${item.keterangan || '-'}</td>
+      </tr>
+    </table>
+
+    <table class="sig-table">
+      <tr>
+        <td style="width: 50%;">
+          Mengetahui,<br/>
+          Kepala SMP Negeri 7 Pasuruan<br/><br/><br/><br/>
+          <b><u>${DEFAULT_KEPALA_SEKOLAH}</u></b><br/>
+          NIP. ${DEFAULT_NIP_KEPALA_SEKOLAH}
+        </td>
+        <td style="width: 50%;">
+          Pasuruan, ${todayIndo}<br/>
+          Guru Bimbingan dan Konseling<br/><br/><br/><br/>
+          <b><u>${DEFAULT_GURU_BK}</u></b><br/>
+          NIP. ${DEFAULT_NIP_GURU_BK}
+        </td>
+      </tr>
+    </table>
+
+  </body>
+  </html>
+  `;
+}
+
+export function downloadKonselingIndividuWord(item: KonselingIndividu) {
+  const html = generateKonselingIndividuHTML(item);
+  const cleanName = item.nama_siswa.replace(/[^a-zA-Z0-9]/g, '_');
+  triggerWordDownload(html, `Rencana_Konseling_Individu_${cleanName}_SMPN7.doc`);
+}
+
+export function downloadBulkKonselingIndividuWord(items: KonselingIndividu[]) {
+  if (items.length === 0) return;
+  const combinedHTML = items.map(generateKonselingIndividuHTML).join('<div style="page-break-before: always;"></div>');
+  triggerWordDownload(combinedHTML, `Kumpulan_Konseling_Individu_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
+// Rencana Konseling Kelompok Exporters
+export function generateKonselingKelompokHTML(item: KonselingKelompok): string {
+  const tanggalIndo = formatTanggalIndo(item.tanggal, item.bulan, item.tahun);
+  const todayIndo = formatTanggalIndo(new Date().toISOString().slice(0, 10));
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>Rencana Konseling Kelompok - ${item.kelas}</title>
+    <style>
+      @page {
+        size: 8.5in 11in;
+        margin: 0.8in;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 11pt;
+        line-height: 1.3;
+        color: #000000;
+      }
+      .title-doc {
+        text-align: center;
+        font-size: 13pt;
+        font-weight: bold;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+      }
+      .subtitle-doc {
+        text-align: center;
+        font-size: 10pt;
+        font-weight: bold;
+        margin-bottom: 15px;
+        text-transform: uppercase;
+      }
+      .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+      .report-table td {
+        border: 1px solid #000000;
+        padding: 6px 10px;
+        vertical-align: top;
+        font-size: 11pt;
+      }
+      .report-table td.no-col {
+        width: 30px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .report-table td.label-col {
+        width: 210px;
+        font-weight: bold;
+      }
+      .sig-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 30px;
+        text-align: center;
+        font-size: 11pt;
+      }
+      .sig-table td {
+        vertical-align: top;
+        padding: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    ${getKopSuratWordHTML()}
+
+    <div class="title-doc">
+      RENCANA KONSELING KELOMPOK
+    </div>
+    <div class="subtitle-doc">
+      BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+    </div>
+
+    <table class="report-table">
+      <tr>
+        <td class="no-col">1</td>
+        <td class="label-col">Hari / Tanggal / Waktu</td>
+        <td><b>${item.hari}, ${tanggalIndo} (${item.waktu || '08.00 WIB'})</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">2</td>
+        <td class="label-col">Kelas</td>
+        <td><b>Kelas ${item.kelas}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">3</td>
+        <td class="label-col">Nama Siswa / Anggota Kelompok</td>
+        <td>${(item.nama_siswa || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">4</td>
+        <td class="label-col">Topik Permasalahan</td>
+        <td><b>${item.topik_permasalahan || '-'}</b></td>
+      </tr>
+      <tr>
+        <td class="no-col">5</td>
+        <td class="label-col">Media yang Diperlukan</td>
+        <td>${item.media_yang_diperlukan || '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">6</td>
+        <td class="label-col">Ringkasan Uraian Permasalahan Siswa</td>
+        <td>${(item.ringkasan_uraian_permasalahan || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">7</td>
+        <td class="label-col">Pendekatan dan Teknik Konseling</td>
+        <td>${(item.pendekatan_dan_teknik_konseling || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">8</td>
+        <td class="label-col">Hasil yang Dicapai</td>
+        <td>${(item.hasil_yang_dicapai || '-').replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">9</td>
+        <td class="label-col">Link Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+      </tr>
+      <tr>
+        <td class="no-col">10</td>
+        <td class="label-col">Keterangan</td>
+        <td>${item.keterangan || '-'}</td>
+      </tr>
+    </table>
+
+    <table class="sig-table">
+      <tr>
+        <td style="width: 50%;">
+          Mengetahui,<br/>
+          Kepala SMP Negeri 7 Pasuruan<br/><br/><br/><br/>
+          <b><u>${DEFAULT_KEPALA_SEKOLAH}</u></b><br/>
+          NIP. ${DEFAULT_NIP_KEPALA_SEKOLAH}
+        </td>
+        <td style="width: 50%;">
+          Pasuruan, ${todayIndo}<br/>
+          Guru Bimbingan dan Konseling<br/><br/><br/><br/>
+          <b><u>${DEFAULT_GURU_BK}</u></b><br/>
+          NIP. ${DEFAULT_NIP_GURU_BK}
+        </td>
+      </tr>
+    </table>
+
+  </body>
+  </html>
+  `;
+}
+
+export function downloadKonselingKelompokWord(item: KonselingKelompok) {
+  const html = generateKonselingKelompokHTML(item);
+  const cleanClass = item.kelas.replace(/[^a-zA-Z0-9]/g, '_');
+  triggerWordDownload(html, `Rencana_Konseling_Kelompok_Kelas_${cleanClass}_SMPN7.doc`);
+}
+
+export function downloadBulkKonselingKelompokWord(items: KonselingKelompok[]) {
+  if (items.length === 0) return;
+  const combinedHTML = items.map(generateKonselingKelompokHTML).join('<div style="page-break-before: always;"></div>');
+  triggerWordDownload(combinedHTML, `Kumpulan_Konseling_Kelompok_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
+// Surat Pernyataan Siswa / Orang Tua Exporters
+export function generateSuratPernyataanWordHTML(item: SuratPernyataan): string {
+  const tanggalIndo = formatTanggalIndo(item.tanggal_surat);
+  const titleHeader =
+    item.jenis_sp === 'SP_PENGUNDURAN_DIRI'
+      ? 'SURAT PERNYATAAN PENGUNDURAN DIRI'
+      : item.jenis_sp.startsWith('SP_ORTU')
+      ? 'SURAT PERNYATAAN'
+      : 'SURAT PERNYATAAN SISWA';
+
+  let bodyContent = '';
+
+  if (item.jenis_sp.startsWith('SP_1') || item.jenis_sp.startsWith('SP_2') || item.jenis_sp.startsWith('SP_3')) {
+    bodyContent = `
+      <p style="margin-bottom: 12px;">Saya yang bertanda tangan dibawah ini:</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_siswa}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Kelas</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.kelas}</b></td>
+        </tr>
+      </table>
+
+      <p style="margin-bottom: 12px;">Berjanji dihadapan Orang Tua /Wali:</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 20px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_orang_tua || '-'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Pekerjaan</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.pekerjaan_orang_tua || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+      </table>
+
+      <p style="margin-bottom: 12px;">Untuk memenuhi Peraturan Sekolah sebagai berikut:</p>
+      <div style="margin-left: 20px; margin-bottom: 20px; white-space: pre-wrap; line-height: 1.5;">${item.peraturan_diketahui}</div>
+
+      <p style="text-align: justify; line-height: 1.5; margin-bottom: 20px;">
+        Demikian Surat Perjanjian ini dibuat tanpa ada paksaan dari pihak lain.
+      </p>
+
+      <table style="width: 100%; margin-top: 40px; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%; vertical-align: top; text-align: left;">
+            Mengetahui<br/>
+            Orang Tua /Wali<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_orang_tua || '....................................'}</u> )
+          </td>
+          <td style="width: 50%; vertical-align: top; text-align: right;">
+            ${item.tempat_surat || 'Pasuruan'}, ${tanggalIndo}<br/><br/>
+            Siswa yang bersangkutan<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_siswa}</u> )
+          </td>
+        </tr>
+      </table>
+    `;
+  } else if (item.jenis_sp === 'SP_ORTU_1') {
+    bodyContent = `
+      <p style="margin-bottom: 12px;">Yang bertanda tangan dibawah ini :</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 20px;">
+        <tr>
+          <td style="width: 140px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_orang_tua || '-'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Pekerjaan</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.pekerjaan_orang_tua || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Hubungan Keluarga</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.hubungan_keluarga || 'Orang Tua / Wali'} dari Siswa <b>${item.nama_siswa}</b> (Kelas ${item.kelas})</td>
+        </tr>
+      </table>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 20px;">
+        ${item.peraturan_diketahui}
+      </p>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 30px;">
+        Demikian pernyataan ini saya buat dengan sebenarnya untuk dapat dipergunakan sebagaimana diperlukan.
+      </p>
+
+      <table style="width: 100%; margin-top: 40px; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%;"></td>
+          <td style="width: 50%; text-align: right;">
+            ${item.tempat_surat || 'Pasuruan'}, ${tanggalIndo}<br/><br/>
+            Hormat saya,<br/>
+            Orang tua /wali siswa<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_orang_tua || '....................................'}</u> )
+          </td>
+        </tr>
+      </table>
+    `;
+  } else if (item.jenis_sp === 'SP_ORTU_2') {
+    bodyContent = `
+      <p style="margin-bottom: 12px;">Yang bertanda tangan dibawah ini, kami orang tua murid atau wali :</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_orang_tua || '-'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Pekerjaan</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.pekerjaan_orang_tua || '-'}</td>
+        </tr>
+      </table>
+
+      <p style="margin-bottom: 12px;">Adalah orang tua dari siswa :</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 20px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_siswa}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Kelas</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.kelas}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+      </table>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 20px;">
+        ${item.peraturan_diketahui}
+      </p>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 30px;">
+        Demikian surat pernyataan ini, kami buat dengan sebenar-benarnya dan tanpa ada unsur paksaan dari siapapun.
+      </p>
+
+      <table style="width: 100%; margin-top: 40px; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%; vertical-align: top; text-align: left;">
+            Yang membuat pernyataan<br/>
+            Orang tua murid<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_orang_tua || '....................................'}</u> )
+          </td>
+          <td style="width: 50%; vertical-align: top; text-align: right;">
+            ${item.tempat_surat || 'Pasuruan'}, ${tanggalIndo}<br/><br/>
+            Siswa<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_siswa}</u> )
+          </td>
+        </tr>
+      </table>
+    `;
+  } else {
+    // SP_PENGUNDURAN_DIRI
+    bodyContent = `
+      <p style="margin-bottom: 12px;">Yang bertanda tangan dibawah ini :</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_orang_tua || '-'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Pekerjaan</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.pekerjaan_orang_tua || '-'}</td>
+        </tr>
+      </table>
+
+      <p style="margin-bottom: 12px;">Adalah orang tua dari siswa :</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 20px;">
+        <tr>
+          <td style="width: 120px; padding: 3px 0;">Nama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_siswa}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Kelas</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.kelas}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Alamat</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;">${item.alamat_orang_tua || '-'}</td>
+        </tr>
+      </table>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 20px;">
+        Dengan ini menyatakan anak kami tersebut diatas mengundurkan diri dari <b>UPT SMP NEGERI 7 PASURUAN</b> dikarenakan: ${item.alasan_pengunduran || 'alasan pribadi / keluarga'}.
+      </p>
+
+      <p style="text-align: justify; line-height: 1.6; margin-bottom: 30px;">
+        Demikian surat pernyataan ini, kami buat dengan sebenar-benarnya dan hendaknya digunakan sebagaimana mestinya.
+      </p>
+
+      <table style="width: 100%; margin-top: 40px; border-collapse: collapse;">
+        <tr>
+          <td style="width: 50%; vertical-align: top; text-align: left;">
+            Mengetahui,<br/>
+            Orang tua siswa<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_orang_tua || '....................................'}</u> )
+          </td>
+          <td style="width: 50%; vertical-align: top; text-align: right;">
+            ${item.tempat_surat || 'Pasuruan'}, ${tanggalIndo}<br/><br/>
+            Siswa<br/><br/><br/><br/><br/>
+            ( <u>${item.nama_siswa}</u> )
+          </td>
+        </tr>
+      </table>
+    `;
+  }
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>${titleHeader} - ${item.nama_siswa}</title>
+    <style>
+      @page {
+        size: 8.5in 11in;
+        margin: 1in;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12pt;
+        line-height: 1.4;
+        color: #000000;
+      }
+      .title-doc {
+        text-align: center;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 35px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      u { text-underline-offset: 3px; }
+    </style>
+  </head>
+  <body>
+    <div class="title-doc">
+      ${titleHeader}
+    </div>
+
+    ${bodyContent}
+  </body>
+  </html>
+  `;
+}
+
+export function downloadSuratPernyataanWord(item: SuratPernyataan) {
+  const html = generateSuratPernyataanWordHTML(item);
+  const cleanName = item.nama_siswa.replace(/[^a-zA-Z0-9]/g, '_');
+  triggerWordDownload(html, `Surat_Pernyataan_${item.jenis_sp}_${cleanName}_SMPN7.doc`);
+}
+
+export function downloadBulkSuratPernyataanWord(items: SuratPernyataan[]) {
+  if (items.length === 0) return;
+  const combinedHTML = items.map(generateSuratPernyataanWordHTML).join('<div style="page-break-before: always;"></div>');
+  triggerWordDownload(combinedHTML, `Kumpulan_Surat_Pernyataan_Siswa_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
+
 
 

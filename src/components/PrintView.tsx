@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgendaKerja, UndanganOrangTua, HomeVisit } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
 import {
   downloadSuratUndanganWord,
@@ -11,16 +11,48 @@ import {
   downloadLaporanHomeVisitWord,
   downloadBulkLaporanHomeVisitWord,
   downloadSuratKesediaanOrtuWord,
-  downloadBulkSuratKesediaanOrtuWord
+  downloadBulkSuratKesediaanOrtuWord,
+  downloadRekamPermasalahanWord,
+  downloadBulkRekamPermasalahanWord,
+  downloadKonselingIndividuWord,
+  downloadBulkKonselingIndividuWord,
+  downloadKonselingKelompokWord,
+  downloadBulkKonselingKelompokWord,
+  downloadSuratPernyataanWord,
+  downloadBulkSuratPernyataanWord
 } from '../lib/wordExporter';
 
 interface PrintViewProps {
-  docType?: 'agenda' | 'undangan_tabel' | 'surat_undangan' | 'laporan_konsultasi' | 'home_visit_tabel' | 'laporan_home_visit' | 'surat_tugas_home_visit' | 'surat_kesediaan_ortu';
+  docType?:
+    | 'agenda'
+    | 'undangan_tabel'
+    | 'surat_undangan'
+    | 'laporan_konsultasi'
+    | 'home_visit_tabel'
+    | 'laporan_home_visit'
+    | 'surat_tugas_home_visit'
+    | 'surat_kesediaan_ortu'
+    | 'rekam_permasalahan_tabel'
+    | 'rekam_permasalahan_dokumen'
+    | 'konseling_individu_tabel'
+    | 'konseling_individu_dokumen'
+    | 'konseling_kelompok_tabel'
+    | 'konseling_kelompok_dokumen'
+    | 'surat_pernyataan_tabel'
+    | 'surat_pernyataan_dokumen';
   agendaItems?: AgendaKerja[];
   undanganItems?: UndanganOrangTua[];
   selectedUndangan?: UndanganOrangTua | null;
   homeVisitItems?: HomeVisit[];
   selectedHomeVisit?: HomeVisit | null;
+  rekamPermasalahanItems?: RekamPermasalahan[];
+  selectedRekamPermasalahan?: RekamPermasalahan | null;
+  konselingIndividuItems?: KonselingIndividu[];
+  selectedKonselingIndividu?: KonselingIndividu | null;
+  konselingKelompokItems?: KonselingKelompok[];
+  selectedKonselingKelompok?: KonselingKelompok | null;
+  suratPernyataanItems?: SuratPernyataan[];
+  selectedSuratPernyataan?: SuratPernyataan | null;
   onBack: () => void;
 }
 
@@ -31,6 +63,14 @@ export const PrintView: React.FC<PrintViewProps> = ({
   selectedUndangan = null,
   homeVisitItems = [],
   selectedHomeVisit = null,
+  rekamPermasalahanItems = [],
+  selectedRekamPermasalahan = null,
+  konselingIndividuItems = [],
+  selectedKonselingIndividu = null,
+  konselingKelompokItems = [],
+  selectedKonselingKelompok = null,
+  suratPernyataanItems = [],
+  selectedSuratPernyataan = null,
   onBack,
 }) => {
   const todayStr = new Date().toLocaleDateString('id-ID', {
@@ -53,6 +93,10 @@ export const PrintView: React.FC<PrintViewProps> = ({
   // Pick single item if selected, else first item if available
   const currentItem = selectedUndangan || (undanganItems.length > 0 ? undanganItems[0] : null);
   const currentHomeVisit = selectedHomeVisit || (homeVisitItems.length > 0 ? homeVisitItems[0] : null);
+  const currentRekamPermasalahan = selectedRekamPermasalahan || (rekamPermasalahanItems.length > 0 ? rekamPermasalahanItems[0] : null);
+  const currentKonselingIndividu = selectedKonselingIndividu || (konselingIndividuItems.length > 0 ? konselingIndividuItems[0] : null);
+  const currentKonselingKelompok = selectedKonselingKelompok || (konselingKelompokItems.length > 0 ? konselingKelompokItems[0] : null);
+  const currentSuratPernyataan = selectedSuratPernyataan || (suratPernyataanItems.length > 0 ? suratPernyataanItems[0] : null);
 
   const handleTriggerPrint = () => {
     try {
@@ -181,6 +225,30 @@ export const PrintView: React.FC<PrintViewProps> = ({
       } else {
         downloadBulkSuratKesediaanOrtuWord(homeVisitItems);
       }
+    } else if (docType === 'rekam_permasalahan_dokumen' || docType === 'rekam_permasalahan_tabel') {
+      if (currentRekamPermasalahan) {
+        downloadRekamPermasalahanWord(currentRekamPermasalahan);
+      } else {
+        downloadBulkRekamPermasalahanWord(rekamPermasalahanItems);
+      }
+    } else if (docType === 'konseling_individu_dokumen' || docType === 'konseling_individu_tabel') {
+      if (currentKonselingIndividu) {
+        downloadKonselingIndividuWord(currentKonselingIndividu);
+      } else {
+        downloadBulkKonselingIndividuWord(konselingIndividuItems);
+      }
+    } else if (docType === 'konseling_kelompok_dokumen' || docType === 'konseling_kelompok_tabel') {
+      if (currentKonselingKelompok) {
+        downloadKonselingKelompokWord(currentKonselingKelompok);
+      } else {
+        downloadBulkKonselingKelompokWord(konselingKelompokItems);
+      }
+    } else if (docType === 'surat_pernyataan_dokumen' || docType === 'surat_pernyataan_tabel') {
+      if (currentSuratPernyataan) {
+        downloadSuratPernyataanWord(currentSuratPernyataan);
+      } else {
+        downloadBulkSuratPernyataanWord(suratPernyataanItems);
+      }
     }
   };
 
@@ -198,7 +266,19 @@ export const PrintView: React.FC<PrintViewProps> = ({
         </button>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-          {(docType === 'surat_undangan' || docType === 'laporan_konsultasi' || docType === 'surat_tugas_home_visit' || docType === 'laporan_home_visit' || docType === 'surat_kesediaan_ortu') && (
+          {(docType === 'surat_undangan' ||
+            docType === 'laporan_konsultasi' ||
+            docType === 'surat_tugas_home_visit' ||
+            docType === 'laporan_home_visit' ||
+            docType === 'surat_kesediaan_ortu' ||
+            docType === 'rekam_permasalahan_dokumen' ||
+            docType === 'rekam_permasalahan_tabel' ||
+            docType === 'konseling_individu_dokumen' ||
+            docType === 'konseling_individu_tabel' ||
+            docType === 'konseling_kelompok_dokumen' ||
+            docType === 'konseling_kelompok_tabel' ||
+            docType === 'surat_pernyataan_dokumen' ||
+            docType === 'surat_pernyataan_tabel') && (
             <button
               onClick={handleDownloadWordCurrent}
               className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold rounded-lg shadow transition-colors"
@@ -961,10 +1041,872 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 </div>
               </>
             ) : (
+              <p className="text-center italic py-8 text-slate-500 font-sans">
+                Data Home Visit tidak ditemukan.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* 9. REKAM PERMASALAHAN SISWA (INDIVIDUAL DOKUMEN) */}
+        {docType === 'rekam_permasalahan_dokumen' && (
+          <div className="space-y-4 text-sm text-slate-950 font-serif">
+            {currentRekamPermasalahan ? (
+              <>
+                <div className="text-center my-3">
+                  <h2 className="text-base font-extrabold uppercase tracking-wide">
+                    REKAM PERMASALAHAN SISWA
+                  </h2>
+                  <p className="text-xs font-bold uppercase mt-1">
+                    BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+                  </p>
+                </div>
+
+                <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4">
+                  <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center w-8">1</td>
+                      <td className="p-2 border-r border-black font-bold w-52 sm:w-60">Hari / Tanggal / Waktu</td>
+                      <td className="p-2 font-bold">{currentRekamPermasalahan.hari}, {formatIndoDate(currentRekamPermasalahan.tanggal)} ({currentRekamPermasalahan.waktu || '08.00 WIB'})</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">2</td>
+                      <td className="p-2 border-r border-black font-bold">Kelas</td>
+                      <td className="p-2 font-bold">Kelas {currentRekamPermasalahan.kelas}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">3</td>
+                      <td className="p-2 border-r border-black font-bold">Nama Siswa</td>
+                      <td className="p-2 font-bold uppercase">{currentRekamPermasalahan.nama_siswa}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">4</td>
+                      <td className="p-2 border-r border-black font-bold">Nama Orang Tua / Wali</td>
+                      <td className="p-2">{currentRekamPermasalahan.nama_orang_tua || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">5</td>
+                      <td className="p-2 border-r border-black font-bold">Pekerjaan Orang Tua</td>
+                      <td className="p-2">{currentRekamPermasalahan.pekerjaan_orang_tua || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">6</td>
+                      <td className="p-2 border-r border-black font-bold">Alamat</td>
+                      <td className="p-2">{currentRekamPermasalahan.alamat || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">7</td>
+                      <td className="p-2 border-r border-black font-bold">Ringkasan Uraian Permasalahan Siswa</td>
+                      <td className="p-2 whitespace-pre-line">{currentRekamPermasalahan.ringkasan_uraian_permasalahan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">8</td>
+                      <td className="p-2 border-r border-black font-bold">Upaya Yang Sudah Dilakukan Oleh Konselor, Wali Kelas</td>
+                      <td className="p-2 whitespace-pre-line">{currentRekamPermasalahan.upaya_konselor_walikelas || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">9</td>
+                      <td className="p-2 border-r border-black font-bold">Hasil Dan Kesimpulan</td>
+                      <td className="p-2 whitespace-pre-line">{currentRekamPermasalahan.hasil_dan_kesimpulan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">10</td>
+                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2">
+                        {currentRekamPermasalahan.link_foto_kegiatan ? (
+                          <a href={currentRekamPermasalahan.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
+                            {currentRekamPermasalahan.link_foto_kegiatan}
+                          </a>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">11</td>
+                      <td className="p-2 border-r border-black font-bold">Keterangan</td>
+                      <td className="p-2">{currentRekamPermasalahan.keterangan || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Signatures */}
+                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
+                  <div>
+                    <div>Mengetahui,</div>
+                    <div>Kepala SMP Negeri 7 Pasuruan</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
+                    <div>NIP. 19731018 200604 1 020</div>
+                  </div>
+                  <div>
+                    <div>Pasuruan, {todayStr}</div>
+                    <div>Guru Bimbingan dan Konseling</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
+                    <div>NIP. 19831116 200904 2 003</div>
+                  </div>
+                </div>
+              </>
+            ) : (
               <div className="p-8 text-center text-slate-500 italic">
-                Data Surat Kesediaan Orang Tua tidak ditemukan.
+                Data Rekam Permasalahan Siswa tidak ditemukan.
               </div>
             )}
+          </div>
+        )}
+
+        {/* 10. REKAM PERMASALAHAN SISWA (TABEL REKAP) */}
+        {docType === 'rekam_permasalahan_tabel' && (
+          <div className="overflow-x-auto my-4">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+              REKAPITULASI REKAM PERMASALAHAN SISWA
+            </h3>
+            <table className="w-full text-left text-xs border-collapse border border-slate-900">
+              <thead>
+                <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 text-[10px] uppercase text-center">
+                  <th className="p-2 border border-slate-900 w-8">NO</th>
+                  <th className="p-2 border border-slate-900 w-24">HARI / TGL</th>
+                  <th className="p-2 border border-slate-900 w-28">SISWA / KELAS</th>
+                  <th className="p-2 border border-slate-900 w-28">ORANG TUA & ALAMAT</th>
+                  <th className="p-2 border border-slate-900">RINGKASAN PERMASALAHAN</th>
+                  <th className="p-2 border border-slate-900">UPAYA & HASIL</th>
+                  <th className="p-2 border border-slate-900 w-20">FOTO / KET</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rekamPermasalahanItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                      Belum ada data Rekam Permasalahan Siswa.
+                    </td>
+                  </tr>
+                ) : (
+                  rekamPermasalahanItems.map((item, idx) => (
+                    <tr key={item.id} className="border-b border-slate-900">
+                      <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                      <td className="p-2 border border-slate-900 font-medium text-[11px]">
+                        <div><b>{item.hari}</b></div>
+                        <div>{formatIndoDate(item.tanggal)}</div>
+                        <div className="text-slate-600 font-mono text-[10px]">{item.waktu}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 font-bold">
+                        <div>{item.nama_siswa}</div>
+                        <div className="text-slate-700 font-normal">Kelas: {item.kelas}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div><b>{item.nama_orang_tua || '-'}</b></div>
+                        <div className="text-slate-600 text-[10px]">{item.pekerjaan_orang_tua}</div>
+                        <div className="text-slate-600 text-[10px]">{item.alamat || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div className="text-slate-800 text-[11px] whitespace-pre-line">{item.ringkasan_uraian_permasalahan}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[11px]">
+                        <div><b>Upaya:</b> {item.upaya_konselor_walikelas || '-'}</div>
+                        <div className="mt-1"><b>Hasil:</b> {item.hasil_dan_kesimpulan || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[10px]">
+                        {item.link_foto_kegiatan && (
+                          <a href={item.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline block mb-1">
+                            Foto
+                          </a>
+                        )}
+                        <div>{item.keterangan || '-'}</div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 11. RENCANA KONSELING INDIVIDU (DOKUMEN SINGLE) */}
+        {docType === 'konseling_individu_dokumen' && (
+          <div className="space-y-4 text-sm text-slate-950 font-serif">
+            {currentKonselingIndividu ? (
+              <>
+                <div className="text-center my-3">
+                  <h2 className="text-base font-extrabold uppercase tracking-wide">
+                    E. RENCANA KONSELING INDIVIDU
+                  </h2>
+                  <p className="text-xs font-bold uppercase mt-1">
+                    BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+                  </p>
+                </div>
+
+                <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4">
+                  <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center w-8">1</td>
+                      <td className="p-2 border-r border-black font-bold w-52 sm:w-60">Hari / Tanggal / Waktu</td>
+                      <td className="p-2 font-bold">{currentKonselingIndividu.hari}, {formatIndoDate(currentKonselingIndividu.tanggal)} ({currentKonselingIndividu.waktu || '08.00 WIB'})</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">2</td>
+                      <td className="p-2 border-r border-black font-bold">Kelas</td>
+                      <td className="p-2 font-bold">Kelas {currentKonselingIndividu.kelas}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">3</td>
+                      <td className="p-2 border-r border-black font-bold">Nama Siswa</td>
+                      <td className="p-2 font-bold uppercase">{currentKonselingIndividu.nama_siswa}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">4</td>
+                      <td className="p-2 border-r border-black font-bold">Topik Permasalahan</td>
+                      <td className="p-2 font-semibold">{currentKonselingIndividu.topik_permasalahan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">5</td>
+                      <td className="p-2 border-r border-black font-bold">Media yang Diperlukan</td>
+                      <td className="p-2">{currentKonselingIndividu.media_yang_diperlukan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">6</td>
+                      <td className="p-2 border-r border-black font-bold">Ringkasan Uraian Permasalahan Siswa</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingIndividu.ringkasan_uraian_permasalahan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">7</td>
+                      <td className="p-2 border-r border-black font-bold">Pendekatan dan Teknik Konseling</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingIndividu.pendekatan_dan_teknik_konseling || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">8</td>
+                      <td className="p-2 border-r border-black font-bold">Hasil yang Dicapai</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingIndividu.hasil_yang_dicapai || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">9</td>
+                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2">
+                        {currentKonselingIndividu.link_foto_kegiatan ? (
+                          <a href={currentKonselingIndividu.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
+                            {currentKonselingIndividu.link_foto_kegiatan}
+                          </a>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">10</td>
+                      <td className="p-2 border-r border-black font-bold">Keterangan</td>
+                      <td className="p-2">{currentKonselingIndividu.keterangan || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Signatures */}
+                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
+                  <div>
+                    <div>Mengetahui,</div>
+                    <div>Kepala SMP Negeri 7 Pasuruan</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
+                    <div>NIP. 19731018 200604 1 020</div>
+                  </div>
+                  <div>
+                    <div>Pasuruan, {todayStr}</div>
+                    <div>Guru Bimbingan dan Konseling</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
+                    <div>NIP. 19831116 200904 2 003</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-8 text-center text-slate-500 italic">
+                Data Rencana Konseling Individu tidak ditemukan.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 12. RENCANA KONSELING INDIVIDU (TABEL REKAP) */}
+        {docType === 'konseling_individu_tabel' && (
+          <div className="overflow-x-auto my-4">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+              REKAPITULASI RENCANA KONSELING INDIVIDU
+            </h3>
+            <table className="w-full text-left text-xs border-collapse border border-slate-900">
+              <thead>
+                <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 text-[10px] uppercase text-center">
+                  <th className="p-2 border border-slate-900 w-8">NO</th>
+                  <th className="p-2 border border-slate-900 w-24">HARI / TGL</th>
+                  <th className="p-2 border border-slate-900 w-28">SISWA / KELAS</th>
+                  <th className="p-2 border border-slate-900 w-28">TOPIK & MEDIA</th>
+                  <th className="p-2 border border-slate-900">RINGKASAN PERMASALAHAN</th>
+                  <th className="p-2 border border-slate-900">PENDEKATAN & HASIL</th>
+                  <th className="p-2 border border-slate-900 w-20">FOTO / KET</th>
+                </tr>
+              </thead>
+              <tbody>
+                {konselingIndividuItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                      Belum ada data Rencana Konseling Individu.
+                    </td>
+                  </tr>
+                ) : (
+                  konselingIndividuItems.map((item, idx) => (
+                    <tr key={item.id} className="border-b border-slate-900">
+                      <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                      <td className="p-2 border border-slate-900 font-medium text-[11px]">
+                        <div><b>{item.hari}</b></div>
+                        <div>{formatIndoDate(item.tanggal)}</div>
+                        <div className="text-slate-600 font-mono text-[10px]">{item.waktu}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 font-bold">
+                        <div>{item.nama_siswa}</div>
+                        <div className="text-slate-700 font-normal">Kelas: {item.kelas}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div><b>{item.topik_permasalahan || '-'}</b></div>
+                        <div className="text-slate-600 text-[10px]">Media: {item.media_yang_diperlukan || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div className="text-slate-800 text-[11px] whitespace-pre-line">{item.ringkasan_uraian_permasalahan}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[11px]">
+                        <div><b>Teknik:</b> {item.pendekatan_dan_teknik_konseling || '-'}</div>
+                        <div className="mt-1"><b>Hasil:</b> {item.hasil_yang_dicapai || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[10px]">
+                        {item.link_foto_kegiatan && (
+                          <a href={item.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline block mb-1">
+                            Foto
+                          </a>
+                        )}
+                        <div>{item.keterangan || '-'}</div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 13. RENCANA KONSELING KELOMPOK (DOKUMEN SINGLE) */}
+        {docType === 'konseling_kelompok_dokumen' && (
+          <div className="space-y-4 text-sm text-slate-950 font-serif">
+            {currentKonselingKelompok ? (
+              <>
+                <div className="text-center my-3">
+                  <h2 className="text-base font-extrabold uppercase tracking-wide">
+                    F. RENCANA KONSELING KELOMPOK
+                  </h2>
+                  <p className="text-xs font-bold uppercase mt-1">
+                    BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
+                  </p>
+                </div>
+
+                <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4">
+                  <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center w-8">1</td>
+                      <td className="p-2 border-r border-black font-bold w-52 sm:w-60">Hari / Tanggal / Waktu</td>
+                      <td className="p-2 font-bold">{currentKonselingKelompok.hari}, {formatIndoDate(currentKonselingKelompok.tanggal)} ({currentKonselingKelompok.waktu || '09.00 WIB'})</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">2</td>
+                      <td className="p-2 border-r border-black font-bold">Kelas</td>
+                      <td className="p-2 font-bold">Kelas {currentKonselingKelompok.kelas}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">3</td>
+                      <td className="p-2 border-r border-black font-bold">Nama Siswa / Anggota Kelompok</td>
+                      <td className="p-2 font-bold whitespace-pre-line">{currentKonselingKelompok.nama_siswa}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">4</td>
+                      <td className="p-2 border-r border-black font-bold">Topik Permasalahan</td>
+                      <td className="p-2 font-semibold">{currentKonselingKelompok.topik_permasalahan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">5</td>
+                      <td className="p-2 border-r border-black font-bold">Media yang Diperlukan</td>
+                      <td className="p-2">{currentKonselingKelompok.media_yang_diperlukan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">6</td>
+                      <td className="p-2 border-r border-black font-bold">Ringkasan Uraian Permasalahan Siswa</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingKelompok.ringkasan_uraian_permasalahan || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">7</td>
+                      <td className="p-2 border-r border-black font-bold">Pendekatan dan Teknik Konseling</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingKelompok.pendekatan_dan_teknik_konseling || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">8</td>
+                      <td className="p-2 border-r border-black font-bold">Hasil yang Dicapai</td>
+                      <td className="p-2 whitespace-pre-line">{currentKonselingKelompok.hasil_yang_dicapai || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">9</td>
+                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2">
+                        {currentKonselingKelompok.link_foto_kegiatan ? (
+                          <a href={currentKonselingKelompok.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
+                            {currentKonselingKelompok.link_foto_kegiatan}
+                          </a>
+                        ) : '-'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">10</td>
+                      <td className="p-2 border-r border-black font-bold">Keterangan</td>
+                      <td className="p-2">{currentKonselingKelompok.keterangan || '-'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Signatures */}
+                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
+                  <div>
+                    <div>Mengetahui,</div>
+                    <div>Kepala SMP Negeri 7 Pasuruan</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
+                    <div>NIP. 19731018 200604 1 020</div>
+                  </div>
+                  <div>
+                    <div>Pasuruan, {todayStr}</div>
+                    <div>Guru Bimbingan dan Konseling</div>
+                    <div className="h-16" />
+                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
+                    <div>NIP. 19831116 200904 2 003</div>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="p-8 text-center text-slate-500 italic">
+                Data Rencana Konseling Kelompok tidak ditemukan.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 14. RENCANA KONSELING KELOMPOK (TABEL REKAP) */}
+        {docType === 'konseling_kelompok_tabel' && (
+          <div className="overflow-x-auto my-4">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+              REKAPITULASI RENCANA KONSELING KELOMPOK
+            </h3>
+            <table className="w-full text-left text-xs border-collapse border border-slate-900">
+              <thead>
+                <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 text-[10px] uppercase text-center">
+                  <th className="p-2 border border-slate-900 w-8">NO</th>
+                  <th className="p-2 border border-slate-900 w-24">HARI / TGL</th>
+                  <th className="p-2 border border-slate-900 w-36">ANGGOTA & KELAS</th>
+                  <th className="p-2 border border-slate-900 w-28">TOPIK & MEDIA</th>
+                  <th className="p-2 border border-slate-900">RINGKASAN PERMASALAHAN</th>
+                  <th className="p-2 border border-slate-900">PENDEKATAN & HASIL</th>
+                  <th className="p-2 border border-slate-900 w-20">FOTO / KET</th>
+                </tr>
+              </thead>
+              <tbody>
+                {konselingKelompokItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                      Belum ada data Rencana Konseling Kelompok.
+                    </td>
+                  </tr>
+                ) : (
+                  konselingKelompokItems.map((item, idx) => (
+                    <tr key={item.id} className="border-b border-slate-900">
+                      <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                      <td className="p-2 border border-slate-900 font-medium text-[11px]">
+                        <div><b>{item.hari}</b></div>
+                        <div>{formatIndoDate(item.tanggal)}</div>
+                        <div className="text-slate-600 font-mono text-[10px]">{item.waktu}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 font-bold">
+                        <div className="whitespace-pre-line text-[11px]">{item.nama_siswa}</div>
+                        <div className="text-slate-700 font-normal mt-0.5">Kelas: {item.kelas}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div><b>{item.topik_permasalahan || '-'}</b></div>
+                        <div className="text-slate-600 text-[10px]">Media: {item.media_yang_diperlukan || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div className="text-slate-800 text-[11px] whitespace-pre-line">{item.ringkasan_uraian_permasalahan}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[11px]">
+                        <div><b>Teknik:</b> {item.pendekatan_dan_teknik_konseling || '-'}</div>
+                        <div className="mt-1"><b>Hasil:</b> {item.hasil_yang_dicapai || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[10px]">
+                        {item.link_foto_kegiatan && (
+                          <a href={item.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline block mb-1">
+                            Foto
+                          </a>
+                        )}
+                        <div>{item.keterangan || '-'}</div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 13. SURAT PERNYATAAN SISWA / ORANG TUA (DOKUMEN DENGAN KOP SURAT) */}
+        {docType === 'surat_pernyataan_dokumen' && (
+          <div className="space-y-4 text-sm leading-relaxed text-slate-950 font-serif">
+            {currentSuratPernyataan ? (
+              (() => {
+                const sp = currentSuratPernyataan;
+                const tanggalIndo = formatIndoDate(sp.tanggal_surat);
+                const isSPSiswa = sp.jenis_sp.startsWith('SP_1') || sp.jenis_sp.startsWith('SP_2') || sp.jenis_sp.startsWith('SP_3');
+
+                let titleDoc = 'SURAT PERNYATAAN SISWA';
+                if (sp.jenis_sp === 'SP_1') titleDoc = 'SURAT PERNYATAAN SISWA (SP 1)';
+                else if (sp.jenis_sp === 'SP_2') titleDoc = 'SURAT PERNYATAAN SISWA (SP 2)';
+                else if (sp.jenis_sp === 'SP_3') titleDoc = 'SURAT PERNYATAAN SISWA (SP 3)';
+                else if (sp.jenis_sp === 'SP_ORTU_1') titleDoc = 'SURAT PERNYATAAN ORANG TUA / WALI';
+                else if (sp.jenis_sp === 'SP_ORTU_2') titleDoc = 'SURAT PERNYATAAN ORANG TUA / WALI';
+                else if (sp.jenis_sp === 'SP_PENGUNDURAN_DIRI') titleDoc = 'SURAT PERNYATAAN PENGUNDURAN DIRI';
+
+                return (
+                  <>
+                    <div className="text-center my-4">
+                      <h2 className="text-base font-bold uppercase underline tracking-wider">
+                        {titleDoc}
+                      </h2>
+                    </div>
+
+                    {isSPSiswa && (
+                      <div className="space-y-3">
+                        <p>Saya yang bertanda tangan dibawah ini:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_siswa}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Kelas</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.kelas}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2">Berjanji dihadapan Orang Tua / Wali:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Pekerjaan</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.pekerjaan_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2 font-semibold">Untuk memenuhi Peraturan Sekolah sebagai berikut:</p>
+                        <div className="ml-5 p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                          {sp.peraturan_diketahui || '-'}
+                        </div>
+
+                        <p className="text-justify pt-2">
+                          Demikian Surat Perjanjian ini dibuat tanpa ada paksaan dari pihak lain.
+                        </p>
+
+                        <div className="pt-8 grid grid-cols-2 text-center text-xs font-serif">
+                          <div className="text-left">
+                            <p>Mengetahui,</p>
+                            <p className="font-bold">Orang Tua / Wali</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline">( {sp.nama_orang_tua || '....................................'} )</p>
+                          </div>
+
+                          <div className="text-right">
+                            <p>{sp.tempat_surat || 'Pasuruan'}, {tanggalIndo}</p>
+                            <p className="font-bold">Siswa yang bersangkutan,</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline uppercase">( {sp.nama_siswa} )</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {sp.jenis_sp === 'SP_ORTU_1' && (
+                      <div className="space-y-3">
+                        <p>Yang bertanda tangan dibawah ini:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-40 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Pekerjaan</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.pekerjaan_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Hubungan Keluarga</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.hubungan_keluarga || 'Orang Tua / Wali'} dari Siswa <strong>{sp.nama_siswa}</strong> (Kelas {sp.kelas})</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2 font-semibold">Pernyataan / Komitmen Orang Tua:</p>
+                        <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                          {sp.peraturan_diketahui || '-'}
+                        </div>
+
+                        <p className="text-justify pt-2">
+                          Demikian pernyataan ini saya buat dengan sebenarnya untuk dapat dipergunakan sebagaimana diperlukan.
+                        </p>
+
+                        <div className="pt-8 grid grid-cols-2 text-xs font-serif">
+                          <div />
+                          <div className="text-right">
+                            <p>{sp.tempat_surat || 'Pasuruan'}, {tanggalIndo}</p>
+                            <p>Hormat saya,</p>
+                            <p className="font-bold">Orang tua / wali siswa</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline">( {sp.nama_orang_tua || '....................................'} )</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {sp.jenis_sp === 'SP_ORTU_2' && (
+                      <div className="space-y-3">
+                        <p>Yang bertanda tangan dibawah ini, kami orang tua murid atau wali:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Pekerjaan</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.pekerjaan_orang_tua || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2">Adalah orang tua dari siswa:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_siswa}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Kelas</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.kelas}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2 font-semibold">Pernyataan / Komitmen Orang Tua:</p>
+                        <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                          {sp.peraturan_diketahui || '-'}
+                        </div>
+
+                        <p className="text-justify pt-2">
+                          Demikian surat pernyataan ini, kami buat dengan sebenar-benarnya dan tanpa ada unsur paksaan dari siapapun.
+                        </p>
+
+                        <div className="pt-8 grid grid-cols-2 text-xs font-serif">
+                          <div className="text-left">
+                            <p>Yang membuat pernyataan</p>
+                            <p className="font-bold">Orang tua murid</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline">( {sp.nama_orang_tua || '....................................'} )</p>
+                          </div>
+
+                          <div className="text-right">
+                            <p>{sp.tempat_surat || 'Pasuruan'}, {tanggalIndo}</p>
+                            <p className="font-bold">Siswa</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline uppercase">( {sp.nama_siswa} )</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {sp.jenis_sp === 'SP_PENGUNDURAN_DIRI' && (
+                      <div className="space-y-3">
+                        <p>Yang bertanda tangan dibawah ini:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Pekerjaan</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.pekerjaan_orang_tua || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2">Adalah orang tua dari siswa:</p>
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-36 py-1">Nama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_siswa}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Kelas</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.kelas}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Alamat</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1">{sp.alamat_orang_tua || '-'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="text-justify pt-2">
+                          Dengan ini menyatakan anak kami tersebut diatas mengundurkan diri dari <strong>UPT SMP NEGERI 7 PASURUAN</strong> dikarenakan: <strong>{sp.alasan_pengunduran || 'alasan pribadi / keluarga'}</strong>.
+                        </p>
+
+                        {sp.peraturan_diketahui && sp.peraturan_diketahui.trim().length > 0 && (
+                          <div className="p-3.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 whitespace-pre-wrap leading-relaxed font-sans text-xs sm:text-sm">
+                            {sp.peraturan_diketahui}
+                          </div>
+                        )}
+
+                        <p className="text-justify pt-2">
+                          Demikian surat pernyataan ini, kami buat dengan sebenar-benarnya dan hendaknya digunakan sebagaimana mestinya.
+                        </p>
+
+                        <div className="pt-8 grid grid-cols-2 text-xs font-serif">
+                          <div className="text-left">
+                            <p>Mengetahui,</p>
+                            <p className="font-bold">Orang tua siswa</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline">( {sp.nama_orang_tua || '....................................'} )</p>
+                          </div>
+
+                          <div className="text-right">
+                            <p>{sp.tempat_surat || 'Pasuruan'}, {tanggalIndo}</p>
+                            <p className="font-bold">Siswa</p>
+                            <div className="h-20" />
+                            <p className="font-bold underline uppercase">( {sp.nama_siswa} )</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()
+            ) : (
+              <div className="p-8 text-center text-slate-500 italic">
+                Data Surat Pernyataan tidak ditemukan.
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* 14. TABEL REKAP SURAT PERNYATAAN */}
+        {docType === 'surat_pernyataan_tabel' && (
+          <div className="overflow-x-auto my-4">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+              REKAPITULASI SURAT PERNYATAAN SISWA / ORANG TUA
+            </h3>
+            <table className="w-full text-left text-xs border-collapse border border-slate-900">
+              <thead>
+                <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 text-[10px] uppercase text-center">
+                  <th className="p-2 border border-slate-900 w-8">NO</th>
+                  <th className="p-2 border border-slate-900 w-28">JENIS SP</th>
+                  <th className="p-2 border border-slate-900 w-28">TANGGAL</th>
+                  <th className="p-2 border border-slate-900 w-40">SISWA & KELAS</th>
+                  <th className="p-2 border border-slate-900 w-40">ORANG TUA / WALI</th>
+                  <th className="p-2 border border-slate-900">POIN PERNYATAAN / KOMITMEN</th>
+                  <th className="p-2 border border-slate-900 w-24">KETERANGAN</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suratPernyataanItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                      Belum ada data Surat Pernyataan Siswa.
+                    </td>
+                  </tr>
+                ) : (
+                  suratPernyataanItems.map((item, idx) => (
+                    <tr key={item.id} className="border-b border-slate-900">
+                      <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                      <td className="p-2 border border-slate-900 font-bold text-center text-amber-900">
+                        {item.jenis_sp}
+                      </td>
+                      <td className="p-2 border border-slate-900 text-center font-medium">
+                        {formatIndoDate(item.tanggal_surat)}
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div className="font-bold">{item.nama_siswa}</div>
+                        <div className="text-slate-700 font-semibold text-[11px]">Kelas: {item.kelas}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900">
+                        <div className="font-medium">{item.nama_orang_tua || '-'}</div>
+                        <div className="text-slate-600 text-[10px]">{item.pekerjaan_orang_tua || item.alamat_orang_tua || '-'}</div>
+                      </td>
+                      <td className="p-2 border border-slate-900 text-[11px]">
+                        <div className="whitespace-pre-wrap text-slate-800 font-sans">{item.peraturan_diketahui}</div>
+                        {item.alasan_pengunduran && (
+                          <div className="mt-1 text-rose-800 font-semibold">Alasan: {item.alasan_pengunduran}</div>
+                        )}
+                      </td>
+                      <td className="p-2 border border-slate-900 text-center font-medium">
+                        {item.keterangan || '-'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         )}
 

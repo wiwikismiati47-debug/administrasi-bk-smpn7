@@ -146,23 +146,23 @@ export const TabelUndangan: React.FC<TabelUndanganProps> = ({
   };
 
   return (
-    <div className="bg-slate-900/90 text-slate-100 rounded-3xl p-5 sm:p-7 border border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.4)] backdrop-blur-xl space-y-6">
+    <div className="bg-white text-slate-800 rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-xl shadow-slate-200/50 space-y-6">
       
       {/* Table Header Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div>
           <div className="flex items-center gap-2">
-            <span className="bg-purple-500/20 text-purple-300 border border-purple-400/30 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+            <span className="bg-purple-100 text-purple-800 border border-purple-200 text-[10px] font-black px-2 py-0.5 rounded uppercase">
               TABEL DATA B
             </span>
-            <span className="text-xs text-slate-400 font-semibold">
+            <span className="text-xs text-slate-500 font-semibold">
               SMPN 7 Pasuruan
             </span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
             DAFTAR UNDANGAN ORANG TUA SISWA
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500">
             Total {items.length} Data Terdaftar • {filtered.length} Ditampilkan
           </p>
         </div>
