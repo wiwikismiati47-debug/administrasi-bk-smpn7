@@ -277,4 +277,18 @@ export interface AppLink {
   colorGradient?: string;
 }
 
+export interface Siswa {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  nama_siswa: string;
+  kelas: string;
+  nis: string;
+  jenis_kelamin: string; // 'Laki-laki' | 'Perempuan'
+  keterangan?: string;
+}
+
+export type FormSiswaData = Omit<Siswa, 'id' | 'created_at' | 'updated_at'>;
+
+
 

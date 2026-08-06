@@ -16,7 +16,9 @@ import {
   SuratPernyataan,
   FormSuratPernyataanData,
   KonferensiKasus,
-  FormKonferensiKasusData
+  FormKonferensiKasusData,
+  Siswa,
+  FormSiswaData
 } from '../types';
 import { FormAgenda } from './FormAgenda';
 import { TabelAgenda } from './TabelAgenda';
@@ -35,6 +37,8 @@ import { FormSuratPernyataan } from './FormSuratPernyataan';
 import { TabelSuratPernyataan } from './TabelSuratPernyataan';
 import { FormKonferensiKasus } from './FormKonferensiKasus';
 import { TabelKonferensiKasus } from './TabelKonferensiKasus';
+import { FormSiswa } from './FormSiswa';
+import { TabelSiswa } from './TabelSiswa';
 import { PrintView } from './PrintView';
 import {
   ExternalLink,
@@ -55,7 +59,8 @@ import {
   AlertTriangle,
   UserCheck,
   UserPlus,
-  FileCheck2
+  FileCheck2,
+  GraduationCap
 } from 'lucide-react';
 
 interface MainAppViewerProps {
@@ -117,6 +122,14 @@ interface MainAppViewerProps {
   onSubmitKonferensiKasus: (data: Partial<KonferensiKasus> & FormKonferensiKasusData) => Promise<void>;
   onDeleteKonferensiKasus: (id: string) => Promise<void>;
 
+  // Siswa Props
+  siswaItems: Siswa[];
+  isLoadingSiswa: boolean;
+  isSubmittingSiswa: boolean;
+  onSubmitSiswa: (data: Partial<Siswa> & FormSiswaData) => Promise<void>;
+  onDeleteSiswa: (id: string) => Promise<void>;
+  onBulkImportSiswa: (students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]) => Promise<void>;
+
   // Common Props
   isSupabaseConnected: boolean;
   onRefreshData: () => void;
@@ -165,6 +178,12 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   isSubmittingKonferensiKasus = false,
   onSubmitKonferensiKasus,
   onDeleteKonferensiKasus,
+  siswaItems = [],
+  isLoadingSiswa = false,
+  isSubmittingSiswa = false,
+  onSubmitSiswa,
+  onDeleteSiswa,
+  onBulkImportSiswa,
   isSupabaseConnected = false,
   onRefreshData,
   onOpenSupabaseConfig,
@@ -178,6 +197,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [editingKonselingKelompok, setEditingKonselingKelompok] = useState<KonselingKelompok | null>(null);
   const [editingSuratPernyataan, setEditingSuratPernyataan] = useState<SuratPernyataan | null>(null);
   const [editingKonferensiKasus, setEditingKonferensiKasus] = useState<KonferensiKasus | null>(null);
+  const [editingSiswa, setEditingSiswa] = useState<Siswa | null>(null);
   
   // Printing states
   const [isPrintMode, setIsPrintMode] = useState(false);
@@ -224,6 +244,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const isInternalKonselingKelompok = linkUrl === 'internal:konseling_kelompok';
   const isInternalSuratPernyataan = linkUrl === 'internal:surat_pernyataan';
   const isInternalKonferensiKasus = linkUrl === 'internal:konferensi_kasus';
+  const isInternalSiswa = linkUrl === 'internal:siswa';
   const isInternal =
     isInternalAgenda ||
     isInternalUndangan ||
@@ -232,7 +253,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     isInternalKonselingIndividu ||
     isInternalKonselingKelompok ||
     isInternalSuratPernyataan ||
-    isInternalKonferensiKasus;
+    isInternalKonferensiKasus ||
+    isInternalSiswa;
 
   const handleOpenPrint = (
     docType:
@@ -325,6 +347,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
               <FileCheck2 className="w-6 h-6" />
             ) : isInternalKonferensiKasus ? (
               <Users className="w-6 h-6" />
+            ) : isInternalSiswa ? (
+              <GraduationCap className="w-6 h-6" />
             ) : (
               <Globe className="w-6 h-6" />
             )}
@@ -333,6 +357,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <div className="flex items-center gap-2">
               <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
                 {selectedLink?.badge || (
+                  isInternalSiswa ? 'SISWA' :
                   isInternalKonferensiKasus ? 'FORM H' :
                   isInternalSuratPernyataan ? 'FORM G' :
                   isInternalKonselingKelompok ? 'FORM F' :
@@ -374,6 +399,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     if (editingKonselingKelompok) setEditingKonselingKelompok(null);
                     if (editingSuratPernyataan) setEditingSuratPernyataan(null);
                     if (editingKonferensiKasus) setEditingKonferensiKasus(null);
+                    if (editingSiswa) setEditingSiswa(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                     internalTab === 'form'
@@ -383,7 +409,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
                   <span>
-                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan || editingKonferensiKasus) ? 'Edit Form' : 'Input Form'}
+                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan || editingKonferensiKasus || editingSiswa) ? 'Edit Form' : 'Input Form'}
                   </span>
                 </button>
  
@@ -979,6 +1005,41 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       handleOpenPrint(mappedType as any, null, null, null, null, null, null, item);
                     }}
                     isFromSupabase={isSupabaseConnected}
+                  />
+                )}
+              </>
+            )}
+
+            {/* I. DATA MANAGEMENT SISWA CONTROLLER */}
+            {isInternalSiswa && (
+              <>
+                {internalTab === 'form' && (
+                  <FormSiswa
+                    initialData={editingSiswa}
+                    onSubmit={async (data) => {
+                      await onSubmitSiswa(data);
+                      setEditingSiswa(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingSiswa(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingSiswa}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelSiswa
+                    items={siswaItems}
+                    onEdit={(item) => {
+                      setEditingSiswa(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteSiswa}
+                    onBulkImport={onBulkImportSiswa}
+                    isSupabase={isSupabaseConnected}
+                    isLoading={isLoadingSiswa}
                   />
                 )}
               </>

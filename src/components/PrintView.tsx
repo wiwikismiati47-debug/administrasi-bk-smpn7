@@ -266,55 +266,57 @@ export const PrintView: React.FC<PrintViewProps> = ({
     <div className="min-h-screen bg-slate-100 p-2 sm:p-8 text-slate-900 print:bg-white print:p-0">
       
       {/* Top Action Bar (hidden during actual printing) */}
-      <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-xl shadow border border-slate-200 print:hidden">
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-lg transition-colors w-full sm:w-auto justify-center"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Aplikasi</span>
-        </button>
+      <div className="max-w-5xl mx-auto mb-6 bg-white p-4 rounded-xl shadow border border-slate-200 print:hidden flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+          <button
+            onClick={onBack}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-sm font-semibold rounded-lg transition-colors w-full sm:w-auto justify-center"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali ke Aplikasi</span>
+          </button>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-          {(docType === 'surat_undangan' ||
-            docType === 'laporan_konsultasi' ||
-            docType === 'surat_tugas_home_visit' ||
-            docType === 'laporan_home_visit' ||
-            docType === 'surat_kesediaan_ortu' ||
-            docType === 'rekam_permasalahan_dokumen' ||
-            docType === 'rekam_permasalahan_tabel' ||
-            docType === 'konseling_individu_dokumen' ||
-            docType === 'konseling_individu_tabel' ||
-            docType === 'konseling_kelompok_dokumen' ||
-            docType === 'konseling_kelompok_tabel' ||
-            docType === 'surat_pernyataan_dokumen' ||
-            docType === 'surat_pernyataan_tabel') && (
+          <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
+            {(docType === 'surat_undangan' ||
+              docType === 'laporan_konsultasi' ||
+              docType === 'surat_tugas_home_visit' ||
+              docType === 'laporan_home_visit' ||
+              docType === 'surat_kesediaan_ortu' ||
+              docType === 'rekam_permasalahan_dokumen' ||
+              docType === 'rekam_permasalahan_tabel' ||
+              docType === 'konseling_individu_dokumen' ||
+              docType === 'konseling_individu_tabel' ||
+              docType === 'konseling_kelompok_dokumen' ||
+              docType === 'konseling_kelompok_tabel' ||
+              docType === 'surat_pernyataan_dokumen' ||
+              docType === 'surat_pernyataan_tabel') && (
+              <button
+                onClick={handleDownloadWordCurrent}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold rounded-lg shadow transition-colors"
+                title="Download dokumen dalam format Microsoft Word (.doc)"
+              >
+                <Download className="w-4 h-4 text-amber-300" />
+                <span>Download Word (.doc)</span>
+              </button>
+            )}
+
             <button
-              onClick={handleDownloadWordCurrent}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold rounded-lg shadow transition-colors"
-              title="Download dokumen dalam format Microsoft Word (.doc)"
+              onClick={handleOpenNewPrintTab}
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition-colors"
+              title="Buka di tab baru jika tombol cetak terhalang iframe"
             >
-              <Download className="w-4 h-4 text-amber-300" />
-              <span>Download Word (.doc)</span>
+              <ExternalLink className="w-4 h-4 text-slate-300" />
+              <span>Tab Baru</span>
             </button>
-          )}
 
-          <button
-            onClick={handleOpenNewPrintTab}
-            className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition-colors"
-            title="Buka di tab baru jika tombol cetak terhalang iframe"
-          >
-            <ExternalLink className="w-4 h-4 text-slate-300" />
-            <span>Tab Baru</span>
-          </button>
-
-          <button
-            onClick={handleTriggerPrint}
-            className="inline-flex items-center gap-2 px-6 py-2 bg-purple-700 hover:bg-purple-800 text-white text-sm font-bold rounded-lg shadow transition-colors w-full sm:w-auto justify-center"
-          >
-            <Printer className="w-4 h-4 text-amber-300" />
-            <span>Cetak / Simpan PDF</span>
-          </button>
+            <button
+              onClick={handleTriggerPrint}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-purple-700 hover:bg-purple-800 text-white text-sm font-bold rounded-lg shadow transition-colors w-full sm:w-auto justify-center"
+            >
+              <Printer className="w-4 h-4 text-amber-300" />
+              <span>Cetak / Simpan PDF</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2167,13 +2169,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
             {/* Signatures */}
             <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
               <div>
-                <div>Mengetahui / Pimpinan Sidang,</div>
-                <div>Ketua Rapat</div>
-                <div className="h-16" />
-                <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.pemandu_nama || 'WIWIK ISMIATI, S.Pd'}
-                </div>
-                <div>Jabatan: {currentKonferensiKasus.pemandu_jabatan || 'Konselor'}</div>
+                {/* Left signature removed as per user attachment template (redundant duplication) */}
               </div>
               <div>
                 <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
@@ -2444,13 +2440,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
               {/* Signatures 2 */}
               <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
                 <div>
-                  <div>Mengetahui / Pimpinan Sidang,</div>
-                  <div>Ketua Rapat</div>
-                  <div className="h-16" />
-                  <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.pemandu_nama || 'WIWIK ISMIATI, S.Pd'}
-                  </div>
-                  <div>Jabatan: {currentKonferensiKasus.pemandu_jabatan || 'Konselor'}</div>
+                  {/* Left signature removed as per user attachment template (redundant duplication) */}
                 </div>
                 <div>
                   <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>

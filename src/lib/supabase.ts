@@ -1,5 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa } from '../types';
 
 const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
 const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
@@ -10,6 +10,7 @@ const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
 const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
 const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
 const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
+const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_data_local';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -19,6 +20,7 @@ export const DEFAULT_KONSELING_INDIVIDU_TABLE_NAME = 'rencana_konseling_individu
 export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok';
 export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
 export const DEFAULT_KONFERENSI_KASUS_TABLE_NAME = 'konferensi_kasus_siswa';
+export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
 
 // Get active config from localStorage or import.meta.env
 export function getSavedSupabaseConfig(): SupabaseConfig {
@@ -1452,6 +1454,184 @@ export async function deleteKonferensiKasusItem(id: string): Promise<{ success: 
   return { success: true, isSupabase: false };
 }
 
+// Local Storage Helpers - Siswa
+export function getLocalSiswaList(): Siswa[] {
+  const str = localStorage.getItem(STORAGE_KEY_SISWA);
+  if (!str) {
+    const demoData: Siswa[] = [
+      {
+        id: 'demo-s1',
+        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+        updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+        nama_siswa: 'Ahmad Rizky Pratama',
+        kelas: 'VIII A',
+        nis: '12345',
+        jenis_kelamin: 'Laki-laki',
+        keterangan: 'Siswa aktif'
+      },
+      {
+        id: 'demo-s2',
+        created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+        updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+        nama_siswa: 'Siti Aminah',
+        kelas: 'VIII A',
+        nis: '12346',
+        jenis_kelamin: 'Perempuan',
+        keterangan: 'Siswa aktif'
+      },
+      {
+        id: 'demo-s3',
+        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+        updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+        nama_siswa: 'Rian Adiputra',
+        kelas: 'IX C',
+        nis: '12347',
+        jenis_kelamin: 'Laki-laki',
+        keterangan: 'Pernah bimbingan kedisiplinan'
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_SISWA, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalSiswaList(data: Siswa[]) {
+  localStorage.setItem(STORAGE_KEY_SISWA, JSON.stringify(data));
+}
+
+export async function fetchSiswaList(): Promise<{ data: Siswa[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_SISWA_TABLE_NAME)
+        .select('*')
+        .order('nama_siswa', { ascending: true });
+
+      if (!error && data) {
+        saveLocalSiswaList(data as Siswa[]);
+        return { data: data as Siswa[], isFromSupabase: true };
+      } else if (error) {
+        console.warn('Supabase fetch siswa error:', error.message);
+        return {
+          data: getLocalSiswaList(),
+          isFromSupabase: false,
+          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
+      return { data: getLocalSiswaList(), isFromSupabase: false, error: msg };
+    }
+  }
+
+  return { data: getLocalSiswaList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateSiswa(
+  siswa: Partial<Siswa> & Omit<Siswa, 'id'>
+): Promise<{ success: boolean; data?: Siswa; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const currentLocal = getLocalSiswaList();
+  
+  // Find by NIS for upserting behavior
+  const matchedSiswaByNis = currentLocal.find(s => s.nis && s.nis.trim() === siswa.nis.trim());
+  const idToUse = siswa.id || matchedSiswaByNis?.id || (crypto.randomUUID ? crypto.randomUUID() : `sis-${Date.now()}`);
+
+  const payload: Siswa = {
+    ...siswa,
+    id: idToUse,
+    created_at: siswa.created_at || matchedSiswaByNis?.created_at || now,
+    updated_at: now,
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_SISWA_TABLE_NAME)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
+        if (existingIdx >= 0) {
+          currentLocal[existingIdx] = data as Siswa;
+        } else {
+          currentLocal.push(data as Siswa);
+        }
+        saveLocalSiswaList(currentLocal);
+
+        return { success: true, data: data as Siswa, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase save siswa error:', error.message);
+        saveToLocalSiswaFallback(payload);
+        return {
+          success: true,
+          data: payload,
+          isSupabase: false,
+          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+        };
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
+      saveToLocalSiswaFallback(payload);
+      return {
+        success: true,
+        data: payload,
+        isSupabase: false,
+        error: `${msg}. Disimpan di penyimpanan lokal.`,
+      };
+    }
+  }
+
+  saveToLocalSiswaFallback(payload);
+  return { success: true, data: payload, isSupabase: false };
+}
+
+function saveToLocalSiswaFallback(item: Siswa) {
+  const current = getLocalSiswaList();
+  const existingIdx = current.findIndex((i) => i.id === item.id);
+  if (existingIdx >= 0) {
+    current[existingIdx] = item;
+  } else {
+    current.push(item);
+  }
+  saveLocalSiswaList(current);
+}
+
+export async function deleteSiswaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalSiswaList().filter((i) => i.id !== id);
+        saveLocalSiswaList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalSiswaList().filter((i) => i.id !== id);
+  saveLocalSiswaList(current);
+  return { success: true, isSupabase: false };
+}
+
 // SQL Script generator for user setup in Supabase SQL Editor
 export function getSupabaseSqlSetup(
   tableName: string = DEFAULT_TABLE_NAME,
@@ -1461,7 +1641,8 @@ export function getSupabaseSqlSetup(
   konselingIndividuTableName: string = DEFAULT_KONSELING_INDIVIDU_TABLE_NAME,
   konselingKelompokTableName: string = DEFAULT_KONSELING_KELOMPOK_TABLE_NAME,
   suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME,
-  konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME
+  konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME,
+  siswaTableName: string = DEFAULT_SISWA_TABLE_NAME
 ): string {
   return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
@@ -1716,6 +1897,27 @@ create policy "Akses Baca Publik Konferensi Kasus" on public.${konferensiKasusTa
 create policy "Akses Tambah Publik Konferensi Kasus" on public.${konferensiKasusTableName} for insert with check (true);
 create policy "Akses Update Publik Konferensi Kasus" on public.${konferensiKasusTableName} for update using (true);
 create policy "Akses Hapus Publik Konferensi Kasus" on public.${konferensiKasusTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
+-- 9. TABEL I: DATA MANAGEMENT SISWA (${siswaTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${siswaTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  nama_siswa text not null,
+  kelas text not null,
+  nis text not null,
+  jenis_kelamin text not null,
+  keterangan text default ''
+);
+
+alter table public.${siswaTableName} enable row level security;
+
+create policy "Akses Baca Publik Siswa" on public.${siswaTableName} for select using (true);
+create policy "Akses Tambah Publik Siswa" on public.${siswaTableName} for insert with check (true);
+create policy "Akses Update Publik Siswa" on public.${siswaTableName} for update using (true);
+create policy "Akses Hapus Publik Siswa" on public.${siswaTableName} for delete using (true);
 `;
 }
 

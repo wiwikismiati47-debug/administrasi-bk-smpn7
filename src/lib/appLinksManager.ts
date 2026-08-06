@@ -92,6 +92,17 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     colorGradient: 'from-rose-600 via-red-600 to-orange-800',
   },
   {
+    id: 'link-internal-siswa',
+    title: 'I. Management Siswa',
+    url: 'internal:siswa',
+    iconName: 'GraduationCap',
+    category: 'Administrasi Utama',
+    description: 'Manajemen Data Siswa (NO, Nama, Kelas, NIS, Jenis Kelamin). Form publik, simpan Supabase, update otomatis bila NIS sudah ada.',
+    isInternal: true,
+    badge: 'SISWA',
+    colorGradient: 'from-cyan-600 via-teal-600 to-blue-800',
+  },
+  {
     id: 'link-supabase-console',
     title: 'Console Supabase Database',
     url: 'https://supabase.com/dashboard',

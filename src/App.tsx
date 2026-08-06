@@ -16,7 +16,9 @@ import {
   FormSuratPernyataanData,
   KonferensiKasus,
   FormKonferensiKasusData,
-  AppLink
+  AppLink,
+  Siswa,
+  FormSiswaData
 } from './types';
 import {
   fetchAllAgenda,
@@ -43,6 +45,9 @@ import {
   fetchAllKonferensiKasus,
   saveOrUpdateKonferensiKasus,
   deleteKonferensiKasusItem,
+  fetchSiswaList,
+  saveOrUpdateSiswa,
+  deleteSiswaItem,
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -105,6 +110,11 @@ export default function App() {
   const [konferensiKasusItems, setKonferensiKasusItems] = useState<KonferensiKasus[]>([]);
   const [isLoadingKonferensiKasus, setIsLoadingKonferensiKasus] = useState<boolean>(true);
   const [isSubmittingKonferensiKasus, setIsSubmittingKonferensiKasus] = useState<boolean>(false);
+
+  // Siswa state
+  const [siswaItems, setSiswaItems] = useState<Siswa[]>([]);
+  const [isLoadingSiswa, setIsLoadingSiswa] = useState<boolean>(true);
+  const [isSubmittingSiswa, setIsSubmittingSiswa] = useState<boolean>(false);
 
   // Connection state
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
@@ -264,6 +274,22 @@ export default function App() {
     }
   }, []);
 
+  const loadSiswaData = useCallback(async () => {
+    setIsLoadingSiswa(true);
+    try {
+      const res = await fetchSiswaList();
+      setSiswaItems(res.data);
+      if (res.isFromSupabase) {
+        setIsSupabaseConnected(true);
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data manajemen siswa.', 'error');
+    } finally {
+      setIsLoadingSiswa(false);
+    }
+  }, []);
+
   const refreshAllData = useCallback(async () => {
     await Promise.all([
       loadAgendaData(),
@@ -273,9 +299,20 @@ export default function App() {
       loadKonselingIndividuData(),
       loadKonselingKelompokData(),
       loadSuratPernyataanData(),
-      loadKonferensiKasusData()
+      loadKonferensiKasusData(),
+      loadSiswaData()
     ]);
-  }, [loadAgendaData, loadUndanganData, loadHomeVisitData, loadRekamPermasalahanData, loadKonselingIndividuData, loadKonselingKelompokData, loadSuratPernyataanData, loadKonferensiKasusData]);
+  }, [
+    loadAgendaData,
+    loadUndanganData,
+    loadHomeVisitData,
+    loadRekamPermasalahanData,
+    loadKonselingIndividuData,
+    loadKonselingKelompokData,
+    loadSuratPernyataanData,
+    loadKonferensiKasusData,
+    loadSiswaData
+  ]);
 
   useEffect(() => {
     refreshAllData();
@@ -573,6 +610,57 @@ export default function App() {
     }
   };
 
+  // Handle Siswa submit & delete & bulk import
+  const handleSubmitSiswa = async (data: Partial<Siswa> & FormSiswaData) => {
+    setIsSubmittingSiswa(true);
+    try {
+      const res = await saveOrUpdateSiswa(data);
+      if (res.success) {
+        await loadSiswaData();
+        showToast(
+          data.id
+            ? 'Data Siswa berhasil diperbarui!'
+            : 'Data Siswa berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan data siswa.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingSiswa(false);
+    }
+  };
+
+  const handleDeleteSiswa = async (id: string) => {
+    try {
+      const res = await deleteSiswaItem(id);
+      if (res.success) {
+        await loadSiswaData();
+        showToast('Data Siswa berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data siswa.', 'error');
+    }
+  };
+
+  const handleBulkImportSiswa = async (students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]) => {
+    setIsSubmittingSiswa(true);
+    try {
+      // Save each student using the upsert-capable saveOrUpdateSiswa
+      await Promise.all(students.map(s => saveOrUpdateSiswa(s)));
+      await loadSiswaData();
+      showToast(`Berhasil mengimpor/memperbarui ${students.length} data siswa.`, 'success');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat import massal';
+      showToast(`Gagal mengimpor: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingSiswa(false);
+    }
+  };
+
   // --- APP LINK MANAGER HANDLERS ---
   const handleSaveLink = (linkToSave: AppLink) => {
     const existingIndex = links.findIndex((l) => l.id === linkToSave.id);
@@ -765,6 +853,12 @@ export default function App() {
           isSubmittingKonferensiKasus={isSubmittingKonferensiKasus}
           onSubmitKonferensiKasus={handleSubmitKonferensiKasus}
           onDeleteKonferensiKasus={handleDeleteKonferensiKasus}
+          siswaItems={siswaItems}
+          isLoadingSiswa={isLoadingSiswa}
+          isSubmittingSiswa={isSubmittingSiswa}
+          onSubmitSiswa={handleSubmitSiswa}
+          onDeleteSiswa={handleDeleteSiswa}
+          onBulkImportSiswa={handleBulkImportSiswa}
           isSupabaseConnected={isSupabaseConnected}
           onRefreshData={refreshAllData}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}
