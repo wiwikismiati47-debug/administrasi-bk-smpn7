@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+
+  /* Hide header, sidebar, footer, top action bar, and non-printable elements */
+  header, footer, nav, aside, .print\:hidden, [role="dialog"], button {
+    display: none !important;
+  }
+
+  /* Force white background and black text on body and all containers */
+  html, body, #root, main, section {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure printable sheet is full width without card margins or rounded corners */
+  .printable-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* Force table text and borders to print in high contrast black */
+  table, th, td {
+    color: #000000 !important;
+    border-color: #000000 !important;
+  }
+
+  /* Page break rules */
+  table, tr, td, th, .keep-together {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

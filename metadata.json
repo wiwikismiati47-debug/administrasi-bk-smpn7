@@ -1,0 +1,6 @@
+{
+  "name": "Administrasi BK SMPN 7 Pasuruan",
+  "description": "Form dan Sistem Agenda Kerja BK SMPN 7 Pasuruan terhubung Supabase tanpa perlu login",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

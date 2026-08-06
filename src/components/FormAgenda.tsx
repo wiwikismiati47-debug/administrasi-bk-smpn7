@@ -1,0 +1,544 @@
+import React, { useState, useEffect } from 'react';
+import { AgendaKerja, FormAgendaData } from '../types';
+import {
+  Calendar,
+  Clock,
+  FileText,
+  Users,
+  Image as ImageIcon,
+  CheckCircle2,
+  Save,
+  RotateCcw,
+  Sparkles,
+  Link as LinkIcon,
+  Upload,
+  Eye,
+  AlertCircle,
+  Pencil
+} from 'lucide-react';
+
+interface FormAgendaProps {
+  initialData?: AgendaKerja | null;
+  onSubmit: (data: Partial<AgendaKerja> & FormAgendaData) => Promise<void>;
+  onCancelEdit?: () => void;
+  isSubmitting: boolean;
+}
+
+const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const NAMA_BULAN = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+const PRESET_URAIAN = [
+  'Layanan Bimbingan Klasikal: Motivasi Belajar & Etika',
+  'Konseling Individual: Pendampingan Masalah Pribadi & Belajar',
+  'Konseling Kelompok: Pembentukan Karakter & Kerjasama',
+  'Layanan Mediasi / Penyelesaian Konflik Antar Siswa',
+  'Home Visit / Kunjungan Rumah Siswa',
+  'Layanan Orientasi & Informasi Karir / Kelanjutan Studi',
+  'Konferensi Kasus Bersama Orang Tua & Wali Kelas',
+];
+
+const PRESET_SASARAN = [
+  'Siswa Kelas VII A',
+  'Siswa Kelas VII B',
+  'Siswa Kelas VIII A',
+  'Siswa Kelas VIII B',
+  'Siswa Kelas IX A',
+  'Siswa Kelas IX B',
+  'Seluruh Siswa Kelas VII',
+  'Seluruh Siswa Kelas VIII',
+  'Seluruh Siswa Kelas IX',
+  'Orang Tua / Wali Siswa',
+  'Wali Kelas & Guru Mata Pelajaran',
+];
+
+const PRESET_WAKTU = [
+  '07:15 - 08:30 WIB',
+  '08:30 - 09:45 WIB',
+  '10:00 - 11:15 WIB',
+  '11:15 - 12:30 WIB',
+  '12:30 - 14:00 WIB',
+];
+
+export const FormAgenda: React.FC<FormAgendaProps> = ({
+  initialData,
+  onSubmit,
+  onCancelEdit,
+  isSubmitting,
+}) => {
+  // Get current date formatted for initial values
+  const today = new Date();
+  const defaultDateStr = today.toISOString().split('T')[0];
+
+  const [formData, setFormData] = useState<FormAgendaData>({
+    hari: NAMA_HARI[today.getDay()],
+    tanggal: defaultDateStr,
+    bulan: NAMA_BULAN[today.getMonth()],
+    tahun: String(today.getFullYear()),
+    waktu: '08:00 - 09:30 WIB',
+    uraian_kegiatan: '',
+    sasaran: '',
+    link_foto_kegiatan: '',
+    keterangan: 'Terlaksana dengan baik',
+  });
+
+  const [previewError, setPreviewError] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Sync when initialData changes (for Edit mode)
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        hari: initialData.hari || 'Senin',
+        tanggal: initialData.tanggal || defaultDateStr,
+        bulan: initialData.bulan || 'Agustus',
+        tahun: initialData.tahun || String(today.getFullYear()),
+        waktu: initialData.waktu || '',
+        uraian_kegiatan: initialData.uraian_kegiatan || '',
+        sasaran: initialData.sasaran || '',
+        link_foto_kegiatan: initialData.link_foto_kegiatan || '',
+        keterangan: initialData.keterangan || '',
+      });
+      setPreviewError(false);
+    }
+  }, [initialData]);
+
+  // When date input changes, automatically update Hari, Bulan, Tahun
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val) {
+      setFormData((prev) => ({ ...prev, tanggal: val }));
+      return;
+    }
+    const d = new Date(val + 'T00:00:00');
+    if (!isNaN(d.getTime())) {
+      const dayName = NAMA_HARI[d.getDay()];
+      const monthName = NAMA_BULAN[d.getMonth()];
+      const yearName = String(d.getFullYear());
+
+      setFormData((prev) => ({
+        ...prev,
+        tanggal: val,
+        hari: dayName,
+        bulan: monthName,
+        tahun: yearName,
+      }));
+    } else {
+      setFormData((prev) => ({ ...prev, tanggal: val }));
+    }
+  };
+
+  // Image File upload preview converter
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setFormData((prev) => ({ ...prev, link_foto_kegiatan: dataUrl }));
+        setPreviewError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.uraian_kegiatan.trim()) {
+      alert('Uraian kegiatan wajib diisi!');
+      return;
+    }
+    if (!formData.sasaran.trim()) {
+      alert('Sasaran kegiatan wajib diisi!');
+      return;
+    }
+
+    try {
+      await onSubmit({
+        ...(initialData?.id ? { id: initialData.id, created_at: initialData.created_at } : {}),
+        ...formData,
+      });
+
+      setSuccessMessage(
+        initialData?.id
+          ? 'Data Agenda Kerja BK berhasil diperbarui!'
+          : 'Data Agenda Kerja BK berhasil disimpan!'
+      );
+
+      setTimeout(() => setSuccessMessage(null), 4000);
+
+      if (!initialData?.id) {
+        // Reset form for next input if new record
+        setFormData((prev) => ({
+          ...prev,
+          uraian_kegiatan: '',
+          sasaran: '',
+          link_foto_kegiatan: '',
+          keterangan: 'Terlaksana dengan baik',
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Terjadi kesalahan saat menyimpan data.');
+    }
+  };
+
+  const handleReset = () => {
+    if (initialData?.id && onCancelEdit) {
+      onCancelEdit();
+    } else {
+      setFormData({
+        hari: NAMA_HARI[today.getDay()],
+        tanggal: defaultDateStr,
+        bulan: NAMA_BULAN[today.getMonth()],
+        tahun: String(today.getFullYear()),
+        waktu: '08:00 - 09:30 WIB',
+        uraian_kegiatan: '',
+        sasaran: '',
+        link_foto_kegiatan: '',
+        keterangan: 'Terlaksana dengan baik',
+      });
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+      {/* Form Header Banner */}
+      <div className="bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-white/10 rounded-lg backdrop-blur-sm">
+            {initialData?.id ? <Pencil className="w-5 h-5 text-amber-300" /> : <Sparkles className="w-5 h-5 text-amber-300" />}
+          </div>
+          <div>
+            <h3 className="font-bold text-lg leading-tight">
+              {initialData?.id ? 'UPDATE AGENDA KERJA BK' : 'INPUT AGENDA KERJA BK BARU'}
+            </h3>
+            <p className="text-xs text-blue-200">
+              Formulir Administrasi BK • SMPN 7 Pasuruan
+            </p>
+          </div>
+        </div>
+
+        {initialData?.id && (
+          <span className="bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1 rounded-full shadow">
+            Mode Edit ID: {initialData.id.slice(0, 8)}...
+          </span>
+        )}
+      </div>
+
+      {successMessage && (
+        <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-3 flex items-center gap-2 text-emerald-800 text-sm font-medium animate-fadeIn">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        
+        {/* ROW 1: Hari / Tanggal / Bulan / Tahun */}
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-4">
+          <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm border-b border-slate-200 pb-2">
+            <Calendar className="w-4 h-4 text-blue-600" />
+            <span>HARI / TANGGAL / BULAN / TAHUN</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            
+            {/* Tanggal Picker */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Pilih Tanggal <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                value={formData.tanggal}
+                onChange={handleDateChange}
+                required
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all [color-scheme:light]"
+              />
+            </div>
+
+            {/* Hari (Auto-calculated but customizable) */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Hari
+              </label>
+              <select
+                value={formData.hari}
+                onChange={(e) => setFormData({ ...formData, hari: e.target.value })}
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                {NAMA_HARI.map((h) => (
+                  <option key={h} value={h} className="text-slate-900">
+                    {h}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Bulan */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Bulan
+              </label>
+              <select
+                value={formData.bulan}
+                onChange={(e) => setFormData({ ...formData, bulan: e.target.value })}
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              >
+                {NAMA_BULAN.map((m) => (
+                  <option key={m} value={m} className="text-slate-900">
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tahun */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Tahun
+              </label>
+              <input
+                type="text"
+                value={formData.tahun}
+                onChange={(e) => setFormData({ ...formData, tahun: e.target.value })}
+                required
+                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                placeholder="2026"
+              />
+            </div>
+
+          </div>
+        </div>
+
+        {/* ROW 2: Waktu */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <Clock className="w-4 h-4 text-blue-600" />
+            <span>WAKTU KEGIATAN <span className="text-red-500">*</span></span>
+          </label>
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={formData.waktu}
+              onChange={(e) => setFormData({ ...formData, waktu: e.target.value })}
+              required
+              placeholder="Contoh: 08:00 - 09:30 WIB"
+              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+            />
+            {/* Quick time chips */}
+            <div className="flex flex-wrap gap-1.5 items-center pt-1">
+              <span className="text-[11px] text-slate-500">Opsi cepat:</span>
+              {PRESET_WAKTU.map((tw) => (
+                <button
+                  key={tw}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, waktu: tw })}
+                  className="text-xs px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-800 transition-colors border border-slate-200"
+                >
+                  {tw}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 3: Uraian Kegiatan */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <FileText className="w-4 h-4 text-blue-600" />
+            <span>URAIAN KEGIATAN <span className="text-red-500">*</span></span>
+          </label>
+          <textarea
+            rows={3}
+            value={formData.uraian_kegiatan}
+            onChange={(e) => setFormData({ ...formData, uraian_kegiatan: e.target.value })}
+            required
+            placeholder="Tuliskan detail uraian kegiatan Bimbingan Konseling yang dilaksanakan..."
+            className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+          />
+          {/* Quick preset chips */}
+          <div className="mt-2 space-y-1">
+            <span className="text-[11px] text-slate-500 block">Template Uraian Kegiatan BK:</span>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_URAIAN.map((u, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, uraian_kegiatan: u })}
+                  className="text-xs px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition-colors border border-blue-200/60 text-left"
+                >
+                  + {u}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ROW 4: Sasaran */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-blue-600" />
+            <span>SASARAN KEGIATAN <span className="text-red-500">*</span></span>
+          </label>
+          <input
+            type="text"
+            value={formData.sasaran}
+            onChange={(e) => setFormData({ ...formData, sasaran: e.target.value })}
+            required
+            placeholder="Contoh: Siswa Kelas VII A, Seluruh Siswa Kelas IX, Wali Kelas"
+            className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+          />
+          {/* Quick preset chips */}
+          <div className="flex flex-wrap gap-1.5 items-center pt-2">
+            <span className="text-[11px] text-slate-500">Pilih Sasaran:</span>
+            {PRESET_SASARAN.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setFormData({ ...formData, sasaran: s })}
+                className="text-xs px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ROW 5: Link Foto Kegiatan */}
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
+          <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <ImageIcon className="w-4 h-4 text-blue-600" />
+              LINK FOTO KEGIATAN
+            </span>
+            <span className="text-[11px] text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+          </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+            
+            {/* Input URL */}
+            <div className="md:col-span-2 space-y-2">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <LinkIcon className="w-4 h-4 text-slate-400" />
+                </div>
+                <input
+                  type="url"
+                  value={formData.link_foto_kegiatan}
+                  onChange={(e) => {
+                    setFormData({ ...formData, link_foto_kegiatan: e.target.value });
+                    setPreviewError(false);
+                  }}
+                  placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                  className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                />
+              </div>
+
+              {/* Local File Upload Button */}
+              <div className="flex items-center gap-2">
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 shadow-sm transition-colors">
+                  <Upload className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Upload Foto dari Perangkat</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-[11px] text-slate-500">
+                  {formData.link_foto_kegiatan.startsWith('data:image')
+                    ? '✓ Foto berhasil diunggah'
+                    : 'Format JPG, PNG, WEBP'}
+                </span>
+              </div>
+            </div>
+
+            {/* Photo Preview Thumbnail */}
+            <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg border border-slate-200 min-h-[90px]">
+              {formData.link_foto_kegiatan && !previewError ? (
+                <div className="relative group w-full h-20 overflow-hidden rounded border border-slate-200 flex items-center justify-center bg-slate-900/5">
+                  <img
+                    src={formData.link_foto_kegiatan}
+                    alt="Preview Kegiatan"
+                    onError={() => setPreviewError(true)}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1">
+                    <Eye className="w-3.5 h-3.5" /> Preview
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center p-2 text-slate-400">
+                  <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                  <span className="text-[11px] block">
+                    {previewError ? 'Link foto tidak valid' : 'Belum ada foto'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* ROW 6: Keterangan */}
+        <div>
+          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-blue-600" />
+            <span>KETERANGAN / HASIL LAYANAN</span>
+          </label>
+          <input
+            type="text"
+            value={formData.keterangan}
+            onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
+            placeholder="Contoh: Terlaksana dengan baik, Siswa kooperatif, Perlunya tindak lanjut"
+            className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+          />
+        </div>
+
+        {/* Form Action Buttons */}
+        <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={isSubmitting}
+            className="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 text-sm font-semibold transition-all inline-flex items-center gap-1.5"
+          >
+            <RotateCcw className="w-4 h-4" />
+            <span>{initialData?.id ? 'Batal Edit' : 'Reset Form'}</span>
+          </button>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="px-6 py-2.5 rounded-lg bg-blue-700 hover:bg-blue-800 text-white text-sm font-bold shadow-md hover:shadow-lg transition-all inline-flex items-center gap-2 disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Menyimpan Data...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4 text-amber-300" />
+                <span>{initialData?.id ? 'Update Agenda BK' : 'Simpan Agenda BK'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  );
+};
