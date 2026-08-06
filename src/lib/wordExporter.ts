@@ -22,6 +22,29 @@ function formatTanggalIndo(dateStr: string, bulanFallback: string = '', tahunFal
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+function getKopSuratWordHTML(): string {
+  return `
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px; border: none;">
+      <tr>
+        <td style="width: 18%; text-align: left; vertical-align: middle; border: none;">
+          <img src="https://i.ibb.co.com/677QPVHY/logo.png" width="75" height="75" alt="Logo Kota Pasuruan" />
+        </td>
+        <td style="width: 64%; text-align: center; vertical-align: middle; border: none;">
+          <h4 style="margin: 0; font-size: 11pt; font-weight: bold; font-family: 'Times New Roman', Times, serif;">PEMERINTAH KOTA PASURAN</h4>
+          <h2 style="margin: 2px 0; font-size: 15pt; font-weight: bold; font-family: 'Times New Roman', Times, serif;">UPT SMP NEGERI 7</h2>
+          <p style="margin: 2px 0; font-size: 8.5pt; font-family: 'Times New Roman', Times, serif;">Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139</p>
+          <p style="margin: 2px 0; font-size: 8.5pt; font-family: 'Times New Roman', Times, serif;">Telepon (0343) 426845</p>
+          <p style="margin: 2px 0; font-size: 8pt; font-family: 'Times New Roman', Times, serif;">Pos-el <i>smp7pas@yahoo.co.id</i>, Laman <i>www.smpn7pasuruan.sch.id</i></p>
+        </td>
+        <td style="width: 18%; text-align: right; vertical-align: middle; border: none;">
+          <img src="https://iili.io/KDFk4fI.png" width="75" height="75" alt="Logo SMPN 7 Pasuruan" />
+        </td>
+      </tr>
+    </table>
+    <div class="line-double" style="border-top: 3px double #000000; margin-top: 5px; margin-bottom: 15px;"></div>
+  `;
+}
+
 export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
   const tanggalIndo = formatTanggalIndo(item.tanggal, item.bulan, item.tahun);
   const todayIndo = formatTanggalIndo(new Date().toISOString().slice(0, 10));
@@ -44,34 +67,6 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
         font-size: 12pt;
         line-height: 1.3;
         color: #000000;
-      }
-      .header-kop {
-        text-align: center;
-        margin-bottom: 5px;
-      }
-      .header-kop h4 {
-        margin: 0;
-        font-size: 12pt;
-        font-weight: bold;
-      }
-      .header-kop h3 {
-        margin: 2px 0;
-        font-size: 13pt;
-        font-weight: bold;
-      }
-      .header-kop h2 {
-        margin: 2px 0;
-        font-size: 15pt;
-        font-weight: bold;
-      }
-      .header-kop p {
-        margin: 2px 0;
-        font-size: 9pt;
-      }
-      .line-double {
-        border-top: 3px double #000000;
-        margin-top: 5px;
-        margin-bottom: 20px;
       }
       .date-right {
         text-align: right;
@@ -99,12 +94,6 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
         padding: 4px 8px 4px 0;
         vertical-align: top;
       }
-      .signature-box {
-        margin-top: 30px;
-        float: right;
-        width: 250px;
-        text-align: center;
-      }
       .nb-box {
         clear: both;
         margin-top: 40px;
@@ -114,13 +103,7 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
   </head>
   <body>
     <!-- KOP SURAT RESMI -->
-    <div class="header-kop">
-      <h4>PEMERINTAH KOTA PASURAN</h4>
-      <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-      <h2>SMP NEGERI 7 PASURAN</h2>
-      <p>Jl. Simpang Slamet Riyadi No. 2 Seboro Gadangrejo Pasuruan 07139 Telp. (0343) 426845</p>
-    </div>
-    <div class="line-double"></div>
+    ${getKopSuratWordHTML()}
 
     <!-- TANGGAL SURAT -->
     <div class="date-right">
@@ -315,13 +298,7 @@ export function generateLaporanKonsultasiHTML(item: UndanganOrangTua): string {
   </head>
   <body>
     <!-- KOP SURAT RESMI -->
-    <div class="header-kop">
-      <h4>PEMERINTAH KOTA PASURAN</h4>
-      <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-      <h2>SMP NEGERI 7 PASURAN</h2>
-      <p>Jl. Simpang Slamet Riyadi No. 2 Seboro Gadangrejo Pasuruan 07139 Telp. (0343) 426845</p>
-    </div>
-    <div class="line-double"></div>
+    ${getKopSuratWordHTML()}
 
     <!-- JUDUL LAPORAN -->
     <div class="title-box">
@@ -482,6 +459,20 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
   const kepalaSekolah = item.nama_kepala_sekolah || DEFAULT_KEPALA_SEKOLAH;
   const nipKepalaSekolah = item.nip_kepala_sekolah || DEFAULT_NIP_KEPALA_SEKOLAH;
 
+  const semesterLaporan = item.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024';
+  const bidangLayanan = item.bidang_layanan || 'Pribadi / Belajar';
+  const topikPermasalahan = item.topik_permasalahan || item.perihal_home_visit || '-';
+  const fungsiLayanan = item.fungsi_layanan || 'Pemahaman/Pencegahan/Penyembuhan';
+  const pihakTerlibat = item.pihak_terlibat || '1. Konselor\n2. Wali Kelas';
+  const tujuanKegiatan = item.tujuan_kegiatan || 'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli';
+  const gambaranRingkasMasalah = item.gambaran_ringkas_masalah || item.uraian_permasalahan || '-';
+  const alamatKunjungan = item.alamat_kunjungan || item.alamat || '-';
+  const hariTanggalLamaKunjungan = item.hari_tanggal_lama_kunjungan || `${item.hari}, ${tanggalIndo} (${item.waktu})`;
+  const anggotaKeluargaDikunjungi = item.anggota_keluarga_dikunjungi || `Ayah : ${item.nama_orang_tua || '-'}`;
+  const rencanaEvaluasi = item.rencana_evaluasi || 'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga';
+  const tindakLanjut = item.tindak_lanjut || '-';
+  const catatanKhusus = item.catatan_khusus || item.keterangan || '-';
+
   return `
   <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
   <head>
@@ -495,49 +486,49 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
       body {
         font-family: 'Times New Roman', Times, serif;
         font-size: 11pt;
-        line-height: 1.4;
+        line-height: 1.3;
         color: #000000;
-      }
-      .header-kop {
-        text-align: center;
-        margin-bottom: 5px;
-      }
-      .header-kop h4 { margin: 0; font-size: 11pt; font-weight: bold; }
-      .header-kop h3 { margin: 2px 0; font-size: 12pt; font-weight: bold; }
-      .header-kop h2 { margin: 2px 0; font-size: 14pt; font-weight: bold; }
-      .header-kop p { margin: 2px 0; font-size: 9pt; }
-      .line-double {
-        border-top: 3px double #000000;
-        margin-top: 5px;
-        margin-bottom: 15px;
       }
       .title-doc {
         text-align: center;
-        font-size: 13pt;
+        font-size: 12pt;
         font-weight: bold;
-        text-decoration: underline;
-        margin-bottom: 15px;
+        margin-bottom: 2px;
         text-transform: uppercase;
       }
-      .grid-table {
+      .subtitle-doc {
+        text-align: center;
+        font-size: 10pt;
+        font-weight: bold;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+      }
+      .report-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 15px;
       }
-      .grid-table th, .grid-table td {
+      .report-table td {
         border: 1px solid #000000;
-        padding: 6px 8px;
+        padding: 5px 8px;
         vertical-align: top;
+        font-size: 10.5pt;
       }
-      .grid-table th {
-        background-color: #f2f2f2;
+      .report-table td.no-col {
+        width: 25px;
+        text-align: center;
+        font-weight: bold;
+      }
+      .report-table td.label-col {
+        width: 210px;
         font-weight: bold;
       }
       .sig-table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 25px;
+        margin-top: 20px;
         text-align: center;
+        font-size: 11pt;
       }
       .sig-table td {
         vertical-align: top;
@@ -546,79 +537,107 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
     </style>
   </head>
   <body>
-    <div class="header-kop">
-      <h4>PEMERINTAH KOTA PASURUAN</h4>
-      <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-      <h2>UPT SMP NEGERI 7 PASURUAN</h2>
-      <p>Jl. SPG No. 4 Telp. (0343) 424265 Pasuruan, Kode Pos 67126</p>
-    </div>
-    <div class="line-double"></div>
+    ${getKopSuratWordHTML()}
 
     <div class="title-doc">
-      LAPORAN PELAKSANAAN HOME VISIT / KUNJUNGAN RUMAH<br/>
-      BIMBINGAN DAN KONSELING
+      LAPORAN KUNJUNGAN RUMAH
+    </div>
+    <div class="subtitle-doc">
+      ${semesterLaporan}
     </div>
 
-    <table class="grid-table">
+    <table class="report-table">
       <tr>
-        <th style="width: 30%;">HARI / TANGGAL</th>
-        <td>${item.hari}, ${tanggalIndo}</td>
+        <td class="no-col">1</td>
+        <td class="label-col">Nama peserta didik/konseli</td>
+        <td><b>${item.nama_siswa.toUpperCase()}</b></td>
       </tr>
       <tr>
-        <th>WAKTU / JAM</th>
-        <td>${item.waktu}</td>
+        <td class="no-col">2</td>
+        <td class="label-col">Kelas /Semester</td>
+        <td><b>${item.kelas} / ${semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}</b></td>
       </tr>
       <tr>
-        <th>NAMA SISWA</th>
-        <td><b>${item.nama_siswa}</b> (Kelas: ${item.kelas})</td>
+        <td class="no-col">3</td>
+        <td class="label-col">Bidang Layanan</td>
+        <td>${bidangLayanan}</td>
       </tr>
       <tr>
-        <th>ORANG TUA / WALI</th>
-        <td>${item.nama_orang_tua || '-'} (Pekerjaan: ${item.pekerjaan_orang_tua || '-'})</td>
+        <td class="no-col">4</td>
+        <td class="label-col">Topik /Permasalahan</td>
+        <td>${topikPermasalahan.replace(/\n/g, '<br/>')}</td>
       </tr>
       <tr>
-        <th>ALAMAT RUMAH</th>
-        <td>${item.alamat || '-'}</td>
+        <td class="no-col">5</td>
+        <td class="label-col">Fungsi layanan</td>
+        <td>${fungsiLayanan}</td>
       </tr>
       <tr>
-        <th>PERIHAL HOME VISIT</th>
-        <td><b>${item.perihal_home_visit}</b></td>
+        <td class="no-col">6</td>
+        <td class="label-col">Pihak yang Terlibat</td>
+        <td>${pihakTerlibat.replace(/\n/g, '<br/>')}</td>
       </tr>
       <tr>
-        <th>URAIAN PERMASALAHAN</th>
-        <td>${item.uraian_permasalahan || '-'}</td>
+        <td class="no-col">7</td>
+        <td class="label-col">Tujuan Kegiatan</td>
+        <td>${tujuanKegiatan.replace(/\n/g, '<br/>')}</td>
       </tr>
       <tr>
-        <th>TINDAK LANJUT / HASIL</th>
-        <td>${item.tindak_lanjut || '-'}</td>
+        <td class="no-col">8</td>
+        <td class="label-col">Gambaran ringkas masalah</td>
+        <td>${gambaranRingkasMasalah.replace(/\n/g, '<br/>')}</td>
       </tr>
       <tr>
-        <th>KETERANGAN</th>
-        <td>${item.keterangan || '-'}</td>
+        <td class="no-col">9</td>
+        <td class="label-col">Alamat Kunjungan</td>
+        <td>${alamatKunjungan}</td>
+      </tr>
+      <tr>
+        <td class="no-col">10</td>
+        <td class="label-col">Hari/Tanggal dan lama kunjungan</td>
+        <td>${hariTanggalLamaKunjungan}</td>
+      </tr>
+      <tr>
+        <td class="no-col">11</td>
+        <td class="label-col">Anggota keluarga yang dikunjungi</td>
+        <td>${anggotaKeluargaDikunjungi}</td>
+      </tr>
+      <tr>
+        <td class="no-col">12</td>
+        <td class="label-col">Rencana Evaluasi</td>
+        <td>${rencanaEvaluasi.replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">13</td>
+        <td class="label-col">Tindaklanjut</td>
+        <td>${tindakLanjut.replace(/\n/g, '<br/>')}</td>
+      </tr>
+      <tr>
+        <td class="no-col">14</td>
+        <td class="label-col">Catatan Khusus</td>
+        <td>${catatanKhusus.replace(/\n/g, '<br/>')}</td>
       </tr>
     </table>
 
-    <br/>
     <table class="sig-table">
       <tr>
-        <td style="width: 50%;"></td>
-        <td style="width: 50%;">${item.tempat_surat || 'Pasuruan'}, ${item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo}</td>
+        <td style="width: 50%;">Guru BK/ Konselor</td>
+        <td style="width: 50%;">
+          Pasuruan, ${item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo}<br/>
+          Orang Tua / Wali Siswa
+        </td>
       </tr>
       <tr>
-        <td>Guru BK/ Konselor</td>
-        <td>Orang Tua / Wali Siswa</td>
-      </tr>
-      <tr>
-        <td style="height: 60px;"></td>
+        <td style="height: 50px;"></td>
         <td></td>
       </tr>
       <tr>
         <td>
-          <b><u>${guruBk}</u></b><br/>
+          <b><u>${guruBk.toUpperCase()}</u></b><br/>
           NIP. ${nipGuruBk}
         </td>
         <td>
-          <b><u>${item.nama_orang_tua || 'Orang Tua Siswa'}</u></b><br/>
+          <b><u>${(item.nama_orang_tua || 'Orang Tua Siswa').toUpperCase()}</u></b><br/>
           Wali Siswa
         </td>
       </tr>
@@ -630,8 +649,8 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
         <td style="width: 100%;">
           Mengetahui,<br/>
           Kepala Sekolah SMPN 7 Pasuruan<br/><br/><br/><br/>
-          <b><u>${kepalaSekolah}</u></b><br/>
-          NIP. ${nipKepalaSekolah}
+          <b><u>${kepalaSekolah.toUpperCase()}</u></b><br/>
+          ${nipKepalaSekolah}
         </td>
       </tr>
     </table>
@@ -690,13 +709,7 @@ export function generateSuratTugasHomeVisitHTML(item: HomeVisit): string {
     </style>
   </head>
   <body>
-    <div class="header-kop">
-      <h4>PEMERINTAH KOTA PASURUAN</h4>
-      <h3>DINAS PENDIDIKAN DAN KEBUDAYAAN</h3>
-      <h2>SMP NEGERI 7 PASURUAN</h2>
-      <p>Jl. Simpang Slamet Riyadi No. 2 Sebani Gadingrejo Pasuruan 67139 Telp. (0343) 426845</p>
-    </div>
-    <div class="line-double"></div>
+    ${getKopSuratWordHTML()}
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
       <tr>

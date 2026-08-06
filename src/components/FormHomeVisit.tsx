@@ -91,6 +91,35 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [petugasPenerimaKunjungan, setPetugasPenerimaKunjungan] = useState('WIWIK ISMIATI, S.Pd dkk');
   const [tanggalPernyataanOrtu, setTanggalPernyataanOrtu] = useState(getTodayISO());
 
+  // 14 Field Laporan Kunjungan Rumah Resmi (Sesuai Lampiran User)
+  const [semesterLaporan, setSemesterLaporan] = useState('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+  const [bidangLayanan, setBidangLayanan] = useState('Pribadi / Belajar');
+  const [topikPermasalahan, setTopikPermasalahan] = useState('');
+  const [fungsiLayanan, setFungsiLayanan] = useState('Pemahaman/Pencegahan/Penyembuhan');
+  const [pihakTerlibat, setPihakTerlibat] = useState('1. Konselor\n2. Wali Kelas');
+  const [tujuanKegiatan, setTujuanKegiatan] = useState(
+    'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli'
+  );
+  const [gambaranRingkasMasalah, setGambaranRingkasMasalah] = useState('');
+  const [alamatKunjungan, setAlamatKunjungan] = useState('');
+  const [hariTanggalLamaKunjungan, setHariTanggalLamaKunjungan] = useState('');
+  const [anggotaKeluargaDikunjungi, setAnggotaKeluargaDikunjungi] = useState('');
+  const [rencanaEvaluasi, setRencanaEvaluasi] = useState(
+    'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga'
+  );
+  const [catatanKhusus, setCatatanKhusus] = useState(
+    'Konseli selama mengikuti pembelajaran disekolah termasuk siswa yang baik, tekun, tidak pernah membuat pelanggaran tata tertib sekolah dan tidak pernah bolos sekolah.'
+  );
+
+  // Auto Sync 14 Poin dari Form Utama
+  const handleSyncLaporan14Poin = () => {
+    setTopikPermasalahan(perihalHomeVisit || 'Membicarakan permasalahan siswa');
+    setGambaranRingkasMasalah(uraianPermasalahan || 'Informasi yang didapat dari sekolah/komite.');
+    setAlamatKunjungan(alamat || 'Alamat tempat tinggal siswa');
+    setHariTanggalLamaKunjungan(`${hari}, ${tanggal} (${waktu})`);
+    setAnggotaKeluargaDikunjungi(`Ayah : ${namaOrangTua || '-'}    Ibu : -`);
+  };
+
   // Automatically update Hari, Bulan, Tahun from Date Picker selection
   const handleDateChange = (dateVal: string) => {
     setTanggal(dateVal);
@@ -140,6 +169,34 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setTanggalSuratTugas(initialData.tanggal_surat_tugas || initialData.tanggal_surat || getTodayISO());
       setPetugasPenerimaKunjungan(initialData.petugas_penerima_kunjungan || initialData.petugas_1 || 'WIWIK ISMIATI, S.Pd dkk');
       setTanggalPernyataanOrtu(initialData.tanggal_pernyataan_ortu || getTodayISO());
+
+      setSemesterLaporan(initialData.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setBidangLayanan(initialData.bidang_layanan || 'Pribadi / Belajar');
+      setTopikPermasalahan(initialData.topik_permasalahan || initialData.perihal_home_visit || '');
+      setFungsiLayanan(initialData.fungsi_layanan || 'Pemahaman/Pencegahan/Penyembuhan');
+      setPihakTerlibat(initialData.pihak_terlibat || '1. Konselor\n2. Wali Kelas');
+      setTujuanKegiatan(
+        initialData.tujuan_kegiatan ||
+          'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli'
+      );
+      setGambaranRingkasMasalah(initialData.gambaran_ringkas_masalah || initialData.uraian_permasalahan || '');
+      setAlamatKunjungan(initialData.alamat_kunjungan || initialData.alamat || '');
+      setHariTanggalLamaKunjungan(
+        initialData.hari_tanggal_lama_kunjungan ||
+          `${initialData.hari || 'Kamis'}, ${initialData.tanggal || getTodayISO()} (${initialData.waktu || '09:00 WIB'})`
+      );
+      setAnggotaKeluargaDikunjungi(
+        initialData.anggota_keluarga_dikunjungi || `Ayah : ${initialData.nama_orang_tua || ''}`
+      );
+      setRencanaEvaluasi(
+        initialData.rencana_evaluasi ||
+          'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga'
+      );
+      setCatatanKhusus(
+        initialData.catatan_khusus ||
+          initialData.keterangan ||
+          'Konseli selama mengikuti pembelajaran disekolah termasuk siswa yang baik, tekun, tidak pernah membuat pelanggaran tata tertib sekolah dan tidak pernah bolos sekolah.'
+      );
     } else {
       handleDateChange(getTodayISO());
       setNamaSiswa('');
@@ -168,6 +225,25 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setTanggalSuratTugas(getTodayISO());
       setPetugasPenerimaKunjungan('WIWIK ISMIATI, S.Pd dkk');
       setTanggalPernyataanOrtu(getTodayISO());
+
+      setSemesterLaporan('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setBidangLayanan('Pribadi / Belajar');
+      setTopikPermasalahan('');
+      setFungsiLayanan('Pemahaman/Pencegahan/Penyembuhan');
+      setPihakTerlibat('1. Konselor\n2. Wali Kelas');
+      setTujuanKegiatan(
+        'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli'
+      );
+      setGambaranRingkasMasalah('');
+      setAlamatKunjungan('');
+      setHariTanggalLamaKunjungan('');
+      setAnggotaKeluargaDikunjungi('');
+      setRencanaEvaluasi(
+        'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga'
+      );
+      setCatatanKhusus(
+        'Konseli selama mengikuti pembelajaran disekolah termasuk siswa yang baik, tekun, tidak pernah membuat pelanggaran tata tertib sekolah dan tidak pernah bolos sekolah.'
+      );
     }
   }, [initialData]);
 
@@ -218,6 +294,20 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       tanggal_surat_tugas: tanggalSuratTugas,
       petugas_penerima_kunjungan: petugasPenerimaKunjungan.trim(),
       tanggal_pernyataan_ortu: tanggalPernyataanOrtu,
+
+      // 14 Field Laporan Kunjungan Rumah
+      semester_laporan: semesterLaporan.trim(),
+      bidang_layanan: bidangLayanan.trim(),
+      topik_permasalahan: topikPermasalahan.trim() || perihalHomeVisit.trim(),
+      fungsi_layanan: fungsiLayanan.trim(),
+      pihak_terlibat: pihakTerlibat.trim(),
+      tujuan_kegiatan: tujuanKegiatan.trim(),
+      gambaran_ringkas_masalah: gambaranRingkasMasalah.trim() || uraianPermasalahan.trim(),
+      alamat_kunjungan: alamatKunjungan.trim() || alamat.trim(),
+      hari_tanggal_lama_kunjungan: hariTanggalLamaKunjungan.trim() || `${hari}, ${tanggal} (${waktu})`,
+      anggota_keluarga_dikunjungi: anggotaKeluargaDikunjungi.trim() || `Ayah : ${namaOrangTua.trim()}`,
+      rencana_evaluasi: rencanaEvaluasi.trim(),
+      catatan_khusus: catatanKhusus.trim() || keterangan.trim(),
     };
 
     await onSubmit(formData);
@@ -246,6 +336,25 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setJabatanPetugas1('Guru Bimbingan dan Konseling');
       setJabatanPetugas2('Wali Kelas / Waka Kesiswaan');
       setNisSiswa('');
+
+      setSemesterLaporan('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setBidangLayanan('Pribadi / Belajar');
+      setTopikPermasalahan('');
+      setFungsiLayanan('Pemahaman/Pencegahan/Penyembuhan');
+      setPihakTerlibat('1. Konselor\n2. Wali Kelas');
+      setTujuanKegiatan(
+        'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli'
+      );
+      setGambaranRingkasMasalah('');
+      setAlamatKunjungan('');
+      setHariTanggalLamaKunjungan('');
+      setAnggotaKeluargaDikunjungi('');
+      setRencanaEvaluasi(
+        'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga'
+      );
+      setCatatanKhusus(
+        'Konseli selama mengikuti pembelajaran disekolah termasuk siswa yang baik, tekun, tidak pernah membuat pelanggaran tata tertib sekolah dan tidak pernah bolos sekolah.'
+      );
     }
   };
 
@@ -1018,6 +1127,333 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               <div className="h-10" />
               <div>( <span className="font-bold underline text-red-600">{namaOrangTua || '....................................'}</span> )</div>
             </div>
+          </div>
+        </div>
+
+        {/* SECTION 8: ISIAN 14 POIN LAPORAN KUNJUNGAN RUMAH (SOP RESMI LAMPIRAN) */}
+        <div className="bg-slate-950/90 p-4 sm:p-5 rounded-2xl border-2 border-blue-500/40 space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 text-blue-400 font-extrabold text-xs uppercase tracking-wider">
+              <FileText className="w-4 h-4 text-blue-400" />
+              <span>8. LAPORAN KUNJUNGAN RUMAH (14 POIN RESMI - BISA DIEDIT)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleSyncLaporan14Poin}
+                className="text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1 rounded-lg transition-colors flex items-center gap-1 shadow"
+              >
+                ⚡ Sinkronkan Isian 14 Poin
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-300">
+            Formulir di bawah ini memuat 14 Poin Laporan Kunjungan Rumah sesuai format resmi yang dapat diisi dan diedit sepenuhnya untuk dicetak maupun diexport ke Word:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            {/* Header Judul Laporan & Semester */}
+            <div className="md:col-span-2 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
+              <label className="block text-xs font-bold text-blue-300 mb-1">
+                SUB-JUDUL / SEMESTER & TAHUN PELAJARAN LAPORAN
+              </label>
+              <input
+                type="text"
+                value={semesterLaporan}
+                onChange={(e) => setSemesterLaporan(e.target.value)}
+                placeholder="SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024"
+                className="w-full px-3.5 py-2 text-xs bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Poin 1: Nama peserta didik/konseli */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                1. Nama peserta didik/konseli
+              </label>
+              <input
+                type="text"
+                value={namaSiswa}
+                onChange={(e) => setNamaSiswa(e.target.value)}
+                placeholder="Nama Siswa"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold"
+              />
+            </div>
+
+            {/* Poin 2: Kelas/Semester */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                2. Kelas / Semester
+              </label>
+              <input
+                type="text"
+                value={kelas ? `${kelas} / ${semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}` : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val.includes('/')) {
+                    setKelas(val.split('/')[0].trim());
+                  }
+                }}
+                placeholder="mis. VII-G / Genap"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 3: Bidang Layanan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                3. Bidang Layanan
+              </label>
+              <input
+                type="text"
+                value={bidangLayanan}
+                onChange={(e) => setBidangLayanan(e.target.value)}
+                placeholder="Pribadi / Belajar"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 5: Fungsi Layanan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                5. Fungsi layanan
+              </label>
+              <input
+                type="text"
+                value={fungsiLayanan}
+                onChange={(e) => setFungsiLayanan(e.target.value)}
+                placeholder="Pemahaman/Pencegahan/Penyembuhan"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 4: Topik / Permasalahan */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                4. Topik / Permasalahan
+              </label>
+              <textarea
+                rows={2}
+                value={topikPermasalahan || perihalHomeVisit}
+                onChange={(e) => setTopikPermasalahan(e.target.value)}
+                placeholder="Membicarakan permasalahan siswa..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 6: Pihak yang Terlibat */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                6. Pihak yang Terlibat
+              </label>
+              <textarea
+                rows={3}
+                value={pihakTerlibat}
+                onChange={(e) => setPihakTerlibat(e.target.value)}
+                placeholder="1. Konselor&#10;2. Wali Kelas"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 7: Tujuan Kegiatan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                7. Tujuan Kegiatan
+              </label>
+              <textarea
+                rows={3}
+                value={tujuanKegiatan}
+                onChange={(e) => setTujuanKegiatan(e.target.value)}
+                placeholder="a) Membangun hubungan baik..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 8: Gambaran Ringkas Masalah */}
+            <div className="md:col-span-2">
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                8. Gambaran ringkas masalah
+              </label>
+              <textarea
+                rows={3}
+                value={gambaranRingkasMasalah || uraianPermasalahan}
+                onChange={(e) => setGambaranRingkasMasalah(e.target.value)}
+                placeholder="Informasi ringkas mengenai masalah siswa..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 9: Alamat Kunjungan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                9. Alamat Kunjungan
+              </label>
+              <input
+                type="text"
+                value={alamatKunjungan || alamat}
+                onChange={(e) => setAlamatKunjungan(e.target.value)}
+                placeholder="Sebani Rt. 1"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 10: Hari/Tanggal dan lama kunjungan */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                10. Hari/Tanggal dan lama kunjungan
+              </label>
+              <input
+                type="text"
+                value={hariTanggalLamaKunjungan || `${hari}, ${tanggal} (${waktu})`}
+                onChange={(e) => setHariTanggalLamaKunjungan(e.target.value)}
+                placeholder="Senin, 19 Oktober 2020 (10.00 wib)"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 11: Anggota keluarga yang dikunjungi */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                11. Anggota keluarga yang dikunjungi
+              </label>
+              <input
+                type="text"
+                value={anggotaKeluargaDikunjungi || (namaOrangTua ? `Ayah : ${namaOrangTua}` : '')}
+                onChange={(e) => setAnggotaKeluargaDikunjungi(e.target.value)}
+                placeholder="Ayah : Sukisno        Ibu : Mariyatul Kiptiyah"
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
+              />
+            </div>
+
+            {/* Poin 12: Rencana Evaluasi */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                12. Rencana Evaluasi
+              </label>
+              <textarea
+                rows={2}
+                value={rencanaEvaluasi}
+                onChange={(e) => setRencanaEvaluasi(e.target.value)}
+                placeholder="a) Konfirmasi kebenaran...&#10;b) Kualitas hubungan..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 13: Tindaklanjut */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                13. Tindaklanjut
+              </label>
+              <textarea
+                rows={2}
+                value={tindakLanjut}
+                onChange={(e) => setTindakLanjut(e.target.value)}
+                placeholder="Tindak lanjut hasil kunjungan..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+            {/* Poin 14: Catatan Khusus */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1">
+                14. Catatan Khusus
+              </label>
+              <textarea
+                rows={2}
+                value={catatanKhusus || keterangan}
+                onChange={(e) => setCatatanKhusus(e.target.value)}
+                placeholder="Konseli selama mengikuti pembelajaran disekolah..."
+                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+              />
+            </div>
+
+          </div>
+
+          {/* Live Mini Preview Table 14 Poin */}
+          <div className="mt-4 bg-white text-black p-4 rounded-xl font-serif text-[11px] border border-slate-300 shadow-inner overflow-x-auto">
+            <div className="text-center font-bold text-xs uppercase mb-1">
+              LAPORAN KUNJUNGAN RUMAH
+            </div>
+            <div className="text-center font-bold text-[10px] uppercase mb-3 text-slate-700">
+              {semesterLaporan}
+            </div>
+
+            <table className="w-full border-collapse border border-black text-[10px] leading-snug">
+              <tbody>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center w-6">1</td>
+                  <td className="p-1 border-r border-black font-bold w-44">Nama peserta didik/konseli</td>
+                  <td className="p-1 font-bold uppercase">{namaSiswa || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">2</td>
+                  <td className="p-1 border-r border-black font-bold">Kelas /Semester</td>
+                  <td className="p-1 font-semibold">{kelas} / {semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">3</td>
+                  <td className="p-1 border-r border-black font-bold">Bidang Layanan</td>
+                  <td className="p-1">{bidangLayanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">4</td>
+                  <td className="p-1 border-r border-black font-bold">Topik /Permasalahan</td>
+                  <td className="p-1 whitespace-pre-line">{topikPermasalahan || perihalHomeVisit || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">5</td>
+                  <td className="p-1 border-r border-black font-bold">Fungsi layanan</td>
+                  <td className="p-1">{fungsiLayanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">6</td>
+                  <td className="p-1 border-r border-black font-bold">Pihak yang Terlibat</td>
+                  <td className="p-1 whitespace-pre-line">{pihakTerlibat}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">7</td>
+                  <td className="p-1 border-r border-black font-bold">Tujuan Kegiatan</td>
+                  <td className="p-1 whitespace-pre-line">{tujuanKegiatan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">8</td>
+                  <td className="p-1 border-r border-black font-bold">Gambaran ringkas masalah</td>
+                  <td className="p-1 whitespace-pre-line">{gambaranRingkasMasalah || uraianPermasalahan || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">9</td>
+                  <td className="p-1 border-r border-black font-bold">Alamat Kunjungan</td>
+                  <td className="p-1">{alamatKunjungan || alamat || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">10</td>
+                  <td className="p-1 border-r border-black font-bold">Hari/Tanggal dan lama kunjungan</td>
+                  <td className="p-1">{hariTanggalLamaKunjungan || `${hari}, ${tanggal} (${waktu})`}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">11</td>
+                  <td className="p-1 border-r border-black font-bold">Anggota keluarga yang dikunjungi</td>
+                  <td className="p-1">{anggotaKeluargaDikunjungi || `Ayah : ${namaOrangTua || '-'}`}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">12</td>
+                  <td className="p-1 border-r border-black font-bold">Rencana Evaluasi</td>
+                  <td className="p-1 whitespace-pre-line">{rencanaEvaluasi}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">13</td>
+                  <td className="p-1 border-r border-black font-bold">Tindaklanjut</td>
+                  <td className="p-1 whitespace-pre-line">{tindakLanjut || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-1 border-r border-black font-bold text-center">14</td>
+                  <td className="p-1 border-r border-black font-bold">Catatan Khusus</td>
+                  <td className="p-1 whitespace-pre-line">{catatanKhusus || keterangan || '-'}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 

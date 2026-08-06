@@ -234,20 +234,54 @@ export const PrintView: React.FC<PrintViewProps> = ({
         className="printable-sheet max-w-5xl mx-auto bg-white p-6 sm:p-12 shadow-xl rounded-xl border border-slate-300 print:shadow-none print:border-none print:p-0 print:m-0"
       >
         
-        {/* KOP SURAT RESMI SMPN 7 PASURAN */}
-        <div className="text-center border-b-4 border-double border-slate-900 pb-3 mb-6">
-          <h4 className="text-sm sm:text-base font-bold tracking-widest text-slate-900 uppercase">
-            PEMERINTAH KOTA PASURAN
-          </h4>
-          <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-wide uppercase">
-            DINAS PENDIDIKAN DAN KEBUDAYAAN
-          </h3>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-950 tracking-wider uppercase mt-0.5">
-            SMP NEGERI 7 PASURAN
-          </h1>
-          <p className="text-xs text-slate-700 mt-0.5 font-medium">
-            Jl. Simpang Slamet Riyadi No. 2 Seboro Gadangrejo Pasuruan 07139 Telp. (0343) 426845
-          </p>
+        {/* KOP SURAT RESMI UPT SMP NEGERI 7 PASURAN */}
+        <div className="relative flex items-center justify-between border-b-4 border-double border-slate-900 pb-3 mb-6 min-h-[100px] font-serif">
+          {/* Logo Kota Pasuruan (Kiri Atas) */}
+          <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
+            <img 
+              src="https://i.ibb.co.com/677QPVHY/logo.png" 
+              alt="Logo Kota Pasuruan"
+              className="max-h-20 sm:max-h-28 max-w-full object-contain"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                if (!img.dataset.tried1) {
+                  img.dataset.tried1 = "true";
+                  img.src = "https://i.ibb.co/677QPVHY/logo.png";
+                } else if (!img.dataset.tried2) {
+                  img.dataset.tried2 = "true";
+                  img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_Kota_Pasuruan_-_Seal_of_Pasuruan_City.svg/240px-Logo_Kota_Pasuruan_-_Seal_of_Pasuruan_City.svg.png";
+                }
+              }}
+            />
+          </div>
+
+          {/* Teks Kop Surat Tengah */}
+          <div className="text-center flex-1 px-2 sm:px-4 text-slate-900">
+            <h4 className="text-sm sm:text-lg font-bold tracking-wide uppercase">
+              PEMERINTAH KOTA PASURAN
+            </h4>
+            <h1 className="text-lg sm:text-2xl font-black tracking-wider uppercase my-0.5">
+              UPT SMP NEGERI 7
+            </h1>
+            <p className="text-[11px] sm:text-sm font-medium leading-tight">
+              Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139
+            </p>
+            <p className="text-[11px] sm:text-sm font-medium leading-tight">
+              Telepon (0343) 426845
+            </p>
+            <p className="text-[10px] sm:text-xs font-medium leading-tight text-slate-800">
+              Pos-el <span className="italic">smp7pas@yahoo.co.id</span>, Laman <span className="italic">www.smpn7pasuruan.sch.id</span>
+            </p>
+          </div>
+
+          {/* Logo SMPN 7 Pasuruan (Kanan Atas) */}
+          <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
+            <img 
+              src="https://iili.io/KDFk4fI.png" 
+              alt="Logo SMPN 7 Pasuruan"
+              className="max-h-20 sm:max-h-28 max-w-full object-contain"
+            />
+          </div>
         </div>
 
         {/* 1. SURAT UNDANGAN ORANG TUA (MODE IMAGE 1) */}
@@ -658,77 +692,138 @@ export const PrintView: React.FC<PrintViewProps> = ({
           </div>
         )}
 
-        {/* 6. LAPORAN HOME VISIT INDIVIDUAL */}
+        {/* 6. LAPORAN HOME VISIT INDIVIDUAL (FORMAT 14 POIN RESMI SANGAT PRESISI) */}
         {docType === 'laporan_home_visit' && (
           <div className="space-y-4 text-sm leading-relaxed text-slate-950 font-serif">
             {currentHomeVisit ? (
               <>
-                <h3 className="text-center text-base font-bold uppercase mb-4 underline">
-                  LAPORAN PELAKSANAAN KUNJUNGAN RUMAH (HOME VISIT)
-                </h3>
+                <div className="text-center my-3">
+                  <h2 className="text-base font-extrabold uppercase tracking-wide">
+                    LAPORAN KUNJUNGAN RUMAH
+                  </h2>
+                  <p className="text-xs font-bold uppercase mt-1">
+                    {currentHomeVisit.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024'}
+                  </p>
+                </div>
 
-                <table className="w-full border-collapse border border-slate-900 text-xs">
+                <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed my-4">
                   <tbody>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100 w-1/3">Hari / Tanggal</th>
-                      <td className="p-2.5 border border-slate-900">{currentHomeVisit.hari}, {formatIndoDate(currentHomeVisit.tanggal)}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center w-8">1</td>
+                      <td className="p-2 border-r border-black font-bold w-52 sm:w-60">Nama peserta didik/konseli</td>
+                      <td className="p-2 font-bold uppercase">{currentHomeVisit.nama_siswa || '-'}</td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Jam / Waktu</th>
-                      <td className="p-2.5 border border-slate-900">{currentHomeVisit.waktu}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">2</td>
+                      <td className="p-2 border-r border-black font-bold">Kelas /Semester</td>
+                      <td className="p-2 font-semibold">
+                        {currentHomeVisit.kelas} / {currentHomeVisit.semester_laporan?.includes('GANJIL') ? 'Ganjil' : 'Genap'}
+                      </td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Nama Siswa / Kelas</th>
-                      <td className="p-2.5 border border-slate-900"><b>{currentHomeVisit.nama_siswa}</b> (Kelas: {currentHomeVisit.kelas})</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">3</td>
+                      <td className="p-2 border-r border-black font-bold">Bidang Layanan</td>
+                      <td className="p-2">{currentHomeVisit.bidang_layanan || 'Pribadi / Belajar'}</td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Orang Tua / Pekerjaan</th>
-                      <td className="p-2.5 border border-slate-900">{currentHomeVisit.nama_orang_tua || '-'} (Pekerjaan: {currentHomeVisit.pekerjaan_orang_tua || '-'})</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">4</td>
+                      <td className="p-2 border-r border-black font-bold">Topik /Permasalahan</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.topik_permasalahan || currentHomeVisit.perihal_home_visit || '-'}
+                      </td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Alamat Rumah</th>
-                      <td className="p-2.5 border border-slate-900">{currentHomeVisit.alamat || '-'}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">5</td>
+                      <td className="p-2 border-r border-black font-bold">Fungsi layanan</td>
+                      <td className="p-2">{currentHomeVisit.fungsi_layanan || 'Pemahaman/Pencegahan/Penyembuhan'}</td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Perihal Home Visit</th>
-                      <td className="p-2.5 border border-slate-900 font-bold">{currentHomeVisit.perihal_home_visit}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">6</td>
+                      <td className="p-2 border-r border-black font-bold">Pihak yang Terlibat</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.pihak_terlibat || '1. Konselor\n2. Wali Kelas'}
+                      </td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Uraian Permasalahan</th>
-                      <td className="p-2.5 border border-slate-900 whitespace-pre-line">{currentHomeVisit.uraian_permasalahan || '-'}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">7</td>
+                      <td className="p-2 border-r border-black font-bold">Tujuan Kegiatan</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.tujuan_kegiatan ||
+                          'a) Membangun hubungan baik dengan orangtua/wali peserta didik/konseli\nb) Melengkapi dan klarifikasi data tentang peserta didik/konseli\nc) Mengkonsultasikan serta membangun kolaborasi untuk pemecahan masalah peserta didik/konseli'}
+                      </td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Tindak Lanjut / Hasil</th>
-                      <td className="p-2.5 border border-slate-900 whitespace-pre-line">{currentHomeVisit.tindak_lanjut || '-'}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">8</td>
+                      <td className="p-2 border-r border-black font-bold">Gambaran ringkas masalah</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.gambaran_ringkas_masalah || currentHomeVisit.uraian_permasalahan || '-'}
+                      </td>
                     </tr>
-                    <tr>
-                      <th className="p-2.5 border border-slate-900 text-left bg-slate-100">Keterangan</th>
-                      <td className="p-2.5 border border-slate-900">{currentHomeVisit.keterangan || '-'}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">9</td>
+                      <td className="p-2 border-r border-black font-bold">Alamat Kunjungan</td>
+                      <td className="p-2">{currentHomeVisit.alamat_kunjungan || currentHomeVisit.alamat || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">10</td>
+                      <td className="p-2 border-r border-black font-bold">Hari/Tanggal dan lama kunjungan</td>
+                      <td className="p-2">
+                        {currentHomeVisit.hari_tanggal_lama_kunjungan ||
+                          `${currentHomeVisit.hari}, ${formatIndoDate(currentHomeVisit.tanggal)} (${currentHomeVisit.waktu})`}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">11</td>
+                      <td className="p-2 border-r border-black font-bold">Anggota keluarga yang dikunjungi</td>
+                      <td className="p-2">
+                        {currentHomeVisit.anggota_keluarga_dikunjungi || `Ayah : ${currentHomeVisit.nama_orang_tua || '-'}`}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">12</td>
+                      <td className="p-2 border-r border-black font-bold">Rencana Evaluasi</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.rencana_evaluasi ||
+                          'a) Konfirmasi kebenaran tentang siswa bersama orangtua\nb) Kualitas hubungan dengan keluarga'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">13</td>
+                      <td className="p-2 border-r border-black font-bold">Tindaklanjut</td>
+                      <td className="p-2 whitespace-pre-line">{currentHomeVisit.tindak_lanjut || '-'}</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-2 border-r border-black font-bold text-center">14</td>
+                      <td className="p-2 border-r border-black font-bold">Catatan Khusus</td>
+                      <td className="p-2 whitespace-pre-line">
+                        {currentHomeVisit.catatan_khusus || currentHomeVisit.keterangan || '-'}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
 
                 {/* Signatures */}
-                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4">
+                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
                   <div>
                     <div>Guru BK / Konselor</div>
                     <div className="h-16" />
-                    <div className="font-bold underline">{currentHomeVisit.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
+                    <div className="font-bold underline uppercase">{currentHomeVisit.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
                     <div>NIP. {currentHomeVisit.nip_guru_bk || '19831116 200904 2 003'}</div>
                   </div>
                   <div>
+                    <div>Pasuruan, {formatIndoDate(currentHomeVisit.tanggal_surat || currentHomeVisit.tanggal)}</div>
                     <div>Orang Tua / Wali Siswa</div>
                     <div className="h-16" />
-                    <div className="font-bold underline">{currentHomeVisit.nama_orang_tua || 'Orang Tua Siswa'}</div>
+                    <div className="font-bold underline uppercase">{currentHomeVisit.nama_orang_tua || 'Orang Tua Siswa'}</div>
                     <div>Wali Siswa</div>
                   </div>
                 </div>
 
-                <div className="text-center pt-4 text-xs">
+                <div className="text-center pt-4 text-xs font-serif">
                   <div>Mengetahui,</div>
                   <div>Kepala SMP Negeri 7 Pasuruan</div>
                   <div className="h-16" />
-                  <div className="font-bold underline">{currentHomeVisit.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</div>
+                  <div className="font-bold underline uppercase">{currentHomeVisit.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</div>
                   <div>{currentHomeVisit.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030'}</div>
                 </div>
               </>

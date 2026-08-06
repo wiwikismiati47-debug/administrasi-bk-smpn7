@@ -66,6 +66,19 @@ export interface HomeVisit {
   tindak_lanjut: string; // TINDAK LANJUT
   link_foto_kegiatan: string; // LINK FOTO KEGIATAN
   keterangan: string; // KETERANGAN
+  // 14 Field Laporan Kunjungan Rumah Resmi (Sesuai Lampiran User)
+  semester_laporan?: string;
+  bidang_layanan?: string;
+  topik_permasalahan?: string;
+  fungsi_layanan?: string;
+  pihak_terlibat?: string;
+  tujuan_kegiatan?: string;
+  gambaran_ringkas_masalah?: string;
+  alamat_kunjungan?: string;
+  hari_tanggal_lama_kunjungan?: string;
+  anggota_keluarga_dikunjungi?: string;
+  rencana_evaluasi?: string;
+  catatan_khusus?: string;
   nama_guru_bk?: string;
   nip_guru_bk?: string;
   nama_kepala_sekolah?: string;
