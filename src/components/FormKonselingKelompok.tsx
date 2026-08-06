@@ -28,6 +28,44 @@ interface FormKonselingKelompokProps {
   isSubmitting?: boolean;
 }
 
+const PENDEKATAN_PRESETS = [
+  {
+    id: 'cbt',
+    nama: 'CBT Kelompok (Group CBT)',
+    fokus: 'Mengubah pola pikir irasional dan perilaku maladaptif secara bersama-sama melalui dinamika kelompok.',
+    teknik: 'Restrukturisasi Kognitif Kelompok, Psychoeducation (Edukasi Psikologis), Cognitive Rehearsal',
+    kasus: 'Stres akademik bersama, kecemasan sosial, kecanduan gawai, penyesuaian diri.',
+  },
+  {
+    id: 'behavioral',
+    nama: 'Behavioral Kelompok',
+    fokus: 'Membentuk dan memperkuat perilaku baru yang positif melalui penguatan (reinforcement) sosial antar anggota.',
+    teknik: 'Behavior Rehearsal (Latihan Perilaku), Role-Playing (Bermain Peran), Token Economy Kelompok',
+    kasus: 'Pelanggaran kedisiplinan massal, kurangnya keterampilan sosial, latihan asertif.',
+  },
+  {
+    id: 'reality',
+    nama: 'Reality Therapy (Kelompok WDEP)',
+    fokus: 'Mendorong setiap anggota kelompok untuk mengevaluasi tindakan mereka dan berkomitmen pada perubahan nyata.',
+    teknik: 'Group WDEP (Wants, Direction, Evaluation, Plan), Kontrak Perilaku Kelompok',
+    kasus: 'Kenakalan remaja, masalah kepatuhan tata tertib sekolah, rendahnya motivasi belajar kelompok.',
+  },
+  {
+    id: 'sfbt',
+    nama: 'SFBT Kelompok (Solution-Focused)',
+    fokus: 'Berfokus pada kekuatan, sumber daya, dan solusi masa depan daripada membahas masalah masa lalu secara berlarut-larut.',
+    teknik: 'Miracle Question Kelompok, Scaling Questions (Skala Motivasi/Kemajuan), Pemberian Umpan Balik Positif',
+    kasus: 'Membangun motivasi belajar kelompok, persiapan menghadapi ujian, pemecahan masalah cepat.',
+  },
+  {
+    id: 'existential',
+    nama: 'Konseling Eksistensial-Humanistik',
+    fokus: 'Memfasilitasi penerimaan diri, pencarian makna hidup, dan kedalaman empati melalui keterbukaan (sharing).',
+    teknik: 'Round Robin (Berbagi Pengalaman Bergiliran), Active Listening & Empathy Feedback, Here-and-Now Awareness',
+    kasus: 'Masalah pencarian jati diri remaja, pengelolaan emosi/stres personal, penguatan dukungan sebaya (peer support).',
+  }
+];
+
 export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
   initialData,
   onSubmit,
@@ -80,6 +118,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
   });
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [selectedPresetTab, setSelectedPresetTab] = useState<number>(0);
 
   useEffect(() => {
     if (initialData) {
@@ -415,6 +454,70 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                 placeholder="Contoh: Pendekatan Kelompok dengan Teknik Simulation Game / Role Playing..."
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all leading-relaxed"
               />
+              <div className="mt-3 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sparkles className="w-4 h-4 text-pink-600 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    PILIHAN PENDEKATAN & TEKNIK KONSELING KELOMPOK (PANDUAN)
+                  </span>
+                </div>
+
+                {/* Tab selector */}
+                <div className="flex flex-wrap gap-1.5 mb-2.5 pb-2 border-b border-slate-200/60">
+                  {PENDEKATAN_PRESETS.map((preset, index) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setSelectedPresetTab(index)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all border ${
+                        selectedPresetTab === index
+                          ? 'bg-pink-600 text-white border-pink-700 shadow-sm shadow-pink-600/10'
+                          : 'bg-white text-slate-600 hover:text-slate-950 hover:bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      {preset.nama.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content showing details of current selection */}
+                <div className="space-y-2 text-xs leading-relaxed text-slate-600 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
+                    <div>
+                      <span className="font-extrabold text-slate-900 text-[13px] block">
+                        {PENDEKATAN_PRESETS[selectedPresetTab].nama}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = PENDEKATAN_PRESETS[selectedPresetTab];
+                        const text = `Pendekatan: ${target.nama}\nTeknik Utama: ${target.teknik}\nFokus Utama: ${target.fokus}\nKasus Efektif: ${target.kasus}`;
+                        setFormData(prev => ({
+                          ...prev,
+                          pendekatan_dan_teknik_konseling: text
+                        }));
+                      }}
+                      className="shrink-0 px-2.5 py-1 bg-pink-50 hover:bg-pink-100 text-pink-700 font-bold rounded-lg border border-pink-100 transition-all text-[11px] flex items-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Gunakan Pilihan Ini
+                    </button>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Fokus Utama</span>
+                    <p className="text-slate-700 font-medium">{PENDEKATAN_PRESETS[selectedPresetTab].fokus}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Teknik Utama dalam Kelompok</span>
+                    <p className="text-pink-950 font-semibold">{PENDEKATAN_PRESETS[selectedPresetTab].teknik}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Sangat Efektif Untuk Kasus / Tujuan</span>
+                    <p className="text-emerald-700 font-semibold">{PENDEKATAN_PRESETS[selectedPresetTab].kasus}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* HASIL YANG DICAPAI */}

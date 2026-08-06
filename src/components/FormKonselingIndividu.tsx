@@ -28,6 +28,44 @@ interface FormKonselingIndividuProps {
   isSubmitting?: boolean;
 }
 
+const PENDEKATAN_PRESETS = [
+  {
+    id: 'cbt',
+    nama: 'CBT (Kognitif Perilaku)',
+    fokus: 'Mengubah pola pikir negatif atau irasional menjadi rasional dan positif.',
+    teknik: 'Restrukturisasi Kognitif',
+    kasus: 'Depresi, kecemasan berlebih, stres akademik.',
+  },
+  {
+    id: 'behavioral',
+    nama: 'Behavioral (Behavioristik)',
+    fokus: 'Mengubah perilaku maladaptif melalui proses belajar dan pembiasaan.',
+    teknik: 'Desensitisasi Sistematis, Token Economy (Penghargaan), Pelatihan Asertif',
+    kasus: 'Fobia, kecemasan spesifik, kebiasaan buruk, kedisiplinan.',
+  },
+  {
+    id: 'person-centered',
+    nama: 'Person-Centered',
+    fokus: 'Membantu konseli menemukan potensi dirinya melalui ruang yang aman dan empati.',
+    teknik: 'Empati Akurat, Refleksi Perasaan, Penerimaan Tanpa Syarat',
+    kasus: 'Masalah konsep diri, pencarian jati diri, eksplorasi emosi.',
+  },
+  {
+    id: 'reality',
+    nama: 'Reality Therapy',
+    fokus: 'Mendorong konseli agar bertanggung jawab atas pilihan tindakannya saat ini.',
+    teknik: 'Metode WDEP (Wants, Direction, Evaluation, Plan), Kontrak Perilaku',
+    kasus: 'Pelanggaran aturan, kenakalan remaja, kurang motivasi/tanggung jawab.',
+  },
+  {
+    id: 'sfbt',
+    nama: 'SFBT (Solusi Terfokus)',
+    fokus: 'Berfokus langsung pada pencarian solusi dan masa depan, tanpa membahas masa lalu.',
+    teknik: 'Miracle Question (Pertanyaan Ajaib), Scaling Questions (Pertanyaan Skala), Pertanyaan Pengecualian',
+    kasus: 'Hambatan spesifik yang membutuhkan penanganan cepat dan praktis.',
+  }
+];
+
 export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
   initialData,
   onSubmit,
@@ -80,6 +118,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
   });
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [selectedPresetTab, setSelectedPresetTab] = useState<number>(0);
 
   useEffect(() => {
     if (initialData) {
@@ -415,6 +454,70 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
                 placeholder="Contoh: Pendekatan Behavioral dengan Teknik Behavioral Contract / SFBT..."
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all leading-relaxed"
               />
+              <div className="mt-3 bg-slate-50/80 border border-slate-200 rounded-2xl p-3.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    PILIHAN PENDEKATAN & TEKNIK KONSELING (PANDUAN)
+                  </span>
+                </div>
+
+                {/* Tab selector */}
+                <div className="flex flex-wrap gap-1.5 mb-2.5 pb-2 border-b border-slate-200/60">
+                  {PENDEKATAN_PRESETS.map((preset, index) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setSelectedPresetTab(index)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all border ${
+                        selectedPresetTab === index
+                          ? 'bg-indigo-600 text-white border-indigo-700 shadow-sm shadow-indigo-600/10'
+                          : 'bg-white text-slate-600 hover:text-slate-950 hover:bg-slate-50 border-slate-200'
+                      }`}
+                    >
+                      {preset.nama.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Tab content showing details of current selection */}
+                <div className="space-y-2 text-xs leading-relaxed text-slate-600 bg-white border border-slate-100 rounded-xl p-3 shadow-sm">
+                  <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2 mb-2">
+                    <div>
+                      <span className="font-extrabold text-slate-900 text-[13px] block">
+                        {PENDEKATAN_PRESETS[selectedPresetTab].nama}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = PENDEKATAN_PRESETS[selectedPresetTab];
+                        const text = `Pendekatan: ${target.nama}\nTeknik Utama: ${target.teknik}\nFokus: ${target.fokus}\nKasus Efektif: ${target.kasus}`;
+                        setFormData(prev => ({
+                          ...prev,
+                          pendekatan_dan_teknik_konseling: text
+                        }));
+                      }}
+                      className="shrink-0 px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold rounded-lg border border-indigo-100 transition-all text-[11px] flex items-center gap-1"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Gunakan Pilihan Ini
+                    </button>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Fokus Utama</span>
+                    <p className="text-slate-700 font-medium">{PENDEKATAN_PRESETS[selectedPresetTab].fokus}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Teknik Utama</span>
+                    <p className="text-indigo-950 font-semibold">{PENDEKATAN_PRESETS[selectedPresetTab].teknik}</p>
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-400 block text-[9px] uppercase tracking-wider mb-0.5">Sangat Efektif Untuk Kasus</span>
+                    <p className="text-emerald-700 font-semibold">{PENDEKATAN_PRESETS[selectedPresetTab].kasus}</p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* HASIL YANG DICAPAI */}
