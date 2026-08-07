@@ -88,6 +88,10 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
     hasil_dan_kesimpulan: '',
     link_foto_kegiatan: '',
     keterangan: 'Proses Pendampingan BK',
+    nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
+    nip_guru_bk: '19831116 200904 2 003',
+    nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+    nip_kepala_sekolah: '19860410 201001 2 030',
   });
 
   const studentsInClass = (siswaItems || []).filter(
@@ -114,6 +118,10 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
         hasil_dan_kesimpulan: initialData.hasil_dan_kesimpulan || '',
         link_foto_kegiatan: initialData.link_foto_kegiatan || '',
         keterangan: initialData.keterangan || 'Proses Pendampingan BK',
+        nama_guru_bk: initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd',
+        nip_guru_bk: initialData.nip_guru_bk || '19831116 200904 2 003',
+        nama_kepala_sekolah: initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
+        nip_kepala_sekolah: initialData.nip_kepala_sekolah || '19860410 201001 2 030',
       });
     }
   }, [initialData]);
@@ -482,6 +490,60 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
                   placeholder="Contoh: Selesai / Terus Dipantau / Rencana Follow-up"
                   className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 />
+              </div>
+            </div>
+
+            {/* DATA PENGESAHAN (GURU BK & KEPALA SEKOLAH) */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <User className="w-4 h-4 text-emerald-600" />
+                <span>Pengesahan Tanda Tangan (Guru BK & Kepala Sekolah)</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Guru BK</label>
+                  <input
+                    type="text"
+                    name="nama_guru_bk"
+                    value={formData.nama_guru_bk || ''}
+                    onChange={handleChange}
+                    placeholder="WIWIK ISMIATI, S.Pd"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Guru BK</label>
+                  <input
+                    type="text"
+                    name="nip_guru_bk"
+                    value={formData.nip_guru_bk || ''}
+                    onChange={handleChange}
+                    placeholder="19831116 200904 2 003"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label>
+                  <input
+                    type="text"
+                    name="nama_kepala_sekolah"
+                    value={formData.nama_kepala_sekolah || ''}
+                    onChange={handleChange}
+                    placeholder="NUR FADILAH, S.Pd"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Kepala Sekolah</label>
+                  <input
+                    type="text"
+                    name="nip_kepala_sekolah"
+                    value={formData.nip_kepala_sekolah || ''}
+                    onChange={handleChange}
+                    placeholder="19860410 201001 2 030"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
               </div>
             </div>
           </div>

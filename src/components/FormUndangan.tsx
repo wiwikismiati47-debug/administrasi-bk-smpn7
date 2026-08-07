@@ -82,8 +82,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
   const [nomorSurat, setNomorSurat] = useState('400/  /423.102.54/2026');
   const [namaGuruBk, setNamaGuruBk] = useState('WIWIK ISMIATI, S.Pd');
   const [nipGuruBk, setNipGuruBk] = useState('19831116 200904 2 003');
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('MAKHRUS SIDDIQ, S.Psi, M.Pd');
-  const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19731018 200604 1 020');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
+  const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
   const [semester, setSemester] = useState('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
 
   // Automatically update Hari, Bulan, Tahun from Date Picker selection
@@ -124,8 +124,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
       setNomorSurat(initialData.nomor_surat || '400/  /423.102.54/2026');
       setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
       setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'MAKHRUS SIDDIQ, S.Psi, M.Pd');
-      setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19731018 200604 1 020');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
       setSemester(initialData.semester || 'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
     } else {
       handleDateChange(getTodayISO());
@@ -144,8 +144,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
       setNomorSurat('400/  /423.102.54/2026');
       setNamaGuruBk('WIWIK ISMIATI, S.Pd');
       setNipGuruBk('19831116 200904 2 003');
-      setNamaKepalaSekolah('MAKHRUS SIDDIQ, S.Psi, M.Pd');
-      setNipKepalaSekolah('19731018 200604 1 020');
+      setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+      setNipKepalaSekolah('19860410 201001 2 030');
       setSemester('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
     }
   }, [initialData]);
@@ -642,7 +642,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   type="text"
                   value={namaKepalaSekolah}
                   onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                  placeholder="MAKHRUS SIDDIQ, S.Psi, M.Pd"
+                  placeholder="NUR FADILAH, S.Pd"
                   className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold"
                 />
               </div>
@@ -654,7 +654,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   type="text"
                   value={nipKepalaSekolah}
                   onChange={(e) => setNipKepalaSekolah(e.target.value)}
-                  placeholder="19731018 200604 1 020"
+                  placeholder="19860410 201001 2 030"
                   className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-slate-300"
                 />
               </div>

@@ -574,8 +574,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <p>Mengetahui,</p>
                   <p className="font-bold">Kepala Sekolah SMPN 7 Pasuruan</p>
                   <div className="h-16" />
-                  <p className="font-bold underline uppercase">{currentItem.nama_kepala_sekolah || 'MAKHRUS SIDDIQ, S.Psi, M.Pd'}</p>
-                  <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19731018 200604 1 020'}</p>
+                  <p className="font-bold underline uppercase">{currentItem.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</p>
+                  <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                 </div>
               </>
             ) : (
@@ -1160,15 +1160,15 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
-                    <div>NIP. 19731018 200604 1 020</div>
+                    <div className="font-bold underline uppercase">{currentRekamPermasalahan.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</div>
+                    <div>NIP. {currentRekamPermasalahan.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
-                    <div>Pasuruan, {todayStr}</div>
+                    <div>Pasuruan, {currentRekamPermasalahan.tanggal_surat ? formatIndoDate(currentRekamPermasalahan.tanggal_surat) : todayStr}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
-                    <div>NIP. 19831116 200904 2 003</div>
+                    <div className="font-bold underline uppercase">{currentRekamPermasalahan.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
+                    <div>NIP. {currentRekamPermasalahan.nip_guru_bk || '19831116 200904 2 003'}</div>
                   </div>
                 </div>
               </>
@@ -1327,15 +1327,15 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
-                    <div>NIP. 19731018 200604 1 020</div>
+                    <div className="font-bold underline uppercase">{currentKonselingIndividu.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</div>
+                    <div>NIP. {currentKonselingIndividu.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
-                    <div>Pasuruan, {todayStr}</div>
+                    <div>Pasuruan, {formatIndoDate(currentKonselingIndividu.tanggal)}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
-                    <div>NIP. 19831116 200904 2 003</div>
+                    <div className="font-bold underline uppercase">{currentKonselingIndividu.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
+                    <div>NIP. {currentKonselingIndividu.nip_guru_bk || '19831116 200904 2 003'}</div>
                   </div>
                 </div>
               </>
@@ -1493,15 +1493,15 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">MAKHRUS SIDDIQ, S.Psi, M.Pd</div>
-                    <div>NIP. 19731018 200604 1 020</div>
+                    <div className="font-bold underline uppercase">{currentKonselingKelompok.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</div>
+                    <div>NIP. {currentKonselingKelompok.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
-                    <div>Pasuruan, {todayStr}</div>
+                    <div>Pasuruan, {formatIndoDate(currentKonselingKelompok.tanggal)}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">WIWIK ISMIATI, S.Pd</div>
-                    <div>NIP. 19831116 200904 2 003</div>
+                    <div className="font-bold underline uppercase">{currentKonselingKelompok.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
+                    <div>NIP. {currentKonselingKelompok.nip_guru_bk || '19831116 200904 2 003'}</div>
                   </div>
                 </div>
               </>
@@ -2094,9 +2094,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala Sekolah</div>
                 <div className="h-16" />
                 <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                  {currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}
                 </div>
-                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
               </div>
               <div>
                 <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
@@ -2268,9 +2268,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala Sekolah</div>
                 <div className="h-16" />
                 <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                  {currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}
                 </div>
-                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
               </div>
               <div>
                 <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
@@ -2367,9 +2367,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Kepala Sekolah</div>
                   <div className="h-16" />
                   <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                    {currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}
                   </div>
-                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                 </div>
                 <div>
                   <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>
@@ -2537,9 +2537,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Kepala Sekolah</div>
                   <div className="h-16" />
                   <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO'}
+                    {currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}
                   </div>
-                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19621212 198712 1 002'}</div>
+                  <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                 </div>
                 <div>
                   <div>{currentKonferensiKasus.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentKonferensiKasus.tanggal_surat)}</div>

@@ -8,8 +8,8 @@ import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, Kons
 
 const DEFAULT_GURU_BK = 'WIWIK ISMIATI, S.Pd';
 const DEFAULT_NIP_GURU_BK = '19831116 200904 2 003';
-const DEFAULT_KEPALA_SEKOLAH = 'MAKHRUS SIDDIQ, S.Psi, M.Pd';
-const DEFAULT_NIP_KEPALA_SEKOLAH = '19731018 200604 1 020';
+const DEFAULT_KEPALA_SEKOLAH = 'NUR FADILAH, S.Pd';
+const DEFAULT_NIP_KEPALA_SEKOLAH = '19860410 201001 2 030';
 
 function formatTanggalIndo(dateStr: string, bulanFallback: string = '', tahunFallback: string = ''): string {
   if (!dateStr) return `${bulanFallback} ${tahunFallback}`.trim();

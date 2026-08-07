@@ -85,8 +85,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   const [tempatSurat, setTempatSurat] = useState('Pasuruan');
   const [namaGuruBk, setNamaGuruBk] = useState('WIWIK ISMIATI, S.Pd');
   const [nipGuruBk, setNipGuruBk] = useState('19831116 200904 2 003');
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('Drs. H. AGUNG ARDI TIGO');
-  const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19621212 198712 1 002');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
+  const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
   const [keterangan, setKeterangan] = useState('');
 
   const [autoUpdatedNotice, setAutoUpdatedNotice] = useState(false);
@@ -131,8 +131,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
       setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
       setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'Drs. H. AGUNG ARDI TIGO');
-      setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19621212 198712 1 002');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
       setKeterangan(initialData.keterangan || '');
     }
   }, [initialData]);
@@ -263,8 +263,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     setTempatSurat('Pasuruan');
     setNamaGuruBk('WIWIK ISMIATI, S.Pd');
     setNipGuruBk('19831116 200904 2 003');
-    setNamaKepalaSekolah('Drs. H. AGUNG ARDI TIGO');
-    setNipKepalaSekolah('19621212 198712 1 002');
+    setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+    setNipKepalaSekolah('19860410 201001 2 030');
     setKeterangan('');
     setActiveTab('notula');
   };
@@ -968,7 +968,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                     type="text"
                     value={namaKepalaSekolah}
                     onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                    placeholder="e.g. Drs. H. AGUNG ARDI TIGO"
+                    placeholder="e.g. NUR FADILAH, S.Pd"
                     className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
                   />
                 </div>
@@ -981,7 +981,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                     type="text"
                     value={nipKepalaSekolah}
                     onChange={(e) => setNipKepalaSekolah(e.target.value)}
-                    placeholder="e.g. 19621212 198712 1 002"
+                    placeholder="e.g. 19860410 201001 2 030"
                     className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
                   />
                 </div>

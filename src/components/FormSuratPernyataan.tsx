@@ -69,6 +69,10 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
   const [tanggalSurat, setTanggalSurat] = useState(initialData?.tanggal_surat || new Date().toISOString().slice(0, 10));
   const [tempatSurat, setTempatSurat] = useState(initialData?.tempat_surat || 'Pasuruan');
   const [keterangan, setKeterangan] = useState(initialData?.keterangan || '');
+  const [namaGuruBk, setNamaGuruBk] = useState(initialData?.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
+  const [nipGuruBk, setNipGuruBk] = useState(initialData?.nip_guru_bk || '19831116 200904 2 003');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState(initialData?.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+  const [nipKepalaSekolah, setNipKepalaSekolah] = useState(initialData?.nip_kepala_sekolah || '19860410 201001 2 030');
   const [autoUpdatedNotice, setAutoUpdatedNotice] = useState(false);
 
   // Update fields when initialData changes
@@ -86,6 +90,10 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
       setTanggalSurat(initialData.tanggal_surat || new Date().toISOString().slice(0, 10));
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
       setKeterangan(initialData.keterangan || '');
+      setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
+      setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
     }
   }, [initialData]);
 
@@ -129,6 +137,10 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
     setTanggalSurat(new Date().toISOString().slice(0, 10));
     setTempatSurat('Pasuruan');
     setKeterangan('');
+    setNamaGuruBk('WIWIK ISMIATI, S.Pd');
+    setNipGuruBk('19831116 200904 2 003');
+    setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+    setNipKepalaSekolah('19860410 201001 2 030');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -165,6 +177,10 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
       tanggal_surat: tanggalSurat,
       tempat_surat: tempatSurat,
       keterangan: keterangan,
+      nama_guru_bk: namaGuruBk,
+      nip_guru_bk: nipGuruBk,
+      nama_kepala_sekolah: namaKepalaSekolah,
+      nip_kepala_sekolah: nipKepalaSekolah,
     };
 
     await onSubmit(payload);
@@ -400,6 +416,56 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
               placeholder="Catatan internal BK..."
               className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium text-slate-900"
             />
+          </div>
+        </div>
+
+        {/* DATA PENGESAHAN (GURU BK & KEPALA SEKOLAH) */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+          <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <User className="w-4 h-4 text-amber-600" />
+            <span>Pengesahan Tanda Tangan (Guru BK & Kepala Sekolah)</span>
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Guru BK</label>
+              <input
+                type="text"
+                value={namaGuruBk}
+                onChange={(e) => setNamaGuruBk(e.target.value)}
+                placeholder="WIWIK ISMIATI, S.Pd"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Guru BK</label>
+              <input
+                type="text"
+                value={nipGuruBk}
+                onChange={(e) => setNipGuruBk(e.target.value)}
+                placeholder="19831116 200904 2 003"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label>
+              <input
+                type="text"
+                value={namaKepalaSekolah}
+                onChange={(e) => setNamaKepalaSekolah(e.target.value)}
+                placeholder="NUR FADILAH, S.Pd"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Kepala Sekolah</label>
+              <input
+                type="text"
+                value={nipKepalaSekolah}
+                onChange={(e) => setNipKepalaSekolah(e.target.value)}
+                placeholder="19860410 201001 2 030"
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+              />
+            </div>
           </div>
         </div>
 

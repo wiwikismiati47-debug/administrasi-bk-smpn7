@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { KonselingKelompok, FormKonselingKelompokData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   FileText,
   Calendar,
   Clock,
+  User,
   Users,
   GraduationCap,
   Image as ImageIcon,
@@ -117,6 +119,10 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
     hasil_yang_dicapai: '',
     link_foto_kegiatan: '',
     keterangan: 'Rencana Pelaksanaan Konseling Kelompok',
+    nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
+    nip_guru_bk: '19831116 200904 2 003',
+    nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+    nip_kepala_sekolah: '19860410 201001 2 030',
   });
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -143,6 +149,10 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
         hasil_yang_dicapai: initialData.hasil_yang_dicapai || '',
         link_foto_kegiatan: initialData.link_foto_kegiatan || '',
         keterangan: initialData.keterangan || 'Rencana Pelaksanaan Konseling Kelompok',
+        nama_guru_bk: initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd',
+        nip_guru_bk: initialData.nip_guru_bk || '19831116 200904 2 003',
+        nama_kepala_sekolah: initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
+        nip_kepala_sekolah: initialData.nip_kepala_sekolah || '19860410 201001 2 030',
       });
     }
   }, [initialData]);
@@ -299,7 +309,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
             <span>1. WAKTU & DAFTAR ANGGOTA KELOMPOK</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* TANGGAL */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -336,82 +346,22 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                 />
               </div>
             </div>
-
-            {/* KELAS */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                KELAS <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  name="kelas"
-                  value={formData.kelas}
-                  onChange={handleChange}
-                  placeholder="Contoh: 7-C / 8-B"
-                  required
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
-                />
-              </div>
-            </div>
           </div>
 
-          {/* NAMA SISWA / ANGGOTA KELOMPOK */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
-              <span>NAMA SISWA / ANGGOTA KELOMPOK <span className="text-rose-500">*</span></span>
-              {studentsInClass.length > 0 && (
-                <span className="text-[10px] text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full font-extrabold border border-pink-300">
-                  {studentsInClass.length} Siswa Tersedia
-                </span>
-              )}
-            </label>
-
-            {studentsInClass.length > 0 && (
-              <div className="mb-2.5">
-                <select
-                  onChange={(e) => {
-                    const selectedName = e.target.value;
-                    if (selectedName) {
-                      setFormData(prev => {
-                        const current = prev.nama_siswa.trim();
-                        if (!current) return { ...prev, nama_siswa: `1. ${selectedName}` };
-                        if (current.includes(selectedName)) return prev;
-                        // Count existing items
-                        const lines = current.split('\n').filter(Boolean);
-                        const nextNum = lines.length + 1;
-                        return { ...prev, nama_siswa: `${current}\n${nextNum}. ${selectedName}` };
-                      });
-                      e.target.value = '';
-                    }
-                  }}
-                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                >
-                  <option value="">+ Klik untuk menambahkan Nama Siswa dari Kelas {formData.kelas}...</option>
-                  {studentsInClass.map((s) => (
-                    <option key={s.id} value={s.nama_siswa}>
-                      {s.nama_siswa} {s.nis ? `(NIS: ${s.nis})` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <textarea
-              name="nama_siswa"
-              value={formData.nama_siswa}
-              onChange={handleChange}
-              rows={4}
-              required
-              placeholder="Tuliskan nama-nama anggota kelompok (contoh: 1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana)..."
-              className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all leading-relaxed"
+          <div className="pt-2">
+            <SiswaSelector
+              siswaItems={siswaItems}
+              selectedKelas={formData.kelas}
+              onSelectKelas={(k) => setFormData((prev) => ({ ...prev, kelas: k }))}
+              selectedNamaSiswa={formData.nama_siswa}
+              onSelectNamaSiswa={(n) => setFormData((prev) => ({ ...prev, nama_siswa: n }))}
+              isMultiSelect={true}
+              formatMultiType="numbered"
+              kelasLabel="Kelas Siswa"
+              siswaLabel="Nama Siswa / Anggota Kelompok"
+              themeColor="pink"
+              required={true}
             />
-            <p className="text-[11px] text-slate-500 mt-1 font-medium">
-              {studentsInClass.length > 0
-                ? `Pilih dari menu di atas atau ketik manual. Anda dapat menambahkan beberapa anggota kelompok.`
-                : `Belum ada data siswa untuk Kelas ${formData.kelas || '...'} di database. Silakan ketik manual atau tambahkan di Data Siswa.`}
-            </p>
           </div>
         </div>
 
@@ -614,6 +564,60 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                   placeholder="Catatan atau keterangan tambahan"
                   className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
                 />
+              </div>
+            </div>
+
+            {/* DATA PENGESAHAN (GURU BK & KEPALA SEKOLAH) */}
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-4">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <User className="w-4 h-4 text-pink-600" />
+                <span>Pengesahan Tanda Tangan (Guru BK & Kepala Sekolah)</span>
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Guru BK</label>
+                  <input
+                    type="text"
+                    name="nama_guru_bk"
+                    value={formData.nama_guru_bk || ''}
+                    onChange={handleChange}
+                    placeholder="WIWIK ISMIATI, S.Pd"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Guru BK</label>
+                  <input
+                    type="text"
+                    name="nip_guru_bk"
+                    value={formData.nip_guru_bk || ''}
+                    onChange={handleChange}
+                    placeholder="19831116 200904 2 003"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label>
+                  <input
+                    type="text"
+                    name="nama_kepala_sekolah"
+                    value={formData.nama_kepala_sekolah || ''}
+                    onChange={handleChange}
+                    placeholder="NUR FADILAH, S.Pd"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Kepala Sekolah</label>
+                  <input
+                    type="text"
+                    name="nip_kepala_sekolah"
+                    value={formData.nip_kepala_sekolah || ''}
+                    onChange={handleChange}
+                    placeholder="19860410 201001 2 030"
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none"
+                  />
+                </div>
               </div>
             </div>
           </div>

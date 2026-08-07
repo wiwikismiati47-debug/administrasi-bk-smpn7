@@ -1309,8 +1309,8 @@ export function getLocalKonferensiKasusList(): KonferensiKasus[] {
         tempat_surat: 'Pasuruan',
         nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
         nip_guru_bk: '19831116 200904 2 003',
-        nama_kepala_sekolah: 'Drs. H. AGUNG ARDI TIGO',
-        nip_kepala_sekolah: '19621212 198712 1 002',
+        nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+        nip_kepala_sekolah: '19860410 201001 2 030',
         keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
       }
     ];
