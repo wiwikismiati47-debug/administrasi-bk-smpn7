@@ -153,8 +153,8 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
               <h3 className="text-xl font-bold text-slate-900">
                 Konfigurasi Database Supabase
               </h3>
-              <p className="text-xs text-slate-500">
-                ADMINISTRASI BK SMPN 7 PASURAN
+              <p className="text-xs text-slate-500 font-semibold">
+                SABDA BK SPANJU - SMPN 7 PASURUAN
               </p>
             </div>
           </div>

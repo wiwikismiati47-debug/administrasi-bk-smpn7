@@ -64,15 +64,18 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
                 </span>
               </div>
 
-              <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex items-center gap-2 justify-center md:justify-start">
+              <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex flex-col sm:flex-row sm:items-center gap-x-2 justify-center md:justify-start leading-tight">
                 <span className="bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent">
-                  ADMINISTRASI BK SMPN 7 PASURAN
+                  SABDA BK SPANJU
+                </span>
+                <span className="text-xs sm:text-sm font-semibold text-slate-500">
+                  (Sistem Administrasi BK Digital dan Akuntabel) SMPN 7 PASURUAN
                 </span>
               </h1>
 
-              <p className="text-xs font-semibold text-slate-600 mt-0.5 flex items-center gap-1.5 justify-center md:justify-start">
-                <BookOpen className="w-3.5 h-3.5 text-blue-600" />
-                <span>Dashboard Integrasi Aplikasi & Agenda Kerja Guru BK</span>
+              <p className="text-xs font-semibold text-slate-600 mt-1.5 flex items-center gap-1.5 justify-center md:justify-start">
+                <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span className="italic">"Data Tertata, Layanan Berkualitas."</span>
               </p>
             </div>
           </div>

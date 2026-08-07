@@ -1,6 +1,6 @@
 {
-  "name": "Administrasi BK SMPN 7 Pasuruan",
-  "description": "Form dan Sistem Agenda Kerja BK SMPN 7 Pasuruan terhubung Supabase tanpa perlu login",
+  "name": "SABDA BK SPANJU",
+  "description": "Sistem Administrasi BK Digital dan Akuntabel SMPN 7 PASURUAN. Data Tertata, Layanan Berkualitas.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

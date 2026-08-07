@@ -170,7 +170,7 @@ export function saveAppLinksToStorage(links: AppLink[]): void {
 
 export function exportLinksBackupJSON(links: AppLink[]): void {
   const exportData = {
-    app: 'ADMINISTRASI BK SMPN 7 PASURAN - DASHBOARD LINKS BACKUP',
+    app: 'SABDA BK SPANJU SMPN 7 PASURUAN - DASHBOARD LINKS BACKUP',
     version: '1.0',
     exportDate: new Date().toISOString(),
     totalLinks: links.length,

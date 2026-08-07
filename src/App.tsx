@@ -878,10 +878,10 @@ export default function App() {
       <footer className="bg-slate-950 border-t border-slate-800/80 py-5 text-center text-xs text-slate-400 print:hidden">
         <div className="max-w-[1700px] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p className="font-bold text-slate-300">
-            ADMINISTRASI BK SMPN 7 PASURAN © 2026
+            SABDA BK SPANJU SMPN 7 PASURUAN © 2026
           </p>
           <p className="text-slate-500 text-[11px]">
-            Sistem Integrasi Menu Aplikasi, Agenda Kerja & Undangan Orang Tua Guru BK • Supabase Cloud Ready
+            Sistem Administrasi BK Digital dan Akuntabel • "Data Tertata, Layanan Berkualitas."
           </p>
         </div>
       </footer>
