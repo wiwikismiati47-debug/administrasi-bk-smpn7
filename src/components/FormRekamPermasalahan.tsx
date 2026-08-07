@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { RekamPermasalahan, FormRekamPermasalahanData } from '../types';
+import { RekamPermasalahan, FormRekamPermasalahanData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   FileText,
   Calendar,
@@ -23,17 +24,26 @@ import {
 
 interface FormRekamPermasalahanProps {
   initialData?: RekamPermasalahan | null;
-  onSave: (data: FormRekamPermasalahanData & { id?: string }) => Promise<void>;
+  onSave?: (data: FormRekamPermasalahanData & { id?: string }) => Promise<void>;
+  onSubmit?: (data: FormRekamPermasalahanData & { id?: string }) => Promise<void>;
   onCancelEdit?: () => void;
   isLoading?: boolean;
+  isSubmitting?: boolean;
+  siswaItems?: Siswa[];
 }
 
 export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
   initialData,
   onSave,
+  onSubmit,
   onCancelEdit,
   isLoading = false,
+  isSubmitting = false,
+  siswaItems = [],
 }) => {
+  const activeSubmit = onSubmit || onSave;
+  const activeLoading = isLoading || isSubmitting;
+
   const getTodayISO = () => new Date().toISOString().slice(0, 10);
 
   const getDayNameFromDate = (dateString: string) => {
@@ -79,6 +89,10 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
     link_foto_kegiatan: '',
     keterangan: 'Proses Pendampingan BK',
   });
+
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (formData.kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -257,7 +271,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
             <span>1. WAKTU KEGIATAN & IDENTITAS SISWA</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* TANGGAL */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -296,47 +310,24 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
                 />
               </div>
             </div>
-
-            {/* KELAS */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                KELAS SISWA <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  name="kelas"
-                  value={formData.kelas}
-                  onChange={handleChange}
-                  placeholder="Contoh: 8-A / 7-C / 9-B"
-                  required
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                />
-              </div>
-            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-            {/* NAMA SISWA */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                NAMA LENGKAP SISWA <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  name="nama_siswa"
-                  value={formData.nama_siswa}
-                  onChange={handleChange}
-                  placeholder="Masukkan nama lengkap siswa"
-                  required
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
-                />
-              </div>
-            </div>
+          <div className="pt-2">
+            <SiswaSelector
+              siswaItems={siswaItems}
+              selectedKelas={formData.kelas}
+              onSelectKelas={(k) => setFormData((prev) => ({ ...prev, kelas: k }))}
+              selectedNamaSiswa={formData.nama_siswa}
+              onSelectNamaSiswa={(n) => setFormData((prev) => ({ ...prev, nama_siswa: n }))}
+              isMultiSelect={true}
+              kelasLabel="Kelas Siswa"
+              siswaLabel="Nama Lengkap Siswa"
+              themeColor="emerald"
+              required={true}
+            />
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             {/* NAMA ORANG TUA */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -354,9 +345,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
                 />
               </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* PEKERJAAN ORANG TUA */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">

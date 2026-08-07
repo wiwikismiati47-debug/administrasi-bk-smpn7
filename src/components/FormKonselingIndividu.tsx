@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { KonselingIndividu, FormKonselingIndividuData } from '../types';
+import { KonselingIndividu, FormKonselingIndividuData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   FileText,
   Calendar,
@@ -26,6 +27,7 @@ interface FormKonselingIndividuProps {
   onSubmit: (data: Partial<KonselingIndividu> & FormKonselingIndividuData) => Promise<void>;
   onCancelEdit?: () => void;
   isSubmitting?: boolean;
+  siswaItems?: Siswa[];
 }
 
 const PENDEKATAN_PRESETS = [
@@ -71,6 +73,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
   onSubmit,
   onCancelEdit,
   isSubmitting = false,
+  siswaItems = [],
 }) => {
   const getTodayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -119,6 +122,10 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [selectedPresetTab, setSelectedPresetTab] = useState<number>(0);
+
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (formData.kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
 
   useEffect(() => {
     if (initialData) {
@@ -293,7 +300,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
             <span>1. WAKTU & IDENTITAS SISWA</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* TANGGAL */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1.5">
@@ -330,44 +337,21 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
                 />
               </div>
             </div>
+          </div>
 
-            {/* KELAS */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                KELAS <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <GraduationCap className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  name="kelas"
-                  value={formData.kelas}
-                  onChange={handleChange}
-                  placeholder="Contoh: 8-A"
-                  required
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                />
-              </div>
-            </div>
-
-            {/* NAMA SISWA */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                NAMA SISWA <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  name="nama_siswa"
-                  value={formData.nama_siswa}
-                  onChange={handleChange}
-                  placeholder="Nama lengkap siswa"
-                  required
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                />
-              </div>
-            </div>
+          <div className="pt-2">
+            <SiswaSelector
+              siswaItems={siswaItems}
+              selectedKelas={formData.kelas}
+              onSelectKelas={(k) => setFormData((prev) => ({ ...prev, kelas: k }))}
+              selectedNamaSiswa={formData.nama_siswa}
+              onSelectNamaSiswa={(n) => setFormData((prev) => ({ ...prev, nama_siswa: n }))}
+              isMultiSelect={true}
+              kelasLabel="Kelas Siswa"
+              siswaLabel="Nama Lengkap Siswa"
+              themeColor="indigo"
+              required={true}
+            />
           </div>
         </div>
 

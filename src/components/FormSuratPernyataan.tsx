@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { SuratPernyataan, FormSuratPernyataanData, JenisSuratPernyataan } from '../types';
+import { SuratPernyataan, FormSuratPernyataanData, JenisSuratPernyataan, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import { FileText, Save, RefreshCw, Sparkles, CheckCircle2, User, AlertCircle, Calendar, MapPin, Building, ShieldCheck } from 'lucide-react';
 
 interface FormSuratPernyataanProps {
@@ -8,6 +9,7 @@ interface FormSuratPernyataanProps {
   isSubmitting?: boolean;
   onCancelEdit?: () => void;
   existingItems?: SuratPernyataan[];
+  siswaItems?: Siswa[];
 }
 
 const TEMPLATES: Record<JenisSuratPernyataan, { title: string; defaultRules: string }> = {
@@ -49,10 +51,15 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
   isSubmitting = false,
   onCancelEdit,
   existingItems = [],
+  siswaItems = [],
 }) => {
   const [jenisSp, setJenisSp] = useState<JenisSuratPernyataan>(initialData?.jenis_sp || 'SP_1');
   const [namaSiswa, setNamaSiswa] = useState(initialData?.nama_siswa || '');
   const [kelas, setKelas] = useState(initialData?.kelas || '');
+
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
   const [namaOrangTua, setNamaOrangTua] = useState(initialData?.nama_orang_tua || '');
   const [pekerjaanOrangTua, setPekerjaanOrangTua] = useState(initialData?.pekerjaan_orang_tua || '');
   const [alamatOrangTua, setAlamatOrangTua] = useState(initialData?.alamat_orang_tua || '');
@@ -246,33 +253,18 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
             <span>Identitas Siswa</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="sm:col-span-2 space-y-1">
-              <label className="block text-xs font-bold text-slate-700">
-                Nama Lengkap Siswa <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={namaSiswa}
-                onChange={(e) => setNamaSiswa(e.target.value)}
-                onBlur={handleNamaSiswaBlur}
-                placeholder="Contoh: Ahmad Rizky Pratama"
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium text-slate-900"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-xs font-bold text-slate-700">Kelas</label>
-              <input
-                type="text"
-                value={kelas}
-                onChange={(e) => setKelas(e.target.value)}
-                placeholder="Contoh: 8-A / 9-B"
-                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium text-slate-900"
-              />
-            </div>
-          </div>
+          <SiswaSelector
+            siswaItems={siswaItems}
+            selectedKelas={kelas}
+            onSelectKelas={(k) => setKelas(k)}
+            selectedNamaSiswa={namaSiswa}
+            onSelectNamaSiswa={(n) => setNamaSiswa(n)}
+            isMultiSelect={true}
+            kelasLabel="Kelas Siswa"
+            siswaLabel="Nama Lengkap Siswa"
+            themeColor="amber"
+            required={true}
+          />
         </div>
 
         {/* 3. Identitas Orang Tua / Wali */}

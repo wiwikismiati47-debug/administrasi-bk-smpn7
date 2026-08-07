@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { AgendaKerja, FormAgendaData } from '../types';
+import { AgendaKerja, FormAgendaData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   Calendar,
   Clock,
@@ -22,6 +23,7 @@ interface FormAgendaProps {
   onSubmit: (data: Partial<AgendaKerja> & FormAgendaData) => Promise<void>;
   onCancelEdit?: () => void;
   isSubmitting: boolean;
+  siswaItems?: Siswa[];
 }
 
 const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
@@ -89,6 +91,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
   onSubmit,
   onCancelEdit,
   isSubmitting,
+  siswaItems = [],
 }) => {
   // Get current date formatted for initial values
   const today = new Date();
@@ -454,22 +457,35 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
         </div>
 
         {/* ROW 4: Sasaran */}
-        <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-            <Users className="w-4 h-4 text-blue-600" />
-            <span>SASARAN KEGIATAN <span className="text-red-500">*</span></span>
+        <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 space-y-3">
+          <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+            <span className="flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-blue-600" />
+              <span>SASARAN KEGIATAN <span className="text-red-500">*</span></span>
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">Pilih Kelas & Siswa atau Ketik Manual Sasaran</span>
           </label>
-          <input
-            type="text"
-            value={formData.sasaran}
-            onChange={(e) => setFormData({ ...formData, sasaran: e.target.value })}
-            required
-            placeholder="Contoh: Siswa Kelas 7-A, Seluruh Siswa Kelas 9, Wali Kelas"
-            className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+
+          <SiswaSelector
+            siswaItems={siswaItems}
+            selectedKelas=""
+            onSelectKelas={(k) => {
+              if (k) {
+                setFormData((prev) => ({ ...prev, sasaran: `Siswa Kelas ${k}` }));
+              }
+            }}
+            selectedNamaSiswa={formData.sasaran}
+            onSelectNamaSiswa={(n) => setFormData((prev) => ({ ...prev, sasaran: n }))}
+            isMultiSelect={true}
+            kelasLabel="Kelas Sasaran"
+            siswaLabel="Sasaran Kegiatan (Nama Siswa / Kelompok)"
+            themeColor="blue"
+            required={true}
           />
+
           {/* Quick preset combobox */}
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-2">
-            <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Sasaran:</span>
+            <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Sasaran Umum:</span>
             <select
               value={PRESET_SASARAN.includes(formData.sasaran) ? formData.sasaran : ''}
               onChange={(e) => {
@@ -479,7 +495,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
               }}
               className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm min-w-[200px]"
             >
-              <option value="">-- Klik untuk memilih sasaran --</option>
+              <option value="">-- Klik untuk memilih sasaran umum --</option>
               {PRESET_SASARAN.map((s) => (
                 <option key={s} value={s}>
                   {s}

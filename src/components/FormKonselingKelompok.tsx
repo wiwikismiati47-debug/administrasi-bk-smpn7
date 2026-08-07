@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KonselingKelompok, FormKonselingKelompokData } from '../types';
+import { KonselingKelompok, FormKonselingKelompokData, Siswa } from '../types';
 import {
   FileText,
   Calendar,
@@ -26,6 +26,7 @@ interface FormKonselingKelompokProps {
   onSubmit: (data: Partial<KonselingKelompok> & FormKonselingKelompokData) => Promise<void>;
   onCancelEdit?: () => void;
   isSubmitting?: boolean;
+  siswaItems?: Siswa[];
 }
 
 const PENDEKATAN_PRESETS = [
@@ -71,6 +72,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
   onSubmit,
   onCancelEdit,
   isSubmitting = false,
+  siswaItems = [],
 }) => {
   const getTodayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -119,6 +121,10 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [selectedPresetTab, setSelectedPresetTab] = useState<number>(0);
+
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (formData.kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
 
   useEffect(() => {
     if (initialData) {
@@ -353,20 +359,58 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
 
           {/* NAMA SISWA / ANGGOTA KELOMPOK */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-              NAMA SISWA / ANGGOTA KELOMPOK <span className="text-rose-500">*</span>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>NAMA SISWA / ANGGOTA KELOMPOK <span className="text-rose-500">*</span></span>
+              {studentsInClass.length > 0 && (
+                <span className="text-[10px] text-pink-700 bg-pink-100 px-2 py-0.5 rounded-full font-extrabold border border-pink-300">
+                  {studentsInClass.length} Siswa Tersedia
+                </span>
+              )}
             </label>
+
+            {studentsInClass.length > 0 && (
+              <div className="mb-2.5">
+                <select
+                  onChange={(e) => {
+                    const selectedName = e.target.value;
+                    if (selectedName) {
+                      setFormData(prev => {
+                        const current = prev.nama_siswa.trim();
+                        if (!current) return { ...prev, nama_siswa: `1. ${selectedName}` };
+                        if (current.includes(selectedName)) return prev;
+                        // Count existing items
+                        const lines = current.split('\n').filter(Boolean);
+                        const nextNum = lines.length + 1;
+                        return { ...prev, nama_siswa: `${current}\n${nextNum}. ${selectedName}` };
+                      });
+                      e.target.value = '';
+                    }
+                  }}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="">+ Klik untuk menambahkan Nama Siswa dari Kelas {formData.kelas}...</option>
+                  {studentsInClass.map((s) => (
+                    <option key={s.id} value={s.nama_siswa}>
+                      {s.nama_siswa} {s.nis ? `(NIS: ${s.nis})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <textarea
               name="nama_siswa"
               value={formData.nama_siswa}
               onChange={handleChange}
-              rows={3}
+              rows={4}
               required
               placeholder="Tuliskan nama-nama anggota kelompok (contoh: 1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana)..."
               className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all leading-relaxed"
             />
             <p className="text-[11px] text-slate-500 mt-1 font-medium">
-              Dapat mencantumkan beberapa nama siswa anggota kelompok konseling.
+              {studentsInClass.length > 0
+                ? `Pilih dari menu di atas atau ketik manual. Anda dapat menambahkan beberapa anggota kelompok.`
+                : `Belum ada data siswa untuk Kelas ${formData.kelas || '...'} di database. Silakan ketik manual atau tambahkan di Data Siswa.`}
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow } from '../types';
+import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle } from 'lucide-react';
 
 interface FormKonferensiKasusProps {
@@ -8,6 +9,7 @@ interface FormKonferensiKasusProps {
   isSubmitting?: boolean;
   onCancelEdit?: () => void;
   existingItems?: KonferensiKasus[];
+  siswaItems?: Siswa[];
 }
 
 const DEFAULT_ROWS: DaftarHadirRow[] = [
@@ -24,6 +26,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   isSubmitting = false,
   onCancelEdit,
   existingItems = [],
+  siswaItems = [],
 }) => {
   // Tabs: 'notula' | 'rapat' | 'daftar_hadir' | 'ttd'
   const [activeTab, setActiveTab] = useState<'notula' | 'rapat' | 'daftar_hadir' | 'ttd'>('notula');
@@ -32,6 +35,26 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   // 1. Notula & Common Info
   const [namaKonseli, setNamaKonseli] = useState('');
   const [kelasTa, setKelasTa] = useState('');
+  const [selectedKelas, setSelectedKelas] = useState('');
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('2024/2025');
+
+  const handleSelectKelas = (k: string) => {
+    setSelectedKelas(k);
+    if (k && selectedTahunAjaran) {
+      setKelasTa(`${k} / ${selectedTahunAjaran}`);
+    } else if (k) {
+      setKelasTa(k);
+    }
+  };
+
+  const handleSelectTahunAjaran = (ta: string) => {
+    setSelectedTahunAjaran(ta);
+    if (selectedKelas && ta) {
+      setKelasTa(`${selectedKelas} / ${ta}`);
+    } else if (ta) {
+      setKelasTa(ta);
+    }
+  };
   const [jenisMasalah, setJenisMasalah] = useState('');
   const [hariTglJam, setHariTglJam] = useState('');
   const [pemanduKonferensi, setPemanduKonferensi] = useState('Konselor Sekolah');
@@ -398,38 +421,22 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                 Informasi Siswa (Konseli) & Kasus
               </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Nama Siswa (Konseli) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={namaKonseli}
-                    onChange={(e) => setNamaKonseli(e.target.value)}
-                    onBlur={handleNamaKonseliBlur}
-                    placeholder="e.g. Syahnaz"
-                    required
-                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                  />
-                  <p className="text-[10px] text-slate-400 mt-1">
-                    Ketik nama lalu blur/klik luar untuk auto-search data yang sudah ada.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Kelas / Tahun Ajaran
-                  </label>
-                  <input
-                    type="text"
-                    value={kelasTa}
-                    onChange={(e) => setKelasTa(e.target.value)}
-                    placeholder="e.g. 9E / 2016-2017"
-                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                  />
-                </div>
-              </div>
+              <SiswaSelector
+                siswaItems={siswaItems}
+                selectedKelas={selectedKelas}
+                onSelectKelas={handleSelectKelas}
+                selectedTahunAjaran={selectedTahunAjaran}
+                onSelectTahunAjaran={handleSelectTahunAjaran}
+                showTahunAjaran={true}
+                selectedNamaSiswa={namaKonseli}
+                onSelectNamaSiswa={(val) => setNamaKonseli(val)}
+                isMultiSelect={true}
+                kelasLabel="Kelas Siswa"
+                taLabel="Tahun Ajaran"
+                siswaLabel="Nama Siswa (Konseli)"
+                themeColor="rose"
+                required={true}
+              />
 
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -568,7 +575,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={rujukenPelayanan => rujukanPelayanan} // Fix warning / direct map
+                    value={rujukanPelayanan}
                     onChange={(e) => setRujukanPelayanan(e.target.value)}
                     placeholder="e.g. Wali Kelas, Guru Mata Pelajaran, Konselor"
                     className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { HomeVisit, FormHomeVisitData } from '../types';
+import { HomeVisit, FormHomeVisitData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   Home,
   Calendar,
@@ -24,6 +25,7 @@ interface FormHomeVisitProps {
   onSubmit: (data: Partial<HomeVisit> & FormHomeVisitData) => Promise<void>;
   onCancelEdit?: () => void;
   isSubmitting?: boolean;
+  siswaItems?: Siswa[];
 }
 
 const DAYS_LIST = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -51,6 +53,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   onSubmit,
   onCancelEdit,
   isSubmitting = false,
+  siswaItems = [],
 }) => {
   const getTodayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -358,6 +361,10 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
     }
   };
 
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
+
   return (
     <div className="bg-white text-slate-800 rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       
@@ -450,24 +457,6 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               />
             </div>
 
-            {/* Kelas */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <GraduationCap className="w-3.5 h-3.5 text-amber-400" />
-                <span>KELAS <span className="text-red-400">*</span></span>
-              </label>
-              <select
-                value={kelas}
-                onChange={(e) => setKelas(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold"
-              >
-                {KELAS_PRESETS.map((k) => (
-                  <option key={k} value={k}>
-                    Kelas {k}
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
         </div>
 
@@ -478,23 +467,23 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
             <span>2. IDENTITAS SISWA, ORANG TUA & ALAMAT RUMAH</span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            
-            {/* Nama Siswa */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-amber-400" />
-                <span>NAMA SISWA <span className="text-red-400">*</span></span>
-              </label>
-              <input
-                type="text"
-                value={namaSiswa}
-                onChange={(e) => setNamaSiswa(e.target.value)}
-                placeholder="Contoh: Rian Adiputra"
-                required
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
+          <SiswaSelector
+            siswaItems={siswaItems}
+            selectedKelas={kelas}
+            onSelectKelas={(k) => setKelas(k)}
+            selectedNamaSiswa={namaSiswa}
+            onSelectNamaSiswa={(n) => setNamaSiswa(n)}
+            onSelectStudentDetails={(s) => {
+              if (s.nis) setNisSiswa(s.nis);
+            }}
+            isMultiSelect={true}
+            kelasLabel="Kelas Siswa"
+            siswaLabel="Nama Siswa"
+            themeColor="amber"
+            required={true}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
 
             {/* Nama Orang Tua */}
             <div>

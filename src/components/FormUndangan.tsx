@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { UndanganOrangTua, FormUndanganData } from '../types';
+import { UndanganOrangTua, FormUndanganData, Siswa } from '../types';
+import { SiswaSelector } from './SiswaSelector';
 import {
   Users,
   Calendar,
@@ -26,6 +27,7 @@ interface FormUndanganProps {
   onSubmit: (data: Partial<UndanganOrangTua> & FormUndanganData) => Promise<void>;
   onCancelEdit?: () => void;
   isSubmitting?: boolean;
+  siswaItems?: Siswa[];
 }
 
 const DAYS_LIST = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
@@ -53,6 +55,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
   onSubmit,
   onCancelEdit,
   isSubmitting = false,
+  siswaItems = [],
 }) => {
   const getTodayISO = () => new Date().toISOString().slice(0, 10);
 
@@ -210,6 +213,10 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
     }
   };
 
+  const studentsInClass = (siswaItems || []).filter(
+    (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (kelas || '').toLowerCase().replace(/\s+/g, '')
+  );
+
   return (
     <div className="bg-white text-slate-800 rounded-3xl p-5 sm:p-7 border border-slate-200 shadow-xl shadow-slate-200/50 relative overflow-hidden">
       
@@ -329,39 +336,20 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             
-            {/* Kelas */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                KELAS <span className="text-red-400">*</span>
-              </label>
-              <select
-                value={kelas}
-                onChange={(e) => setKelas(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold"
-              >
-                {KELAS_PRESETS.map((k) => (
-                  <option key={k} value={k}>
-                    Kelas {k}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Nama Siswa */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <User className="w-3.5 h-3.5 text-purple-400" />
-                <span>NAMA SISWA <span className="text-red-400">*</span></span>
-              </label>
-              <input
-                type="text"
-                value={namaSiswa}
-                onChange={(e) => setNamaSiswa(e.target.value)}
-                placeholder="Contoh: Ahmad Rizky Pratama"
-                required
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+          <div className="pt-2">
+            <SiswaSelector
+              siswaItems={siswaItems}
+              selectedKelas={kelas}
+              onSelectKelas={(k) => setKelas(k)}
+              selectedNamaSiswa={namaSiswa}
+              onSelectNamaSiswa={(n) => setNamaSiswa(n)}
+              isMultiSelect={true}
+              kelasLabel="Kelas Siswa"
+              siswaLabel="Nama Siswa"
+              themeColor="purple"
+              required={true}
+            />
+          </div>
 
             {/* Nama Orang Tua */}
             <div>

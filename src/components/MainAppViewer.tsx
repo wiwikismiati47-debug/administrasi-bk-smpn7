@@ -726,6 +726,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingAgenda}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -763,6 +764,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingUndangan}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -800,6 +802,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingHomeVisit}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -838,6 +841,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingRekamPermasalahan}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -874,6 +878,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingKonselingIndividu}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -910,6 +915,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingKonselingKelompok}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -946,6 +952,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingSuratPernyataan}
+                    siswaItems={siswaItems}
                   />
                 )}
 
@@ -982,6 +989,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     }}
                     isSubmitting={isSubmittingKonferensiKasus}
                     existingItems={konferensiKasusItems}
+                    siswaItems={siswaItems}
                   />
                 )}
 
