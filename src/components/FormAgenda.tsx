@@ -73,11 +73,14 @@ const PRESET_SASARAN = [
 ];
 
 const PRESET_WAKTU = [
-  '07:15 - 08:30 WIB',
-  '08:30 - 09:45 WIB',
-  '10:00 - 11:15 WIB',
-  '11:15 - 12:30 WIB',
-  '12:30 - 14:00 WIB',
+  '07.15-07.55 WIB',
+  '07.55-08.35 WIB',
+  '08.35-09.15 WIB',
+  '09.15-09.55 WIB',
+  '10.35-11.15 WIB',
+  '11.15-11.55 WIB',
+  '11.55-12.35 WIB',
+  '12.35-13.15 WIB',
 ];
 
 export const FormAgenda: React.FC<FormAgendaProps> = ({
@@ -95,7 +98,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
     tanggal: defaultDateStr,
     bulan: NAMA_BULAN[today.getMonth()],
     tahun: String(today.getFullYear()),
-    waktu: '08:00 - 09:30 WIB',
+    waktu: '07.15-07.55 WIB',
     uraian_kegiatan: '',
     sasaran: '',
     link_foto_kegiatan: '',
@@ -219,7 +222,7 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
         tanggal: defaultDateStr,
         bulan: NAMA_BULAN[today.getMonth()],
         tahun: String(today.getFullYear()),
-        waktu: '08:00 - 09:30 WIB',
+        waktu: '07.15-07.55 WIB',
         uraian_kegiatan: '',
         sasaran: '',
         link_foto_kegiatan: '',
@@ -351,22 +354,28 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
               value={formData.waktu}
               onChange={(e) => setFormData({ ...formData, waktu: e.target.value })}
               required
-              placeholder="Contoh: 08:00 - 09:30 WIB"
+              placeholder="Contoh: 07.15-07.55 WIB"
               className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
             />
-            {/* Quick time chips */}
-            <div className="flex flex-wrap gap-1.5 items-center pt-1">
-              <span className="text-[11px] text-slate-500">Opsi cepat:</span>
-              {PRESET_WAKTU.map((tw) => (
-                <button
-                  key={tw}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, waktu: tw })}
-                  className="text-xs px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-100 text-slate-700 hover:text-blue-800 transition-colors border border-slate-200"
-                >
-                  {tw}
-                </button>
-              ))}
+            {/* Quick time combobox */}
+            <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-1">
+              <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Waktu:</span>
+              <select
+                value={PRESET_WAKTU.includes(formData.waktu) ? formData.waktu : ''}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    setFormData({ ...formData, waktu: e.target.value });
+                  }
+                }}
+                className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm min-w-[200px]"
+              >
+                <option value="">-- Klik untuk memilih waktu --</option>
+                {PRESET_WAKTU.map((tw) => (
+                  <option key={tw} value={tw}>
+                    {tw}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

@@ -102,17 +102,6 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     badge: 'SISWA',
     colorGradient: 'from-cyan-600 via-teal-600 to-blue-800',
   },
-  {
-    id: 'link-supabase-console',
-    title: 'Console Supabase Database',
-    url: 'https://supabase.com/dashboard',
-    iconName: 'Database',
-    category: 'Database & Cloud',
-    description: 'Akses dashboard database cloud Supabase untuk pemantauan data BK',
-    isInternal: false,
-    badge: 'CLOUD',
-    colorGradient: 'from-emerald-600 via-teal-600 to-emerald-800',
-  },
 ];
 
 export function getSavedAppLinks(): AppLink[] {
@@ -125,7 +114,7 @@ export function getSavedAppLinks(): AppLink[] {
     let parsed = JSON.parse(dataStr);
     if (Array.isArray(parsed) && parsed.length > 0) {
       // Exclude removed default links
-      const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk']);
+      const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk', 'link-supabase-console']);
       parsed = parsed.filter((item: AppLink) => !removedIds.has(item.id));
 
       const existingMap = new Map<string, AppLink>(parsed.map((item: AppLink) => [item.id, item]));
