@@ -24,6 +24,51 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   onOpenSupabaseConfig,
   totalLinksCount,
 }) => {
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
+  const [isInstallable, setIsInstallable] = React.useState(false);
+
+  React.useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    const handleAppInstalled = () => {
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+      alert('Selamat! SABDA BK SPANJU berhasil diinstal di perangkat Anda.');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      alert(
+        'SABDA BK SPANJU mendukung instalasi langsung di HP & Laptop Anda!\n\n' +
+        'Langkah mudah untuk menginstal:\n' +
+        '📱 Di HP Android (Chrome): Klik ikon titik tiga di kanan atas, lalu pilih "Instal aplikasi" atau "Tambahkan ke Layar Utama".\n' +
+        '🍏 Di iPhone (Safari): Klik tombol "Bagikan" (Share / panah ke atas) di menu Safari bawah, lalu pilih "Tambahkan ke Layar Utama" (Add to Home Screen).\n' +
+        '💻 Di Laptop / PC (Chrome/Edge): Klik ikon instalasi (tanda tambah/monitor berpanah bawah) di sebelah kanan kolom alamat (address bar) browser Anda.'
+      );
+      return;
+    }
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('User accepted install');
+      setIsInstallable(false);
+      setDeferredPrompt(null);
+    }
+  };
+
   return (
     <header className="bg-white/90 backdrop-blur-md text-slate-900 shadow-md border-b-4 border-gradient-to-r border-blue-600 relative overflow-hidden">
       {/* Decorative Gradient Top Stripe */}
@@ -74,6 +119,27 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           {/* Action Bar: Backup, Upload, Supabase Pill */}
           <div className="flex flex-wrap items-center justify-center md:justify-end gap-2.5">
             
+            {/* Install PWA Button with School Logo Mascot */}
+            <button
+              onClick={handleInstallClick}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-95 transition-all cursor-pointer relative overflow-hidden group/install"
+              title="Instal aplikasi SABDA BK SPANJU di HP atau Laptop Anda"
+            >
+              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/install:translate-y-0 transition-transform duration-300" />
+              <img
+                src="https://iili.io/KDFk4fI.png"
+                alt="Maskot"
+                className="w-4 h-4 object-contain rounded-full bg-white p-0.5 shadow-sm transform group-hover/install:rotate-12 transition-transform"
+              />
+              <span>Instal Aplikasi</span>
+              {isInstallable && (
+                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+              )}
+            </button>
+
             {/* Public Access Badge */}
             <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
