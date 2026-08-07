@@ -68,6 +68,7 @@ const PRESET_SASARAN = [
   'Seluruh Siswa Kelas 7',
   'Seluruh Siswa Kelas 8',
   'Seluruh Siswa Kelas 9',
+  'Seluruh Siswa Kelas 7, 8, 9',
   'Orang Tua / Wali Siswa',
   'Wali Kelas & Guru Mata Pelajaran',
 ];
