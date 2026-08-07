@@ -73,6 +73,8 @@ const PRESET_SASARAN = [
   'Seluruh Siswa Kelas 7, 8, 9',
   'Orang Tua / Wali Siswa',
   'Wali Kelas & Guru Mata Pelajaran',
+  'Konselor',
+  'Guru BK / Konselor',
 ];
 
 const PRESET_WAKTU = [
