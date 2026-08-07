@@ -55,15 +55,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
             {/* School & App Names */}
             <div>
-              <div className="flex items-center gap-2 justify-center md:justify-start">
-                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black text-[10px] uppercase tracking-widest px-2.5 py-0.5 rounded-md shadow-sm">
-                  SMPN 7 PASURAN
-                </span>
-                <span className="text-xs text-blue-800 font-bold tracking-wide hidden sm:inline-block bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                  Pemerintah Kota Pasuruan
-                </span>
-              </div>
-
               <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex flex-col sm:flex-row sm:items-center gap-x-2 justify-center md:justify-start leading-tight">
                 <span className="bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent">
                   SABDA BK SPANJU

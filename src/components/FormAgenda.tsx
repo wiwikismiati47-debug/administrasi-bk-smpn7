@@ -107,6 +107,27 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
 
   const [previewError, setPreviewError] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hrs = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      setCurrentTime(`${hrs}.${mins}.${secs} WIB`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUseCurrentTime = () => {
+    const now = new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    setFormData((prev) => ({ ...prev, waktu: `${hrs}.${mins} WIB` }));
+  };
 
   // Sync when initialData changes (for Edit mode)
   useEffect(() => {
@@ -344,19 +365,38 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
 
         {/* ROW 2: Waktu */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1 flex items-center gap-1.5">
-            <Clock className="w-4 h-4 text-blue-600" />
-            <span>WAKTU KEGIATAN <span className="text-red-500">*</span></span>
-          </label>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-blue-600" />
+              <span>WAKTU KEGIATAN <span className="text-red-500">*</span></span>
+            </label>
+            {currentTime && (
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>Jam Realtime: {currentTime}</span>
+              </div>
+            )}
+          </div>
           <div className="space-y-2">
-            <input
-              type="text"
-              value={formData.waktu}
-              onChange={(e) => setFormData({ ...formData, waktu: e.target.value })}
-              required
-              placeholder="Contoh: 07.15-07.55 WIB"
-              className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={formData.waktu}
+                onChange={(e) => setFormData({ ...formData, waktu: e.target.value })}
+                required
+                placeholder="Contoh: 07.15-07.55 WIB"
+                className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                onClick={handleUseCurrentTime}
+                className="px-3.5 py-2 text-xs font-bold bg-blue-50 hover:bg-blue-100 active:bg-blue-200 text-blue-700 rounded-lg border border-blue-200 transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                title="Gunakan jam saat ini"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span>Gunakan Waktu Sekarang</span>
+              </button>
+            </div>
             {/* Quick time combobox */}
             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-1">
               <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Waktu:</span>
