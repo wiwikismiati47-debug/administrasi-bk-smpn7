@@ -666,19 +666,33 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     </td>
                   </tr>
                 ) : (
-                  agendaItems.map((item, idx) => (
-                    <tr key={item.id} className="border-b border-slate-900">
-                      <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
-                      <td className="p-2 border border-slate-900 font-medium">
-                        <div><strong>{item.hari}</strong></div>
-                        <div>{item.tanggal} ({item.bulan} {item.tahun})</div>
-                      </td>
-                      <td className="p-2 border border-slate-900 text-center font-mono">{item.waktu || '-'}</td>
-                      <td className="p-2 border border-slate-900 font-medium">{item.uraian_kegiatan}</td>
-                      <td className="p-2 border border-slate-900 font-semibold">{item.sasaran}</td>
-                      <td className="p-2 border border-slate-900">{item.keterangan || 'Terlaksana'}</td>
-                    </tr>
-                  ))
+                  agendaItems.map((item, idx) => {
+                    const isSameDateAsPrevious = idx > 0 && 
+                      agendaItems[idx - 1].tanggal === item.tanggal &&
+                      agendaItems[idx - 1].bulan === item.bulan &&
+                      agendaItems[idx - 1].tahun === item.tahun &&
+                      agendaItems[idx - 1].hari === item.hari;
+
+                    return (
+                      <tr key={item.id} className="border-b border-slate-900">
+                        <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
+                        <td className="p-2 border border-slate-900 font-medium text-center">
+                          {!isSameDateAsPrevious ? (
+                            <>
+                              <div><strong>{item.hari}</strong></div>
+                              <div className="text-[10px] text-slate-800 mt-0.5">{item.tanggal} ({item.bulan} {item.tahun})</div>
+                            </>
+                          ) : (
+                            <div className="text-slate-400 font-extrabold text-sm py-1 select-none">〃</div>
+                          )}
+                        </td>
+                        <td className="p-2 border border-slate-900 text-center font-mono">{item.waktu || '-'}</td>
+                        <td className="p-2 border border-slate-900 font-medium">{item.uraian_kegiatan}</td>
+                        <td className="p-2 border border-slate-900 font-semibold">{item.sasaran}</td>
+                        <td className="p-2 border border-slate-900">{item.keterangan || 'Terlaksana'}</td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

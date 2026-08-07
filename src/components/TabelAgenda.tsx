@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { AgendaKerja } from '../types';
 import {
   Search,
@@ -69,53 +70,80 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
     return Array.from(setY).filter(Boolean);
   }, [items]);
 
-  // Export to CSV Function
-  const exportToCSV = () => {
+  // Export to Excel Function with Letterhead (Kop)
+  const exportToExcel = () => {
     if (filteredItems.length === 0) {
       alert('Tidak ada data untuk diexport.');
       return;
     }
 
-    const headers = [
-      'No',
-      'Hari',
-      'Tanggal',
-      'Bulan',
-      'Tahun',
-      'Waktu',
-      'Uraian Kegiatan',
-      'Sasaran',
-      'Link Foto Kegiatan',
-      'Keterangan',
+    const kop = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["DINAS PENDIDIKAN DAN KEBUDAYAAN"],
+      ["🏫 SMP NEGERI 7 PASURUAN (SPANJU)"],
+      ["SABDA BK SPANJU - SISTEM ADMINISTRASI BK DIGITAL DAN AKUNTABEL"],
+      ["Jl. Sunan Ampel No. 9, Pasuruan, Jawa Timur (67116) | Telp: (0343) 421271"],
+      ["REKAPITULASI LAPORAN AGENDA KERJA HARIAN BIMBINGAN KONSELING (BK)"],
+      ["------------------------------------------------------------------------------------------------------------------------------------"],
+      [""], // Spacer row
     ];
 
-    const rows = filteredItems.map((item, idx) => [
-      idx + 1,
-      `"${item.hari || ''}"`,
-      `"${item.tanggal || ''}"`,
-      `"${item.bulan || ''}"`,
-      `"${item.tahun || ''}"`,
-      `"${item.waktu || ''}"`,
-      `"${(item.uraian_kegiatan || '').replace(/"/g, '""')}"`,
-      `"${(item.sasaran || '').replace(/"/g, '""')}"`,
-      `"${item.link_foto_kegiatan || ''}"`,
-      `"${(item.keterangan || '').replace(/"/g, '""')}"`,
-    ]);
+    const headers = [
+      "NO",
+      "HARI / TANGGAL",
+      "WAKTU",
+      "URAIAN KEGIATAN",
+      "SASARAN KEGIATAN",
+      "KETERANGAN / STATUS"
+    ];
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const rows = filteredItems.map((item, idx) => {
+      const isSameDateAsPrevious = idx > 0 && 
+        filteredItems[idx - 1].tanggal === item.tanggal &&
+        filteredItems[idx - 1].bulan === item.bulan &&
+        filteredItems[idx - 1].tahun === item.tahun &&
+        filteredItems[idx - 1].hari === item.hari;
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `Agenda_Kerja_BK_SMPN7_Pasuruan_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      return [
+        idx + 1,
+        isSameDateAsPrevious ? '〃' : `${item.hari}, ${item.tanggal} ${item.bulan} ${item.tahun}`,
+        item.waktu || '-',
+        item.uraian_kegiatan || '',
+        item.sasaran || '',
+        item.keterangan || 'Terlaksana'
+      ];
+    });
+
+    const wsData = [...kop, headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Apply merges for the Kop (columns A to F)
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } }, // Row 1
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } }, // Row 2
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } }, // Row 3
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }, // Row 4
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 5 } }, // Row 5
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 5 } }, // Row 6
+      { s: { r: 6, c: 0 }, e: { r: 6, c: 5 } }, // Row 7
+    ];
+
+    // Set custom column widths for Excel layout
+    ws['!cols'] = [
+      { wch: 6 },   // NO
+      { wch: 28 },  // HARI / TANGGAL
+      { wch: 22 },  // WAKTU
+      { wch: 55 },  // URAIAN KEGIATAN
+      { wch: 28 },  // SASARAN
+      { wch: 22 },  // KETERANGAN
+    ];
+
+    // Create workbook and append worksheet
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Agenda Kerja BK");
+
+    // Write file
+    XLSX.writeFile(wb, `Agenda_Kerja_BK_SMPN7_Pasuruan_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const handleDeleteConfirm = async (id: string, uraian: string) => {
@@ -146,12 +174,12 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={exportToCSV}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow transition-all"
-            title="Export data ke file Excel / CSV"
+            onClick={exportToExcel}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow transition-all cursor-pointer"
+            title="Export data ke file Excel (.xlsx)"
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Export CSV</span>
+            <span>Export Excel (.xlsx)</span>
           </button>
 
           <button
@@ -246,27 +274,43 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {filteredItems.map((item, index) => (
-                <tr
-                  key={item.id}
-                  className="hover:bg-blue-50/60 transition-colors group text-slate-800"
-                >
-                  {/* NO */}
-                  <td className="p-3 text-center font-bold text-slate-600 border-r border-slate-200 bg-slate-50/50">
-                    {index + 1}
-                  </td>
+              {filteredItems.map((item, index) => {
+                const isSameDateAsPrevious = index > 0 && 
+                  filteredItems[index - 1].tanggal === item.tanggal &&
+                  filteredItems[index - 1].bulan === item.bulan &&
+                  filteredItems[index - 1].tahun === item.tahun &&
+                  filteredItems[index - 1].hari === item.hari;
 
-                  {/* HARI / TANGGAL / BULAN / TAHUN */}
-                  <td className="p-3 border-r border-slate-200 font-medium">
-                    <div className="font-bold text-blue-900">{item.hari}</div>
-                    <div className="text-slate-600 text-xs flex items-center gap-1 mt-0.5">
-                      <Calendar className="w-3 h-3 text-slate-400" />
-                      <span>{item.tanggal}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {item.bulan} {item.tahun}
-                    </div>
-                  </td>
+                return (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-blue-50/60 transition-colors group text-slate-800"
+                  >
+                    {/* NO */}
+                    <td className="p-3 text-center font-bold text-slate-600 border-r border-slate-200 bg-slate-50/50">
+                      {index + 1}
+                    </td>
+
+                    {/* HARI / TANGGAL / BULAN / TAHUN */}
+                    <td className="p-3 border-r border-slate-200 font-medium">
+                      {!isSameDateAsPrevious ? (
+                        <>
+                          <div className="font-bold text-blue-900">{item.hari}</div>
+                          <div className="text-slate-600 text-xs flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3 text-slate-400" />
+                            <span>{item.tanggal}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            {item.bulan} {item.tahun}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center h-full py-1.5 select-none">
+                          <span className="text-slate-300 font-extrabold text-base leading-none">〃</span>
+                          <span className="text-[9px] text-slate-400/80 font-bold italic mt-0.5">(s.d.a)</span>
+                        </div>
+                      )}
+                    </td>
 
                   {/* WAKTU */}
                   <td className="p-3 border-r border-slate-200 text-slate-700">
@@ -354,8 +398,9 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              );
+            })}
+          </tbody>
           </table>
         )}
       </div>

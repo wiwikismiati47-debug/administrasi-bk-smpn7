@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { HomeVisit } from '../types';
 import {
   downloadLaporanHomeVisitWord,
@@ -96,65 +97,88 @@ export const TabelHomeVisit: React.FC<TabelHomeVisitProps> = ({
   // Get unique years in data
   const yearsInSeries = Array.from(new Set(items.map((i) => i.tahun))).sort().reverse();
 
-  // Export CSV function
-  const handleExportCSV = () => {
+  // Export to Excel function with Letterhead (Kop)
+  const handleExportExcel = () => {
     if (filtered.length === 0) {
       alert('Tidak ada data home visit untuk diexport.');
       return;
     }
 
+    const kop = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["DINAS PENDIDIKAN DAN KEBUDAYAAN"],
+      ["🏫 SMP NEGERI 7 PASURUAN (SPANJU)"],
+      ["SABDA BK SPANJU - SISTEM ADMINISTRASI BK DIGITAL DAN AKUNTABEL"],
+      ["Jl. Sunan Ampel No. 9, Pasuruan, Jawa Timur (67116) | Telp: (0343) 421271"],
+      ["DAFTAR REKAPITULASI PELAKSANAAN HOME VISIT / KUNJUNGAN RUMAH (BK)"],
+      ["------------------------------------------------------------------------------------------------------------------------------------"],
+      [""], // Spacer row
+    ];
+
     const headers = [
-      'No',
-      'Hari',
-      'Tanggal',
-      'Bulan',
-      'Tahun',
-      'Jam',
-      'Kelas',
-      'Nama Siswa',
-      'Nama Orang Tua',
-      'Pekerjaan Orang Tua',
-      'Alamat Rumah',
-      'Perihal Home Visit',
-      'Uraian Permasalahan',
-      'Tindak Lanjut',
-      'Link Foto',
-      'Keterangan'
+      "NO",
+      "HARI / TANGGAL",
+      "WAKTU/JAM",
+      "KELAS",
+      "NAMA SISWA",
+      "NAMA ORANG TUA",
+      "PEKERJAAN ORTU",
+      "ALAMAT RUMAH",
+      "PERIHAL HOME VISIT",
+      "URAIAN MASALAH",
+      "TINDAK LANJUT",
+      "KETERANGAN / STATUS"
     ];
 
     const rows = filtered.map((item, index) => [
       index + 1,
-      `"${item.hari}"`,
-      `"${item.tanggal}"`,
-      `"${item.bulan}"`,
-      `"${item.tahun}"`,
-      `"${item.waktu}"`,
-      `"${item.kelas}"`,
-      `"${item.nama_siswa.replace(/"/g, '""')}"`,
-      `"${item.nama_orang_tua.replace(/"/g, '""')}"`,
-      `"${(item.pekerjaan_orang_tua || '').replace(/"/g, '""')}"`,
-      `"${(item.alamat || '').replace(/"/g, '""')}"`,
-      `"${item.perihal_home_visit.replace(/"/g, '""')}"`,
-      `"${(item.uraian_permasalahan || '').replace(/"/g, '""')}"`,
-      `"${(item.tindak_lanjut || '').replace(/"/g, '""')}"`,
-      `"${(item.link_foto_kegiatan || '').replace(/"/g, '""')}"`,
-      `"${(item.keterangan || '').replace(/"/g, '""')}"`
+      `${item.hari}, ${item.tanggal} ${item.bulan} ${item.tahun}`,
+      item.waktu || '-',
+      item.kelas || '',
+      item.nama_siswa || '',
+      item.nama_orang_tua || '',
+      item.pekerjaan_orang_tua || '',
+      item.alamat || '',
+      item.perihal_home_visit || '',
+      item.uraian_permasalahan || '',
+      item.tindak_lanjut || '',
+      item.keterangan || ''
     ]);
 
-    const csvContent =
-      'data:text/csv;charset=utf-8,\uFEFF' +
-      [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+    const wsData = [...kop, headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute(
-      'download',
-      `Rekap_Home_Visit_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    // Apply merges for the Kop (columns A to L, 12 columns total, index 0 to 11)
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 11 } },
+      { s: { r: 6, c: 0 }, e: { r: 6, c: 11 } },
+    ];
+
+    // Set custom column widths for pristine Excel layout
+    ws['!cols'] = [
+      { wch: 6 },   // NO
+      { wch: 28 },  // HARI / TANGGAL
+      { wch: 18 },  // WAKTU/JAM
+      { wch: 12 },  // KELAS
+      { wch: 25 },  // NAMA SISWA
+      { wch: 25 },  // NAMA ORANG TUA
+      { wch: 20 },  // PEKERJAAN ORTU
+      { wch: 30 },  // ALAMAT RUMAH
+      { wch: 30 },  // PERIHAL HOME VISIT
+      { wch: 35 },  // URAIAN MASALAH
+      { wch: 35 },  // TINDAK LANJUT
+      { wch: 18 },  // KETERANGAN / STATUS
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rekap Home Visit BK");
+
+    XLSX.writeFile(wb, `Rekap_Home_Visit_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   return (
@@ -224,14 +248,14 @@ export const TabelHomeVisit: React.FC<TabelHomeVisitProps> = ({
             </button>
           )}
 
-          {/* Export Excel / CSV */}
+          {/* Export XLSX */}
           <button
-            onClick={handleExportCSV}
-            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5"
-            title="Export Data ke CSV/Excel"
+            onClick={handleExportExcel}
+            className="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-extrabold rounded-xl shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+            title="Export Data ke Excel (.xlsx)"
           >
             <Download className="w-4 h-4 text-emerald-200" />
-            <span>Export CSV</span>
+            <span>Export Excel (.xlsx)</span>
           </button>
 
           {/* Cetak Tabel */}

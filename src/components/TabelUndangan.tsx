@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import * as XLSX from 'xlsx';
 import { UndanganOrangTua } from '../types';
 import {
   downloadSuratUndanganWord,
@@ -90,59 +91,88 @@ export const TabelUndangan: React.FC<TabelUndanganProps> = ({
   // Get unique years in data
   const yearsInSeries = Array.from(new Set(items.map((i) => i.tahun))).sort().reverse();
 
-  // Export CSV function
-  const handleExportCSV = () => {
+  // Export to Excel function with Letterhead (Kop)
+  const handleExportExcel = () => {
     if (filtered.length === 0) {
       alert('Tidak ada data undangan untuk diexport.');
       return;
     }
 
+    const kop = [
+      ["PEMERINTAH KOTA PASURUAN"],
+      ["DINAS PENDIDIKAN DAN KEBUDAYAAN"],
+      ["🏫 SMP NEGERI 7 PASURUAN (SPANJU)"],
+      ["SABDA BK SPANJU - SISTEM ADMINISTRASI BK DIGITAL DAN AKUNTABEL"],
+      ["Jl. Sunan Ampel No. 9, Pasuruan, Jawa Timur (67116) | Telp: (0343) 421271"],
+      ["DAFTAR REKAPITULASI UNDANGAN ORANG TUA / WALI SISWA (BK)"],
+      ["------------------------------------------------------------------------------------------------------------------------------------"],
+      [""], // Spacer row
+    ];
+
     const headers = [
-      'No',
-      'Hari',
-      'Tanggal',
-      'Bulan',
-      'Tahun',
-      'Waktu',
-      'Kelas',
-      'Nama Siswa',
-      'Nama Orang Tua',
-      'Pekerjaan Ortu',
-      'Alamat',
-      'Perihal Undangan',
-      'Uraian Permasalahan Siswa',
-      'Tindak Lanjut',
-      'Link Foto Kegiatan',
-      'Keterangan'
+      "NO",
+      "HARI / TANGGAL",
+      "WAKTU",
+      "KELAS",
+      "NAMA SISWA",
+      "NAMA ORANG TUA",
+      "PEKERJAAN ORTU",
+      "ALAMAT",
+      "PERIHAL UNDANGAN",
+      "URAIAN MASALAH",
+      "TINDAK LANJUT",
+      "KETERANGAN / STATUS"
     ];
 
     const rows = filtered.map((item, idx) => [
       idx + 1,
-      `"${item.hari}"`,
-      `"${item.tanggal}"`,
-      `"${item.bulan}"`,
-      `"${item.tahun}"`,
-      `"${item.waktu}"`,
-      `"${item.kelas}"`,
-      `"${item.nama_siswa.replace(/"/g, '""')}"`,
-      `"${item.nama_orang_tua.replace(/"/g, '""')}"`,
-      `"${item.pekerjaan_orang_tua.replace(/"/g, '""')}"`,
-      `"${item.alamat.replace(/"/g, '""')}"`,
-      `"${item.perihal_undangan.replace(/"/g, '""')}"`,
-      `"${item.uraian_permasalahan.replace(/"/g, '""')}"`,
-      `"${item.tindak_lanjut.replace(/"/g, '""')}"`,
-      `"${item.link_foto_kegiatan}"`,
-      `"${item.keterangan.replace(/"/g, '""')}"`
+      `${item.hari}, ${item.tanggal} ${item.bulan} ${item.tahun}`,
+      item.waktu || '-',
+      item.kelas || '',
+      item.nama_siswa || '',
+      item.nama_orang_tua || '',
+      item.pekerjaan_orang_tua || '',
+      item.alamat || '',
+      item.perihal_undangan || '',
+      item.uraian_permasalahan || '',
+      item.tindak_lanjut || '',
+      item.keterangan || ''
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `Daftar_Undangan_Orang_Tua_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const wsData = [...kop, headers, ...rows];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Apply merges for the Kop (columns A to L, 12 columns total, index 0 to 11)
+    ws['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
+      { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
+      { s: { r: 5, c: 0 }, e: { r: 5, c: 11 } },
+      { s: { r: 6, c: 0 }, e: { r: 6, c: 11 } },
+    ];
+
+    // Set custom column widths for pristine Excel layout
+    ws['!cols'] = [
+      { wch: 6 },   // NO
+      { wch: 28 },  // HARI / TANGGAL
+      { wch: 18 },  // WAKTU
+      { wch: 12 },  // KELAS
+      { wch: 25 },  // NAMA SISWA
+      { wch: 25 },  // NAMA ORANG TUA
+      { wch: 20 },  // PEKERJAAN ORTU
+      { wch: 30 },  // ALAMAT
+      { wch: 30 },  // PERIHAL UNDANGAN
+      { wch: 35 },  // URAIAN MASALAH
+      { wch: 35 },  // TINDAK LANJUT
+      { wch: 18 },  // KETERANGAN / STATUS
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Daftar Undangan BK");
+
+    XLSX.writeFile(wb, `Daftar_Undangan_Orang_Tua_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   return (
@@ -212,14 +242,14 @@ export const TabelUndangan: React.FC<TabelUndanganProps> = ({
             <span>Word Laporan</span>
           </button>
 
-          {/* Export CSV */}
+          {/* Export XLSX */}
           <button
-            onClick={handleExportCSV}
-            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5"
-            title="Download file Excel / CSV data undangan"
+            onClick={handleExportExcel}
+            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Download file Excel (.xlsx) data undangan"
           >
             <Download className="w-3.5 h-3.5 text-amber-300" />
-            <span>Export CSV</span>
+            <span>Export Excel (.xlsx)</span>
           </button>
 
           {/* Cetak Print */}
