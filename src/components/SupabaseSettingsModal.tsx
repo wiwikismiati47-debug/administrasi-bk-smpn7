@@ -128,7 +128,7 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
     setTestStatus({
       tested: true,
       success: true,
-      message: 'Konfigurasi dibersihkan. Kembali menggunakan Penyimpanan Lokal.',
+      message: 'Konfigurasi kustom dibersihkan. Kembali menggunakan Database Supabase bawaan (default).',
     });
   };
 

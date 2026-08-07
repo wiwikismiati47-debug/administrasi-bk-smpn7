@@ -41,8 +41,8 @@ export function getSavedSupabaseConfig(): SupabaseConfig {
   }
 
   const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
-  const envUrl = env.VITE_SUPABASE_URL || '';
-  const envKey = env.VITE_SUPABASE_ANON_KEY || '';
+  const envUrl = env.VITE_SUPABASE_URL || 'https://kedffsrkxwlnynrnicek.supabase.co';
+  const envKey = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi';
 
   return {
     url: envUrl,
