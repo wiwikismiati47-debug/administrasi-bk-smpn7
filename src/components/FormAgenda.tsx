@@ -41,15 +41,33 @@ const PRESET_URAIAN = [
 ];
 
 const PRESET_SASARAN = [
-  'Siswa Kelas VII A',
-  'Siswa Kelas VII B',
-  'Siswa Kelas VIII A',
-  'Siswa Kelas VIII B',
-  'Siswa Kelas IX A',
-  'Siswa Kelas IX B',
-  'Seluruh Siswa Kelas VII',
-  'Seluruh Siswa Kelas VIII',
-  'Seluruh Siswa Kelas IX',
+  'Siswa Kelas 7-A',
+  'Siswa Kelas 7-B',
+  'Siswa Kelas 7-C',
+  'Siswa Kelas 7-D',
+  'Siswa Kelas 7-E',
+  'Siswa Kelas 7-F',
+  'Siswa Kelas 7-G',
+  'Siswa Kelas 7-H',
+  'Siswa Kelas 8-A',
+  'Siswa Kelas 8-B',
+  'Siswa Kelas 8-C',
+  'Siswa Kelas 8-D',
+  'Siswa Kelas 8-E',
+  'Siswa Kelas 8-F',
+  'Siswa Kelas 8-G',
+  'Siswa Kelas 8-H',
+  'Siswa Kelas 9-A',
+  'Siswa Kelas 9-B',
+  'Siswa Kelas 9-C',
+  'Siswa Kelas 9-D',
+  'Siswa Kelas 9-E',
+  'Siswa Kelas 9-F',
+  'Siswa Kelas 9-G',
+  'Siswa Kelas 9-H',
+  'Seluruh Siswa Kelas 7',
+  'Seluruh Siswa Kelas 8',
+  'Seluruh Siswa Kelas 9',
   'Orang Tua / Wali Siswa',
   'Wali Kelas & Guru Mata Pelajaran',
 ];
@@ -396,22 +414,28 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
             value={formData.sasaran}
             onChange={(e) => setFormData({ ...formData, sasaran: e.target.value })}
             required
-            placeholder="Contoh: Siswa Kelas VII A, Seluruh Siswa Kelas IX, Wali Kelas"
+            placeholder="Contoh: Siswa Kelas 7-A, Seluruh Siswa Kelas 9, Wali Kelas"
             className="w-full px-3.5 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
           />
-          {/* Quick preset chips */}
-          <div className="flex flex-wrap gap-1.5 items-center pt-2">
-            <span className="text-[11px] text-slate-500">Pilih Sasaran:</span>
-            {PRESET_SASARAN.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setFormData({ ...formData, sasaran: s })}
-                className="text-xs px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-200"
-              >
-                {s}
-              </button>
-            ))}
+          {/* Quick preset combobox */}
+          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-2">
+            <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Sasaran:</span>
+            <select
+              value={PRESET_SASARAN.includes(formData.sasaran) ? formData.sasaran : ''}
+              onChange={(e) => {
+                if (e.target.value) {
+                  setFormData({ ...formData, sasaran: e.target.value });
+                }
+              }}
+              className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm min-w-[200px]"
+            >
+              <option value="">-- Klik untuk memilih sasaran --</option>
+              {PRESET_SASARAN.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

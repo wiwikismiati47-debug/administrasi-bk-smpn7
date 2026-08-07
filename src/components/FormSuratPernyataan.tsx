@@ -268,7 +268,7 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
                 type="text"
                 value={kelas}
                 onChange={(e) => setKelas(e.target.value)}
-                placeholder="Contoh: VIII A / IX B"
+                placeholder="Contoh: 8-A / 9-B"
                 className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all font-medium text-slate-900"
               />
             </div>

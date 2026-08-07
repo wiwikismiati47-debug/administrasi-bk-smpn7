@@ -54,9 +54,9 @@ const MONTHS_LIST = [
 
 const KELAS_LIST = [
   'Semua Kelas',
-  'VII A', 'VII B', 'VII C', 'VII D', 'VII E', 'VII F',
-  'VIII A', 'VIII B', 'VIII C', 'VIII D', 'VIII E', 'VIII F',
-  'IX A', 'IX B', 'IX C', 'IX D', 'IX E', 'IX F'
+  '7-A', '7-B', '7-C', '7-D', '7-E', '7-F', '7-G', '7-H',
+  '8-A', '8-B', '8-C', '8-D', '8-E', '8-F', '8-G', '8-H',
+  '9-A', '9-B', '9-C', '9-D', '9-E', '9-F', '9-G', '9-H'
 ];
 
 export const TabelHomeVisit: React.FC<TabelHomeVisitProps> = ({

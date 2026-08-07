@@ -47,6 +47,7 @@ import {
   deleteKonferensiKasusItem,
   fetchSiswaList,
   saveOrUpdateSiswa,
+  bulkSaveOrUpdateSiswa,
   deleteSiswaItem,
 } from './lib/supabase';
 import {
@@ -649,10 +650,17 @@ export default function App() {
   const handleBulkImportSiswa = async (students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]) => {
     setIsSubmittingSiswa(true);
     try {
-      // Save each student using the upsert-capable saveOrUpdateSiswa
-      await Promise.all(students.map(s => saveOrUpdateSiswa(s)));
+      const res = await bulkSaveOrUpdateSiswa(students);
       await loadSiswaData();
-      showToast(`Berhasil mengimpor/memperbarui ${students.length} data siswa.`, 'success');
+      if (res.success) {
+        if (res.error) {
+          showToast(res.error, 'info');
+        } else {
+          showToast(`Berhasil mengimpor/memperbarui ${students.length} data siswa.`, 'success');
+        }
+      } else {
+        showToast(res.error || 'Gagal mengimpor data siswa.', 'error');
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat import massal';
       showToast(`Gagal mengimpor: ${msg}`, 'error');

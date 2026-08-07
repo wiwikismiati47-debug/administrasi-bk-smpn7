@@ -33,9 +33,9 @@ const MONTHS_LIST = [
 ];
 
 const KELAS_PRESETS = [
-  'VII A', 'VII B', 'VII C', 'VII D', 'VII E', 'VII F',
-  'VIII A', 'VIII B', 'VIII C', 'VIII D', 'VIII E', 'VIII F',
-  'IX A', 'IX B', 'IX C', 'IX D', 'IX E', 'IX F'
+  '7-A', '7-B', '7-C', '7-D', '7-E', '7-F', '7-G', '7-H',
+  '8-A', '8-B', '8-C', '8-D', '8-E', '8-F', '8-G', '8-H',
+  '9-A', '9-B', '9-C', '9-D', '9-E', '9-F', '9-G', '9-H'
 ];
 
 const PERIHAL_PRESETS = [
@@ -59,7 +59,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [bulan, setBulan] = useState('Agustus');
   const [tahun, setTahun] = useState('2026');
   const [waktu, setWaktu] = useState('09:00 WIB');
-  const [kelas, setKelas] = useState('VIII A');
+  const [kelas, setKelas] = useState('8-A');
   const [namaSiswa, setNamaSiswa] = useState('');
   const [namaOrangTua, setNamaOrangTua] = useState('');
   const [pekerjaanOrangTua, setPekerjaanOrangTua] = useState('');
@@ -141,7 +141,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setBulan(initialData.bulan || 'Agustus');
       setTahun(initialData.tahun || '2026');
       setWaktu(initialData.waktu || '09:00 WIB');
-      setKelas(initialData.kelas || 'VIII A');
+      setKelas(initialData.kelas || '8-A');
       setNamaSiswa(initialData.nama_siswa || '');
       setNamaOrangTua(initialData.nama_orang_tua || '');
       setPekerjaanOrangTua(initialData.pekerjaan_orang_tua || '');
@@ -317,7 +317,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
     if (window.confirm('Bersihkan seluruh isian form home visit?')) {
       handleDateChange(getTodayISO());
       setWaktu('09:00 WIB');
-      setKelas('VIII A');
+      setKelas('8-A');
       setNamaSiswa('');
       setNamaOrangTua('');
       setPekerjaanOrangTua('');

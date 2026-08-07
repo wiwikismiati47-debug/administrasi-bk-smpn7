@@ -1610,6 +1610,141 @@ function saveToLocalSiswaFallback(item: Siswa) {
   saveLocalSiswaList(current);
 }
 
+export async function bulkSaveOrUpdateSiswa(
+  students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]
+): Promise<{ success: boolean; count: number; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+  const now = new Date().toISOString();
+
+  // Get current state
+  let currentList: Siswa[] = [];
+  let isSupabase = false;
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_SISWA_TABLE_NAME)
+        .select('*');
+      if (!error && data) {
+        currentList = data as Siswa[];
+        isSupabase = true;
+      } else {
+        console.warn('Gagal fetch siswa untuk bulk import, menggunakan local:', error?.message);
+        currentList = getLocalSiswaList();
+      }
+    } catch (err) {
+      console.warn('Exception fetch siswa untuk bulk import, menggunakan local:', err);
+      currentList = getLocalSiswaList();
+    }
+  } else {
+    currentList = getLocalSiswaList();
+  }
+
+  // Map existing students by NIS (case-insensitive, trimmed)
+  const existingByNisMap = new Map<string, Siswa>();
+  currentList.forEach(s => {
+    if (s.nis) {
+      existingByNisMap.set(s.nis.trim().toLowerCase(), s);
+    }
+  });
+
+  // De-duplicate the incoming students array by NIS (case-insensitive, trimmed) to avoid database conflicts
+  const uniqueStudentsMap = new Map<string, Omit<Siswa, 'id' | 'created_at' | 'updated_at'>>();
+  students.forEach(s => {
+    if (s.nis) {
+      uniqueStudentsMap.set(s.nis.trim().toLowerCase(), s);
+    }
+  });
+  const uniqueStudents = Array.from(uniqueStudentsMap.values());
+
+  // Prepare payloads using the deduplicated students
+  const payloads: Siswa[] = uniqueStudents.map((s, index) => {
+    const key = s.nis.trim().toLowerCase();
+    const existing = existingByNisMap.get(key);
+    
+    const idToUse = existing?.id || (
+      crypto && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `sis-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 11)}`
+    );
+    const created_at = existing?.created_at || now;
+
+    return {
+      id: idToUse,
+      created_at,
+      updated_at: now,
+      nama_siswa: s.nama_siswa,
+      kelas: s.kelas,
+      nis: s.nis,
+      jenis_kelamin: s.jenis_kelamin,
+      keterangan: s.keterangan
+    };
+  });
+
+  if (client && isSupabase) {
+    try {
+      // Bulk upsert into Supabase based on 'nis' column
+      const { error } = await client
+        .from(DEFAULT_SISWA_TABLE_NAME)
+        .upsert(payloads, { onConflict: 'nis' });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      // If successful, update our local cache by merging
+      const mergedList = [...currentList];
+      payloads.forEach(p => {
+        const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
+        if (idx !== -1) {
+          mergedList[idx] = p;
+        } else {
+          mergedList.push(p);
+        }
+      });
+      saveLocalSiswaList(mergedList);
+
+      return { success: true, count: payloads.length, isSupabase: true };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi';
+      
+      // Fallback to local
+      const mergedList = [...currentList];
+      payloads.forEach(p => {
+        const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
+        if (idx !== -1) {
+          mergedList[idx] = p;
+        } else {
+          mergedList.push(p);
+        }
+      });
+      saveLocalSiswaList(mergedList);
+
+      return { 
+        success: true, 
+        count: payloads.length, 
+        isSupabase: false, 
+        error: `Supabase: ${msg}. Data berhasil disimpan ke penyimpanan lokal.` 
+      };
+    }
+  }
+
+  // Local storage only
+  const mergedList = [...currentList];
+  payloads.forEach(p => {
+    const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
+    if (idx !== -1) {
+      mergedList[idx] = p;
+    } else {
+      mergedList.push(p);
+    }
+  });
+  saveLocalSiswaList(mergedList);
+
+  return { success: true, count: payloads.length, isSupabase: false };
+}
+
 export async function deleteSiswaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
@@ -1644,7 +1779,7 @@ export function getSupabaseSqlSetup(
   konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME,
   siswaTableName: string = DEFAULT_SISWA_TABLE_NAME
 ): string {
-  return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan
+  return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan (ADM_BK_SMPN7)
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
 
 --------------------------------------------------------------------------------
@@ -1667,6 +1802,12 @@ create table if not exists public.${tableName} (
 
 alter table public.${tableName} enable row level security;
 
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Agenda BK" on public.${tableName};
+drop policy if exists "Akses Tambah Publik Agenda BK" on public.${tableName};
+drop policy if exists "Akses Update Publik Agenda BK" on public.${tableName};
+drop policy if exists "Akses Hapus Publik Agenda BK" on public.${tableName};
+
 create policy "Akses Baca Publik Agenda BK" on public.${tableName} for select using (true);
 create policy "Akses Tambah Publik Agenda BK" on public.${tableName} for insert with check (true);
 create policy "Akses Update Publik Agenda BK" on public.${tableName} for update using (true);
@@ -1684,6 +1825,7 @@ create table if not exists public.${undanganTableName} (
   bulan text not null,
   tahun text not null,
   waktu text not null,
+  tempat_pelaksanaan text default 'SMP Negeri 7 Pasuruan',
   kelas text not null,
   nama_siswa text not null,
   nama_orang_tua text not null,
@@ -1693,10 +1835,24 @@ create table if not exists public.${undanganTableName} (
   uraian_permasalahan text default '',
   tindak_lanjut text default '',
   link_foto_kegiatan text default '',
-  keterangan text default ''
+  keterangan text default '',
+  nomor_surat text default '',
+  tanggal_surat text default '',
+  tempat_surat text default 'Pasuruan',
+  semester text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default ''
 );
 
 alter table public.${undanganTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Undangan Ortu" on public.${undanganTableName};
+drop policy if exists "Akses Tambah Publik Undangan Ortu" on public.${undanganTableName};
+drop policy if exists "Akses Update Publik Undangan Ortu" on public.${undanganTableName};
+drop policy if exists "Akses Hapus Publik Undangan Ortu" on public.${undanganTableName};
 
 create policy "Akses Baca Publik Undangan Ortu" on public.${undanganTableName} for select using (true);
 create policy "Akses Tambah Publik Undangan Ortu" on public.${undanganTableName} for insert with check (true);
@@ -1724,10 +1880,43 @@ create table if not exists public.${homeVisitTableName} (
   uraian_permasalahan text default '',
   tindak_lanjut text default '',
   link_foto_kegiatan text default '',
-  keterangan text default ''
+  keterangan text default '',
+  semester_laporan text default '',
+  bidang_layanan text default '',
+  topik_permasalahan text default '',
+  fungsi_layanan text default '',
+  pihak_terlibat text default '',
+  tujuan_kegiatan text default '',
+  gambaran_ringkas_masalah text default '',
+  alamat_kunjungan text default '',
+  hari_tanggal_lama_kunjungan text default '',
+  anggota_keluarga_dikunjungi text default '',
+  rencana_evaluasi text default '',
+  catatan_khusus text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default '',
+  tanggal_surat text default '',
+  tempat_surat text default 'Pasuruan',
+  nomor_surat_tugas text default '',
+  petugas_1 text default '',
+  petugas_2 text default '',
+  jabatan_petugas_1 text default '',
+  jabatan_petugas_2 text default '',
+  nis_siswa text default '',
+  tanggal_surat_tugas text default '',
+  petugas_penerima_kunjungan text default '',
+  tanggal_pernyataan_ortu text default ''
 );
 
 alter table public.${homeVisitTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Home Visit" on public.${homeVisitTableName};
+drop policy if exists "Akses Tambah Publik Home Visit" on public.${homeVisitTableName};
+drop policy if exists "Akses Update Publik Home Visit" on public.${homeVisitTableName};
+drop policy if exists "Akses Hapus Publik Home Visit" on public.${homeVisitTableName};
 
 create policy "Akses Baca Publik Home Visit" on public.${homeVisitTableName} for select using (true);
 create policy "Akses Tambah Publik Home Visit" on public.${homeVisitTableName} for insert with check (true);
@@ -1755,10 +1944,22 @@ create table if not exists public.${rekamPermasalahanTableName} (
   upaya_konselor_walikelas text default '',
   hasil_dan_kesimpulan text default '',
   link_foto_kegiatan text default '',
-  keterangan text default ''
+  keterangan text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default '',
+  tanggal_surat text default '',
+  tempat_surat text default 'Pasuruan'
 );
 
 alter table public.${rekamPermasalahanTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
+drop policy if exists "Akses Tambah Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
+drop policy if exists "Akses Update Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
+drop policy if exists "Akses Hapus Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
 
 create policy "Akses Baca Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for select using (true);
 create policy "Akses Tambah Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for insert with check (true);
@@ -1785,10 +1986,20 @@ create table if not exists public.${konselingIndividuTableName} (
   pendekatan_dan_teknik_konseling text default '',
   hasil_yang_dicapai text default '',
   link_foto_kegiatan text default '',
-  keterangan text default ''
+  keterangan text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default ''
 );
 
 alter table public.${konselingIndividuTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Konseling Individu" on public.${konselingIndividuTableName};
+drop policy if exists "Akses Tambah Publik Konseling Individu" on public.${konselingIndividuTableName};
+drop policy if exists "Akses Update Publik Konseling Individu" on public.${konselingIndividuTableName};
+drop policy if exists "Akses Hapus Publik Konseling Individu" on public.${konselingIndividuTableName};
 
 create policy "Akses Baca Publik Konseling Individu" on public.${konselingIndividuTableName} for select using (true);
 create policy "Akses Tambah Publik Konseling Individu" on public.${konselingIndividuTableName} for insert with check (true);
@@ -1815,10 +2026,20 @@ create table if not exists public.${konselingKelompokTableName} (
   pendekatan_dan_teknik_konseling text default '',
   hasil_yang_dicapai text default '',
   link_foto_kegiatan text default '',
-  keterangan text default ''
+  keterangan text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default ''
 );
 
 alter table public.${konselingKelompokTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Konseling Kelompok" on public.${konselingKelompokTableName};
+drop policy if exists "Akses Tambah Publik Konseling Kelompok" on public.${konselingKelompokTableName};
+drop policy if exists "Akses Update Publik Konseling Kelompok" on public.${konselingKelompokTableName};
+drop policy if exists "Akses Hapus Publik Konseling Kelompok" on public.${konselingKelompokTableName};
 
 create policy "Akses Baca Publik Konseling Kelompok" on public.${konselingKelompokTableName} for select using (true);
 create policy "Akses Tambah Publik Konseling Kelompok" on public.${konselingKelompokTableName} for insert with check (true);
@@ -1843,10 +2064,20 @@ create table if not exists public.${suratPernyataanTableName} (
   alasan_pengunduran text default '',
   tanggal_surat date default current_date,
   tempat_surat text default 'Pasuruan',
-  keterangan text default ''
+  keterangan text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default ''
 );
 
 alter table public.${suratPernyataanTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Surat Pernyataan" on public.${suratPernyataanTableName};
+drop policy if exists "Akses Tambah Publik Surat Pernyataan" on public.${suratPernyataanTableName};
+drop policy if exists "Akses Update Publik Surat Pernyataan" on public.${suratPernyataanTableName};
+drop policy if exists "Akses Hapus Publik Surat Pernyataan" on public.${suratPernyataanTableName};
 
 create policy "Akses Baca Publik Surat Pernyataan" on public.${suratPernyataanTableName} for select using (true);
 create policy "Akses Tambah Publik Surat Pernyataan" on public.${suratPernyataanTableName} for insert with check (true);
@@ -1893,6 +2124,12 @@ create table if not exists public.${konferensiKasusTableName} (
 
 alter table public.${konferensiKasusTableName} enable row level security;
 
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Konferensi Kasus" on public.${konferensiKasusTableName};
+drop policy if exists "Akses Tambah Publik Konferensi Kasus" on public.${konferensiKasusTableName};
+drop policy if exists "Akses Update Publik Konferensi Kasus" on public.${konferensiKasusTableName};
+drop policy if exists "Akses Hapus Publik Konferensi Kasus" on public.${konferensiKasusTableName};
+
 create policy "Akses Baca Publik Konferensi Kasus" on public.${konferensiKasusTableName} for select using (true);
 create policy "Akses Tambah Publik Konferensi Kasus" on public.${konferensiKasusTableName} for insert with check (true);
 create policy "Akses Update Publik Konferensi Kasus" on public.${konferensiKasusTableName} for update using (true);
@@ -1914,10 +2151,27 @@ create table if not exists public.${siswaTableName} (
 
 alter table public.${siswaTableName} enable row level security;
 
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Siswa" on public.${siswaTableName};
+drop policy if exists "Akses Tambah Publik Siswa" on public.${siswaTableName};
+drop policy if exists "Akses Update Publik Siswa" on public.${siswaTableName};
+drop policy if exists "Akses Hapus Publik Siswa" on public.${siswaTableName};
+
 create policy "Akses Baca Publik Siswa" on public.${siswaTableName} for select using (true);
 create policy "Akses Tambah Publik Siswa" on public.${siswaTableName} for insert with check (true);
 create policy "Akses Update Publik Siswa" on public.${siswaTableName} for update using (true);
 create policy "Akses Hapus Publik Siswa" on public.${siswaTableName} for delete using (true);
+
+-- Indexes for performance
+create index if not exists idx_${tableName}_tanggal on public.${tableName}(tanggal);
+create index if not exists idx_${undanganTableName}_siswa on public.${undanganTableName}(nama_siswa);
+create index if not exists idx_${homeVisitTableName}_siswa on public.${homeVisitTableName}(nama_siswa);
+create index if not exists idx_${rekamPermasalahanTableName}_siswa on public.${rekamPermasalahanTableName}(nama_siswa);
+create index if not exists idx_${konselingIndividuTableName}_siswa on public.${konselingIndividuTableName}(nama_siswa);
+create index if not exists idx_${konselingKelompokTableName}_kelas on public.${konselingKelompokTableName}(kelas);
+create index if not exists idx_${suratPernyataanTableName}_siswa on public.${suratPernyataanTableName}(nama_siswa);
+create index if not exists idx_${konferensiKasusTableName}_konseli on public.${konferensiKasusTableName}(nama_konseli);
+create index if not exists idx_${siswaTableName}_kelas on public.${siswaTableName}(kelas);
 `;
 }
 

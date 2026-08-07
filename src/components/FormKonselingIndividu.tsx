@@ -106,7 +106,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
     bulan: getBulanFromDate(getTodayISO()),
     tahun: getTahunFromDate(getTodayISO()),
     waktu: '08:00 WIB',
-    kelas: 'VIII A',
+    kelas: '8-A',
     nama_siswa: '',
     topik_permasalahan: '',
     media_yang_diperlukan: '',
@@ -128,7 +128,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
         bulan: initialData.bulan || getBulanFromDate(initialData.tanggal || getTodayISO()),
         tahun: initialData.tahun || getTahunFromDate(initialData.tanggal || getTodayISO()),
         waktu: initialData.waktu || '08:00 WIB',
-        kelas: initialData.kelas || 'VIII A',
+        kelas: initialData.kelas || '8-A',
         nama_siswa: initialData.nama_siswa || '',
         topik_permasalahan: initialData.topik_permasalahan || '',
         media_yang_diperlukan: initialData.media_yang_diperlukan || '',
@@ -169,7 +169,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
       bulan: getBulanFromDate(today),
       tahun: getTahunFromDate(today),
       waktu: '08:00 WIB',
-      kelas: 'VIII A',
+      kelas: '8-A',
       nama_siswa: '',
       topik_permasalahan: '',
       media_yang_diperlukan: '',
@@ -343,7 +343,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
                   name="kelas"
                   value={formData.kelas}
                   onChange={handleChange}
-                  placeholder="Contoh: VIII A"
+                  placeholder="Contoh: 8-A"
                   required
                   className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
                 />

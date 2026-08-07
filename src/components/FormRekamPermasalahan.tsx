@@ -68,7 +68,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
     bulan: getBulanFromDate(getTodayISO()),
     tahun: getTahunFromDate(getTodayISO()),
     waktu: '08:00 WIB',
-    kelas: 'VIII A',
+    kelas: '8-A',
     nama_siswa: '',
     nama_orang_tua: '',
     pekerjaan_orang_tua: '',
@@ -90,7 +90,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
         bulan: initialData.bulan || getBulanFromDate(initialData.tanggal || getTodayISO()),
         tahun: initialData.tahun || getTahunFromDate(initialData.tanggal || getTodayISO()),
         waktu: initialData.waktu || '08:00 WIB',
-        kelas: initialData.kelas || 'VIII A',
+        kelas: initialData.kelas || '8-A',
         nama_siswa: initialData.nama_siswa || '',
         nama_orang_tua: initialData.nama_orang_tua || '',
         pekerjaan_orang_tua: initialData.pekerjaan_orang_tua || '',
@@ -132,7 +132,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
       bulan: getBulanFromDate(today),
       tahun: getTahunFromDate(today),
       waktu: '08:00 WIB',
-      kelas: 'VIII A',
+      kelas: '8-A',
       nama_siswa: '',
       nama_orang_tua: '',
       pekerjaan_orang_tua: '',
@@ -309,7 +309,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
                   name="kelas"
                   value={formData.kelas}
                   onChange={handleChange}
-                  placeholder="Contoh: VIII A / VII C / IX B"
+                  placeholder="Contoh: 8-A / 7-C / 9-B"
                   required
                   className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
                 />

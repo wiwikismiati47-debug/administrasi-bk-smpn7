@@ -20,9 +20,9 @@ interface FormSiswaProps {
 }
 
 const PRESET_KELAS = [
-  'VII A', 'VII B', 'VII C', 'VII D', 'VII E', 'VII F', 'VII G', 'VII H',
-  'VIII A', 'VIII B', 'VIII C', 'VIII D', 'VIII E', 'VIII F', 'VIII G', 'VIII H',
-  'IX A', 'IX B', 'IX C', 'IX D', 'IX E', 'IX F', 'IX G', 'IX H'
+  '7-A', '7-B', '7-C', '7-D', '7-E', '7-F', '7-G', '7-H',
+  '8-A', '8-B', '8-C', '8-D', '8-E', '8-F', '8-G', '8-H',
+  '9-A', '9-B', '9-C', '9-D', '9-E', '9-F', '9-G', '9-H'
 ];
 
 export const FormSiswa: React.FC<FormSiswaProps> = ({
@@ -33,7 +33,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
 }) => {
   const [formData, setFormData] = useState<FormSiswaData>({
     nama_siswa: '',
-    kelas: 'VIII A',
+    kelas: '8-A',
     nis: '',
     jenis_kelamin: 'Laki-laki',
     keterangan: 'Aktif',
@@ -47,7 +47,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
     if (initialData) {
       setFormData({
         nama_siswa: initialData.nama_siswa || '',
-        kelas: initialData.kelas || 'VIII A',
+        kelas: initialData.kelas || '8-A',
         nis: initialData.nis || '',
         jenis_kelamin: initialData.jenis_kelamin || 'Laki-laki',
         keterangan: initialData.keterangan || '',
@@ -55,7 +55,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
     } else {
       setFormData({
         nama_siswa: '',
-        kelas: 'VIII A',
+        kelas: '8-A',
         nis: '',
         jenis_kelamin: 'Laki-laki',
         keterangan: 'Aktif',
@@ -76,7 +76,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
     if (initialData) {
       setFormData({
         nama_siswa: initialData.nama_siswa || '',
-        kelas: initialData.kelas || 'VIII A',
+        kelas: initialData.kelas || '8-A',
         nis: initialData.nis || '',
         jenis_kelamin: initialData.jenis_kelamin || 'Laki-laki',
         keterangan: initialData.keterangan || '',
@@ -84,7 +84,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
     } else {
       setFormData({
         nama_siswa: '',
-        kelas: 'VIII A',
+        kelas: '8-A',
         nis: '',
         jenis_kelamin: 'Laki-laki',
         keterangan: 'Aktif',
@@ -137,7 +137,7 @@ export const FormSiswa: React.FC<FormSiswaProps> = ({
         // Clear only if adding new
         setFormData({
           nama_siswa: '',
-          kelas: 'VIII A',
+          kelas: '8-A',
           nis: '',
           jenis_kelamin: 'Laki-laki',
           keterangan: 'Aktif',

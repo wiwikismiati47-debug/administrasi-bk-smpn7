@@ -343,7 +343,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                   name="kelas"
                   value={formData.kelas}
                   onChange={handleChange}
-                  placeholder="Contoh: VII C / VIII B"
+                  placeholder="Contoh: 7-C / 8-B"
                   required
                   className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
                 />

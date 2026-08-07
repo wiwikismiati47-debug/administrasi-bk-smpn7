@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Siswa } from '../types';
+import * as XLSX from 'xlsx';
 import {
   Search,
   Filter,
@@ -7,6 +8,7 @@ import {
   Trash2,
   FileSpreadsheet,
   Upload,
+  Download,
   User,
   Hash,
   School,
@@ -29,10 +31,52 @@ interface TabelSiswaProps {
 
 const PRESET_KELAS = [
   'SEMUA',
-  'VII A', 'VII B', 'VII C', 'VII D', 'VII E', 'VII F', 'VII G', 'VII H',
-  'VIII A', 'VIII B', 'VIII C', 'VIII D', 'VIII E', 'VIII F', 'VIII G', 'VIII H',
-  'IX A', 'IX B', 'IX C', 'IX D', 'IX E', 'IX F', 'IX G', 'IX H'
+  '7-A', '7-B', '7-C', '7-D', '7-E', '7-F', '7-G', '7-H',
+  '8-A', '8-B', '8-C', '8-D', '8-E', '8-F', '8-G', '8-H',
+  '9-A', '9-B', '9-C', '9-D', '9-E', '9-F', '9-G', '9-H'
 ];
+
+export function standardizeKelas(kelasStr: string): string {
+  if (!kelasStr) return '8-A';
+  const clean = kelasStr.trim().toUpperCase();
+  
+  // Match Roman numerals with optional spaces/hyphens/dashes, e.g. VIII A or VIII-A or VIII_A or VIII B
+  const romanMatch = clean.match(/^(VIII|VII|IX)[\s\-_]*([A-H0-9]+)$/i);
+  if (romanMatch) {
+    let grade = '8';
+    const r = romanMatch[1].toUpperCase();
+    if (r === 'VII') grade = '7';
+    if (r === 'VIII') grade = '8';
+    if (r === 'IX') grade = '9';
+    return `${grade}-${romanMatch[2].toUpperCase()}`;
+  }
+
+  // Match Arabic numerals with optional spaces/hyphens, e.g. 8 A or 8-A or 8A
+  const arabicMatch = clean.match(/^([789])[\s\-_]*([A-H0-9]+)$/i);
+  if (arabicMatch) {
+    return `${arabicMatch[1]}-${arabicMatch[2].toUpperCase()}`;
+  }
+
+  // Fallback cleanup
+  const fallback = clean.replace(/[\s\-_]+/g, '-');
+  if (!fallback.includes('-')) {
+    const simpleMatch = fallback.match(/^([789])([A-H])$/);
+    if (simpleMatch) {
+      return `${simpleMatch[1]}-${simpleMatch[2]}`;
+    }
+    const romanSimpleMatch = fallback.match(/^(VIII|VII|IX)([A-H])$/);
+    if (romanSimpleMatch) {
+      let grade = '8';
+      const r = romanSimpleMatch[1];
+      if (r === 'VII') grade = '7';
+      if (r === 'VIII') grade = '8';
+      if (r === 'IX') grade = '9';
+      return `${grade}-${romanSimpleMatch[2]}`;
+    }
+  }
+  return fallback || '8-A';
+}
+
 
 export const TabelSiswa: React.FC<TabelSiswaProps> = ({
   items,
@@ -48,6 +92,207 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
   const [bulkText, setBulkText] = useState('');
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
+  const [activeImportTab, setActiveImportTab] = useState<'excel' | 'copypaste'>('excel');
+
+  // Excel template downloader
+  const downloadExcelTemplate = () => {
+    try {
+      const data = [
+        ['NAMA SISWA', 'KELAS', 'NIS', 'JENIS KELAMIN', 'KETERANGAN'],
+        ['Slamet Santoso', '8-A', '12345', 'Laki-laki', 'Aktif'],
+        ['Wahyu Hidayat', '8-B', '12346', 'Laki-laki', 'Aktif'],
+        ['Ismiati Rahayu', '9-C', '12347', 'Perempuan', 'Butuh bimbingan']
+      ];
+      
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Siswa');
+      XLSX.writeFile(workbook, 'Template_Data_Siswa.xlsx');
+    } catch (err) {
+      console.error('Gagal mengunduh template:', err);
+      alert('Gagal mengunduh template Excel.');
+    }
+  };
+
+  // Process Excel upload
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportStatus(null);
+    setIsImporting(true);
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        if (!data) throw new Error('File tidak terbaca.');
+
+        const arrayBuffer = data as ArrayBuffer;
+        const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        
+        // Convert sheet to json 2D array
+        const sheetData = XLSX.utils.sheet_to_json<any[]>(worksheet, { header: 1 });
+        
+        if (sheetData.length === 0) {
+          throw new Error('Sheet kosong atau tidak ada data.');
+        }
+
+        // Find the header row (scan first 5 rows)
+        let headerRowIdx = 0;
+        let bestScore = -1;
+        let headerMap = { nama: -1, kelas: -1, nis: -1, jk: -1, ket: -1 };
+
+        const keywords = {
+          nama: ['nama', 'siswa', 'student', 'nama_siswa'],
+          kelas: ['kelas', 'class', 'grade'],
+          nis: ['nis', 'nisn', 'nomor induk', 'induk', 'id'],
+          jk: ['jenis kelamin', 'kelamin', 'jk', 'gender', 'sex', 'l/p', 'lp'],
+          ket: ['keterangan', 'status', 'catatan', 'description', 'ket']
+        };
+
+        const limitRows = Math.min(sheetData.length, 5);
+        for (let r = 0; r < limitRows; r++) {
+          const row = sheetData[r];
+          if (!row || !Array.isArray(row)) continue;
+          
+          let score = 0;
+          let tempMap = { nama: -1, kelas: -1, nis: -1, jk: -1, ket: -1 };
+          
+          row.forEach((cell, cIdx) => {
+            if (cell === null || cell === undefined) return;
+            const str = cell.toString().toLowerCase().trim();
+            
+            if (keywords.jk.some(k => str === k || str.includes(k))) {
+              tempMap.jk = cIdx;
+              score += 2;
+            } else if (keywords.nama.some(k => str === k || str.includes(k))) {
+              tempMap.nama = cIdx;
+              score += 3;
+            } else if (keywords.nis.some(k => {
+              if (k === 'nis') {
+                return str === 'nis' || str === 'nisn' || str === 'nis/nisn' || (str.includes('nis') && !str.includes('jenis') && !str.includes('kelamin'));
+              }
+              if (k === 'id') {
+                return str === 'id';
+              }
+              return str === k || str.includes(k);
+            })) {
+              tempMap.nis = cIdx;
+              score += 3;
+            } else if (keywords.kelas.some(k => str === k || str.includes(k))) {
+              tempMap.kelas = cIdx;
+              score += 2;
+            } else if (keywords.ket.some(k => str === k || str.includes(k))) {
+              tempMap.ket = cIdx;
+              score += 1;
+            }
+          });
+
+          if (score > bestScore) {
+            bestScore = score;
+            headerRowIdx = r;
+            headerMap = tempMap;
+          }
+        }
+
+        const hasHeader = bestScore > 2;
+        const startRowIdx = hasHeader ? headerRowIdx + 1 : 0;
+
+        const parsedStudents: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[] = [];
+
+        for (let r = startRowIdx; r < sheetData.length; r++) {
+          const row = sheetData[r];
+          if (!row || !Array.isArray(row) || row.length === 0) continue;
+
+          // Check if row has any values
+          const hasValues = row.some(cell => cell !== null && cell !== undefined && cell.toString().trim() !== '');
+          if (!hasValues) continue;
+
+          let nama_siswa = '';
+          let kelas = '';
+          let nis = '';
+          let jenis_kelamin = 'Laki-laki';
+          let keterangan = 'Aktif';
+
+          if (hasHeader) {
+            if (headerMap.nama !== -1) nama_siswa = row[headerMap.nama]?.toString() || '';
+            if (headerMap.kelas !== -1) kelas = row[headerMap.kelas]?.toString() || '';
+            if (headerMap.nis !== -1) nis = row[headerMap.nis]?.toString() || '';
+            if (headerMap.jk !== -1) jenis_kelamin = row[headerMap.jk]?.toString() || '';
+            if (headerMap.ket !== -1) keterangan = row[headerMap.ket]?.toString() || '';
+          } else {
+            nama_siswa = row[0]?.toString() || '';
+            kelas = row[1]?.toString() || '';
+            nis = row[2]?.toString() || '';
+            jenis_kelamin = row[3]?.toString() || 'Laki-laki';
+            keterangan = row[4]?.toString() || 'Aktif';
+          }
+
+          nama_siswa = nama_siswa.trim();
+          nis = nis.trim();
+          kelas = kelas.trim();
+          jenis_kelamin = jenis_kelamin.trim();
+          keterangan = keterangan.trim();
+
+          if (!nama_siswa || !nis) continue;
+
+          // Clean gender
+          const jkLower = jenis_kelamin.toLowerCase();
+          if (jkLower.startsWith('p') || jkLower.includes('wanita') || jkLower.includes('perempuan') || jkLower === 'f' || jkLower === 'w') {
+            jenis_kelamin = 'Perempuan';
+          } else {
+            jenis_kelamin = 'Laki-laki';
+          }
+
+          // Format Kelas
+          const matchedKelas = standardizeKelas(kelas);
+
+          parsedStudents.push({
+            nama_siswa,
+            kelas: matchedKelas,
+            nis,
+            jenis_kelamin,
+            keterangan
+          });
+        }
+
+        if (parsedStudents.length === 0) {
+          throw new Error('Tidak ada data siswa valid yang berhasil dibaca. Pastikan terdapat kolom Nama dan NIS.');
+        }
+
+        await onBulkImport(parsedStudents);
+        setImportStatus({
+          type: 'success',
+          message: `Berhasil mengimpor/memperbarui ${parsedStudents.length} data siswa dari file Excel!`
+        });
+
+        e.target.value = '';
+        
+        setTimeout(() => {
+          setShowBulkImport(false);
+          setImportStatus(null);
+        }, 3000);
+
+      } catch (err: any) {
+        setImportStatus({
+          type: 'error',
+          message: err.message || 'Gagal membaca file Excel.'
+        });
+      } finally {
+        setIsImporting(false);
+      }
+    };
+
+    reader.onerror = () => {
+      setImportStatus({ type: 'error', message: 'Gagal membaca file.' });
+      setIsImporting(false);
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
 
   // Filter items
   const filteredItems = useMemo(() => {
@@ -121,11 +366,17 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
       if (containsHeaderKeywords) {
         hasHeader = true;
         firstLineParts.forEach((part, index) => {
-          if (part.includes('nama') || part.includes('siswa')) headerIndices.nama = index;
-          else if (part.includes('kelas')) headerIndices.kelas = index;
-          else if (part.includes('nis')) headerIndices.nis = index;
-          else if (part.includes('kelamin') || part.includes('jenis') || part.includes('jk')) headerIndices.jk = index;
-          else if (part.includes('keterangan') || part.includes('catatan') || part.includes('ket')) headerIndices.ket = index;
+          if (part.includes('kelamin') || part.includes('jenis') || part.includes('jk')) {
+            headerIndices.jk = index;
+          } else if (part.includes('nama') || part.includes('siswa')) {
+            headerIndices.nama = index;
+          } else if (part.includes('kelas')) {
+            headerIndices.kelas = index;
+          } else if (part.includes('nis') && !part.includes('jenis') && !part.includes('kelamin')) {
+            headerIndices.nis = index;
+          } else if (part.includes('keterangan') || part.includes('catatan') || part.includes('ket')) {
+            headerIndices.ket = index;
+          }
         });
       }
 
@@ -170,22 +421,11 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
         }
 
         // Format Kelas slightly to match presets
-        let matchedKelas = kelas.toUpperCase();
-        if (!matchedKelas.includes(' ') && matchedKelas.length >= 4) {
-          // try to split e.g., VIIIA -> VIII A
-          const match = matchedKelas.match(/^(VII|VIII|IX|7|8|9)([A-H])$/i);
-          if (match) {
-            let grade = match[1];
-            if (grade === '7') grade = 'VII';
-            else if (grade === '8') grade = 'VIII';
-            else if (grade === '9') grade = 'IX';
-            matchedKelas = `${grade} ${match[2]}`;
-          }
-        }
+        const matchedKelas = standardizeKelas(kelas);
 
         parsedStudents.push({
           nama_siswa,
-          kelas: matchedKelas || 'VIII A',
+          kelas: matchedKelas,
           nis,
           jenis_kelamin,
           keterangan
@@ -242,7 +482,7 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
             }`}
           >
             <Upload className="w-4 h-4" />
-            <span>{showBulkImport ? 'Tutup Panel Import' : 'Excel/CSV Copypaste'}</span>
+            <span>{showBulkImport ? 'Tutup Panel Import' : 'Import Massal (Excel/Copypaste)'}</span>
           </button>
 
           {/* Export CSV Button */}
@@ -260,23 +500,100 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
       {/* Bulk Import Collapsible Panel */}
       {showBulkImport && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 space-y-4 animate-fade-in" id="bulk-import-panel">
-          <div>
-            <h5 className="font-bold text-amber-950 text-sm flex items-center gap-2">
-              <Upload className="w-4 h-4 text-amber-700" />
-              <span>Bulk Importer: Tempel Data dari Excel / Spreadsheet / CSV</span>
-            </h5>
-            <p className="text-xs text-amber-900 mt-1 leading-relaxed">
-              Caranya: Buka file Excel/Spreadsheet Anda, salin kolom data siswa (misalnya kolom Nama, Kelas, NIS, Jenis Kelamin, Keterangan), lalu langsung tempel di bawah ini. Baris data dengan <strong>NIS yang sama akan langsung diupdate</strong> ke data terbaru otomatis!
-            </p>
+          {/* Tab Headers */}
+          <div className="flex border-b border-amber-200 gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveImportTab('excel');
+                setImportStatus(null);
+              }}
+              className={`px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                activeImportTab === 'excel'
+                  ? 'border-amber-600 text-amber-700 bg-amber-100/40 rounded-t-lg'
+                  : 'border-transparent text-amber-900/60 hover:text-amber-800'
+              }`}
+            >
+              📂 Unggah File Excel (.xlsx)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveImportTab('copypaste');
+                setImportStatus(null);
+              }}
+              className={`px-4 py-2 text-xs sm:text-sm font-bold border-b-2 transition-all cursor-pointer ${
+                activeImportTab === 'copypaste'
+                  ? 'border-amber-600 text-amber-700 bg-amber-100/40 rounded-t-lg'
+                  : 'border-transparent text-amber-900/60 hover:text-amber-800'
+              }`}
+            >
+              📝 Salin-Tempel Teks (Copypaste)
+            </button>
           </div>
 
-          <textarea
-            value={bulkText}
-            onChange={(e) => setBulkText(e.target.value)}
-            rows={5}
-            placeholder="Contoh format (Bisa pakai header atau tanpa header):&#10;Slamet Santoso	VIII A	12345	Laki-laki	Aktif&#10;Wahyu Hidayat	VIII B	12346	Laki-laki	Aktif&#10;Ismiati Rahayu	IX C	12347	Perempuan	Butuh bimbingan"
-            className="w-full p-3 bg-white border border-amber-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
-          />
+          {activeImportTab === 'excel' ? (
+            <div className="space-y-4 animate-fade-in">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-lg border border-amber-250 shadow-sm">
+                <div className="space-y-1">
+                  <h6 className="font-bold text-slate-800 text-xs sm:text-sm flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                    <span>Unduh Template Excel</span>
+                  </h6>
+                  <p className="text-xs text-slate-500">Gunakan template standar ini agar format kolom sesuai dengan sistem BK.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={downloadExcelTemplate}
+                  className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-lg flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Template (.xlsx)</span>
+                </button>
+              </div>
+
+              <div className="border-2 border-dashed border-amber-300 bg-white rounded-lg p-6 flex flex-col items-center justify-center text-center gap-3">
+                <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center">
+                  <Upload className="w-6 h-6 text-amber-700" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-bold text-slate-700">Pilih file Excel Anda</p>
+                  <p className="text-xs text-slate-500">Mendukung format file <strong>excel.xlsx</strong> atau <strong>.xls</strong></p>
+                </div>
+                
+                <label className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg transition-all cursor-pointer shadow-sm">
+                  <span>Pilih File Excel</span>
+                  <input
+                    type="file"
+                    accept=".xlsx, .xls"
+                    onChange={handleExcelUpload}
+                    disabled={isImporting}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 animate-fade-in">
+              <div>
+                <h5 className="font-bold text-amber-950 text-xs sm:text-sm flex items-center gap-2">
+                  <Upload className="w-4 h-4 text-amber-700" />
+                  <span>Bulk Importer: Tempel Data dari Excel / Spreadsheet / CSV</span>
+                </h5>
+                <p className="text-xs text-amber-900 mt-1 leading-relaxed">
+                  Caranya: Buka file Excel/Spreadsheet Anda, salin kolom data siswa (misalnya kolom Nama, Kelas, NIS, Jenis Kelamin, Keterangan), lalu langsung tempel di bawah ini. Baris data dengan <strong>NIS yang sama akan langsung diupdate</strong> ke data terbaru otomatis!
+                </p>
+              </div>
+
+              <textarea
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+                rows={5}
+                placeholder="Contoh format (Bisa pakai header atau tanpa header):&#10;Slamet Santoso	8-A	12345	Laki-laki	Aktif&#10;Wahyu Hidayat	8-B	12346	Laki-laki	Aktif&#10;Ismiati Rahayu	9-C	12347	Perempuan	Butuh bimbingan"
+                className="w-full p-3 bg-white border border-amber-300 rounded-lg text-slate-900 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+              />
+            </div>
+          )}
 
           {importStatus && (
             <div className={`p-3 rounded-lg text-xs flex items-start gap-2 border ${
@@ -303,13 +620,15 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
             >
               Batal
             </button>
-            <button
-              onClick={handleProcessBulkImport}
-              disabled={isImporting || !bulkText.trim()}
-              className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              {isImporting ? 'Memproses...' : 'Proses Import / Update'}
-            </button>
+            {activeImportTab === 'copypaste' && (
+              <button
+                onClick={handleProcessBulkImport}
+                disabled={isImporting || !bulkText.trim()}
+                className="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+              >
+                {isImporting ? 'Memproses...' : 'Proses Import / Update'}
+              </button>
+            )}
           </div>
         </div>
       )}
