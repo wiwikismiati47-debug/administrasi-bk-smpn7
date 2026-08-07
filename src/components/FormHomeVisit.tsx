@@ -384,7 +384,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              C. HOME VISIT / KUNJUNGAN RUMAH
+              HOME VISIT / KUNJUNGAN RUMAH
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
               Laporan Pelaksanaan Home Visit / Kunjungan Rumah Guru BK SMPN 7 Pasuruan

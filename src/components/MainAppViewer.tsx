@@ -375,7 +375,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
               {selectedLink
                 ? selectedLink.title
-                : 'A. AGENDA KERJA BK SMPN 7 PASURUAN'}
+                : 'AGENDA KERJA BK SMPN 7 PASURUAN'}
             </h2>
           </div>
         </div>

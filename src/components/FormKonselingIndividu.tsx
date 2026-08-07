@@ -248,7 +248,7 @@ export const FormKonselingIndividu: React.FC<FormKonselingIndividuProps> = ({
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              E. RENCANA KONSELING INDIVIDU
+              RENCANA KONSELING INDIVIDU
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Formulir Perencanaan & Pelaksanaan Konseling Individu BK SMPN 7 Pasuruan

@@ -219,7 +219,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              D. REKAM PERMASALAHAN SISWA
+              REKAM PERMASALAHAN SISWA
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Formulir Rekam Pencatatan & Penanganan Permasalahan Siswa BK SMPN 7 Pasuruan

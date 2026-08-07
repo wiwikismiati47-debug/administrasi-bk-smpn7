@@ -1253,7 +1253,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
               <>
                 <div className="text-center my-3">
                   <h2 className="text-base font-extrabold uppercase tracking-wide">
-                    E. RENCANA KONSELING INDIVIDU
+                    RENCANA KONSELING INDIVIDU
                   </h2>
                   <p className="text-xs font-bold uppercase mt-1">
                     BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN
@@ -1419,7 +1419,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
               <>
                 <div className="text-center my-3">
                   <h2 className="text-base font-extrabold uppercase tracking-wide">
-                    F. RENCANA KONSELING KELOMPOK
+                    RENCANA KONSELING KELOMPOK
                   </h2>
                   <p className="text-xs font-bold uppercase mt-1">
                     BIMBINGAN DAN KONSELING UPT SMP NEGERI 7 PASURUAN

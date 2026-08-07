@@ -236,7 +236,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
               </span>
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
-              B. UNDANGAN ORANG TUA SISWA
+              UNDANGAN ORANG TUA SISWA
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
               Administrasi Penanganan & Pembinaan Siswa Melalui Undangan Orang Tua BK SMPN 7 Pasuruan

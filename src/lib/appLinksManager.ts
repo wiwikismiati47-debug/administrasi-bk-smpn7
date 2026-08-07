@@ -5,7 +5,7 @@ const STORAGE_KEY_APP_LINKS = 'bk_smpn7_dashboard_app_links';
 export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   {
     id: 'link-internal-agenda-bk',
-    title: 'A. Agenda Kerja BK SMPN 7',
+    title: 'Agenda Kerja BK SMPN 7',
     url: 'internal:agenda_bk',
     iconName: 'BookOpen',
     category: 'Administrasi Utama',
@@ -16,7 +16,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-undangan-ortu',
-    title: 'B. Undangan Orang Tua Siswa',
+    title: 'Undangan Orang Tua Siswa',
     url: 'internal:undangan_ortu',
     iconName: 'Users',
     category: 'Administrasi Utama',
@@ -27,7 +27,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-home-visit',
-    title: 'C. Home Visit / Kunjungan Rumah',
+    title: 'Home Visit / Kunjungan Rumah',
     url: 'internal:home_visit',
     iconName: 'Home',
     category: 'Administrasi Utama',
@@ -38,7 +38,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-rekam-permasalahan',
-    title: 'D. Rekam Permasalahan Siswa',
+    title: 'Rekam Permasalahan Siswa',
     url: 'internal:rekam_permasalahan',
     iconName: 'FileSpreadsheet',
     category: 'Administrasi Utama',
@@ -49,7 +49,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-konseling-individu',
-    title: 'E. Rencana Konseling Individu',
+    title: 'Rencana Konseling Individu',
     url: 'internal:konseling_individu',
     iconName: 'UserCheck',
     category: 'Administrasi Utama',
@@ -60,7 +60,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-konseling-kelompok',
-    title: 'F. Rencana Konseling Kelompok',
+    title: 'Rencana Konseling Kelompok',
     url: 'internal:konseling_kelompok',
     iconName: 'UserPlus',
     category: 'Administrasi Utama',
@@ -71,7 +71,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-surat-pernyataan',
-    title: 'G. Surat Pernyataan Siswa',
+    title: 'Surat Pernyataan Siswa',
     url: 'internal:surat_pernyataan',
     iconName: 'FileCheck2',
     category: 'Administrasi Utama',
@@ -82,7 +82,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-konferensi-kasus',
-    title: 'H. Konferensi Kasus Siswa',
+    title: 'Konferensi Kasus Siswa',
     url: 'internal:konferensi_kasus',
     iconName: 'ClipboardList',
     category: 'Administrasi Utama',
@@ -93,7 +93,7 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   },
   {
     id: 'link-internal-siswa',
-    title: 'I. Management Siswa',
+    title: 'Management Siswa',
     url: 'internal:siswa',
     iconName: 'GraduationCap',
     category: 'Administrasi Utama',

@@ -167,7 +167,7 @@ export const TabelAgenda: React.FC<TabelAgendaProps> = ({
             </span>
           </div>
           <h3 className="text-lg font-bold text-white mt-1">
-            A. AGENDA KERJA BK SMPN 7 PASURAN
+            AGENDA KERJA BK SMPN 7 PASURAN
           </h3>
         </div>
 
