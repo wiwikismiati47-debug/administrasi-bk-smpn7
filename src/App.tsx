@@ -153,10 +153,11 @@ export default function App() {
     try {
       const res = await fetchAllAgenda();
       setAgendaItems(res.data);
-      setIsSupabaseConnected(res.isFromSupabase);
+      
       if (res.error) {
         showToast(res.error, 'info');
       }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data agenda BK.', 'error');
@@ -170,9 +171,7 @@ export default function App() {
     try {
       const res = await fetchAllUndangan();
       setUndanganItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data undangan orang tua.', 'error');
@@ -186,9 +185,7 @@ export default function App() {
     try {
       const res = await fetchAllHomeVisit();
       setHomeVisitItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data home visit.', 'error');
@@ -202,9 +199,7 @@ export default function App() {
     try {
       const res = await fetchAllRekamPermasalahan();
       setRekamPermasalahanItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data rekam permasalahan siswa.', 'error');
@@ -218,9 +213,7 @@ export default function App() {
     try {
       const res = await fetchAllKonselingIndividu();
       setKonselingIndividuItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data konseling individu.', 'error');
@@ -234,9 +227,7 @@ export default function App() {
     try {
       const res = await fetchAllKonselingKelompok();
       setKonselingKelompokItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data konseling kelompok.', 'error');
@@ -250,9 +241,7 @@ export default function App() {
     try {
       const res = await fetchAllSuratPernyataan();
       setSuratPernyataanItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data surat pernyataan siswa.', 'error');
@@ -266,9 +255,7 @@ export default function App() {
     try {
       const res = await fetchAllKonferensiKasus();
       setKonferensiKasusItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data konferensi kasus siswa.', 'error');
@@ -282,9 +269,7 @@ export default function App() {
     try {
       const res = await fetchSiswaList();
       setSiswaItems(res.data);
-      if (res.isFromSupabase) {
-        setIsSupabaseConnected(true);
-      }
+      return res.isFromSupabase;
     } catch (err) {
       console.error(err);
       showToast('Gagal memuat data manajemen siswa.', 'error');
@@ -294,7 +279,7 @@ export default function App() {
   }, []);
 
   const refreshAllData = useCallback(async () => {
-    await Promise.all([
+    const results = await Promise.all([
       loadAgendaData(),
       loadUndanganData(),
       loadHomeVisitData(),
@@ -305,6 +290,17 @@ export default function App() {
       loadKonferensiKasusData(),
       loadSiswaData()
     ]);
+    
+    // Check if any load was successful but some failed
+    const connectedCount = results.filter(r => r).length;
+    if (connectedCount > 0 && connectedCount < results.length) {
+      setIsSupabaseConnected(false); // Force to false to show warning
+      showToast('PERINGATAN: Beberapa tabel gagal dimuat dari Supabase. Harap jalankan ulang Script SQL di menu Pengaturan.', 'error');
+    } else if (connectedCount === results.length && results.length > 0) {
+      setIsSupabaseConnected(true);
+    } else {
+      setIsSupabaseConnected(false);
+    }
   }, [
     loadAgendaData,
     loadUndanganData,
