@@ -370,7 +370,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
           {/* Logo SMPN 7 Pasuruan (Kanan Atas) */}
           <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
             <img 
-              src="https://iili.io/KDFk4fI.png" 
+              src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png" 
               alt="Logo SMPN 7 Pasuruan"
               className="max-h-20 sm:max-h-28 max-w-full object-contain"
             />

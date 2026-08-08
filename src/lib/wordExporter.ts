@@ -38,7 +38,7 @@ function getKopSuratWordHTML(): string {
           <p style="margin: 2px 0; font-size: 8pt; font-family: 'Times New Roman', Times, serif;">Pos-el <i>smp7pas@yahoo.co.id</i>, Laman <i>www.smpn7pasuruan.sch.id</i></p>
         </td>
         <td style="width: 18%; text-align: right; vertical-align: middle; border: none;">
-          <img src="https://iili.io/KDFk4fI.png" width="75" height="75" alt="Logo SMPN 7 Pasuruan" />
+          <img src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png" width="75" height="75" alt="Logo SMPN 7 Pasuruan" />
         </td>
       </tr>
     </table>
