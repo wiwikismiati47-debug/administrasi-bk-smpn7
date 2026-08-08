@@ -1,3 +1,4 @@
+import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { SuratPernyataan, FormSuratPernyataanData, JenisSuratPernyataan, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
@@ -69,8 +70,8 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
   const [tanggalSurat, setTanggalSurat] = useState(initialData?.tanggal_surat || new Date().toISOString().slice(0, 10));
   const [tempatSurat, setTempatSurat] = useState(initialData?.tempat_surat || 'Pasuruan');
   const [keterangan, setKeterangan] = useState(initialData?.keterangan || '');
-  const [namaGuruBk, setNamaGuruBk] = useState(initialData?.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
-  const [nipGuruBk, setNipGuruBk] = useState(initialData?.nip_guru_bk || '19831116 200904 2 003');
+  const [namaGuruBk, setNamaGuruBk] = useState(initialData?.nama_guru_bk || getActiveGuruBK().nama);
+  const [nipGuruBk, setNipGuruBk] = useState(initialData?.nip_guru_bk || getActiveGuruBK().nip);
   const [namaKepalaSekolah, setNamaKepalaSekolah] = useState(initialData?.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState(initialData?.nip_kepala_sekolah || '19860410 201001 2 030');
   const [autoUpdatedNotice, setAutoUpdatedNotice] = useState(false);
@@ -90,8 +91,8 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
       setTanggalSurat(initialData.tanggal_surat || new Date().toISOString().slice(0, 10));
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
       setKeterangan(initialData.keterangan || '');
-      setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
-      setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
+      setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
+      setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
       setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
     }
@@ -137,8 +138,8 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
     setTanggalSurat(new Date().toISOString().slice(0, 10));
     setTempatSurat('Pasuruan');
     setKeterangan('');
-    setNamaGuruBk('WIWIK ISMIATI, S.Pd');
-    setNipGuruBk('19831116 200904 2 003');
+    setNamaGuruBk(getActiveGuruBK().nama);
+    setNipGuruBk(getActiveGuruBK().nip);
     setNamaKepalaSekolah('NUR FADILAH, S.Pd');
     setNipKepalaSekolah('19860410 201001 2 030');
   };
@@ -428,23 +429,41 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Guru BK</label>
-              <input
-                type="text"
+              <select
                 value={namaGuruBk}
-                onChange={(e) => setNamaGuruBk(e.target.value)}
-                placeholder="WIWIK ISMIATI, S.Pd"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
-              />
+                onChange={(e) => {
+                  setNamaGuruBk(e.target.value);
+                  const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
+                  if (preset) setNipGuruBk(preset.nip);
+                }}
+                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer"
+              >
+                {PRESET_GURU_BK.map(g => (
+                  <option key={g.nip} value={g.nama}>{g.nama}</option>
+                ))}
+                {!PRESET_GURU_BK.some(g => g.nama === namaGuruBk) && (
+                  <option value={namaGuruBk}>{namaGuruBk}</option>
+                )}
+              </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Guru BK</label>
-              <input
-                type="text"
-                value={nipGuruBk}
-                onChange={(e) => setNipGuruBk(e.target.value)}
-                placeholder="19831116 200904 2 003"
-                className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
-              />
+              <select
+                  value={nipGuruBk}
+                  onChange={(e) => {
+                    setNipGuruBk(e.target.value);
+                    const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
+                    if (preset) setNamaGuruBk(preset.nama);
+                  }}
+                  className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none cursor-pointer"
+                >
+                  {PRESET_GURU_BK.map(g => (
+                    <option key={g.nip} value={g.nip}>{g.nip}</option>
+                  ))}
+                  {!PRESET_GURU_BK.some(g => g.nip === nipGuruBk) && (
+                    <option value={nipGuruBk}>{nipGuruBk}</option>
+                  )}
+                </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label>

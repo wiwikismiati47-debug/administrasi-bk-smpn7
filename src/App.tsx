@@ -49,6 +49,8 @@ import {
   saveOrUpdateSiswa,
   bulkSaveOrUpdateSiswa,
   deleteSiswaItem,
+  getSavedSupabaseConfig,
+  getSupabaseClient
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -317,6 +319,34 @@ export default function App() {
 
   useEffect(() => {
     refreshAllData();
+
+    // Set up realtime subscription
+    const config = getSavedSupabaseConfig();
+    const client = getSupabaseClient(config);
+    let channel: any = null;
+
+    if (client) {
+      channel = client
+        .channel('schema-db-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+          },
+          (payload) => {
+            console.log('Realtime update received!', payload);
+            refreshAllData();
+          }
+        )
+        .subscribe();
+    }
+
+    return () => {
+      if (channel) {
+        client?.removeChannel(channel);
+      }
+    };
   }, [refreshAllData]);
 
   // Handle Agenda submit

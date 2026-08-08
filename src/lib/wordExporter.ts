@@ -1,3 +1,4 @@
+import { getActiveGuruBK } from './guruBk';
 import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan } from '../types';
 
 /**
@@ -6,8 +7,8 @@ import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, Kons
  * opens natively and formatted cleanly in Microsoft Word.
  */
 
-const DEFAULT_GURU_BK = 'WIWIK ISMIATI, S.Pd';
-const DEFAULT_NIP_GURU_BK = '19831116 200904 2 003';
+const DEFAULT_GURU_BK = getActiveGuruBK().nama;
+const DEFAULT_NIP_GURU_BK = getActiveGuruBK().nip;
 const DEFAULT_KEPALA_SEKOLAH = 'NUR FADILAH, S.Pd';
 const DEFAULT_NIP_KEPALA_SEKOLAH = '19860410 201001 2 030';
 

@@ -1,3 +1,4 @@
+import { getActiveGuruBK } from './guruBk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa } from '../types';
 
@@ -1307,8 +1308,8 @@ export function getLocalKonferensiKasusList(): KonferensiKasus[] {
         ]),
         tanggal_surat: '2026-08-06',
         tempat_surat: 'Pasuruan',
-        nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
-        nip_guru_bk: '19831116 200904 2 003',
+        nama_guru_bk: getActiveGuruBK().nama,
+        nip_guru_bk: getActiveGuruBK().nip,
         nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
         nip_kepala_sekolah: '19860410 201001 2 030',
         keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'

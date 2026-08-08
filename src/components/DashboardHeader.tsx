@@ -1,4 +1,5 @@
 import React from 'react';
+import { GuruBkSelector } from './GuruBkSelector';
 import {
   Download,
   Upload,
@@ -118,6 +119,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
           {/* Action Bar: Backup, Upload, Supabase Pill */}
           <div className="flex flex-wrap items-center justify-center md:justify-end gap-2.5">
+            <GuruBkSelector />
             
             {/* Install PWA Button with School Logo Mascot */}
             <button

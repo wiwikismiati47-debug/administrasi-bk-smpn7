@@ -1,3 +1,4 @@
+import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
@@ -36,7 +37,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   const [namaKonseli, setNamaKonseli] = useState('');
   const [kelasTa, setKelasTa] = useState('');
   const [selectedKelas, setSelectedKelas] = useState('');
-  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('2024/2025');
+  const [selectedTahunAjaran, setSelectedTahunAjaran] = useState('2026/2027');
 
   const handleSelectKelas = (k: string) => {
     setSelectedKelas(k);
@@ -83,8 +84,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   // Meta & Signatures
   const [tanggalSurat, setTanggalSurat] = useState(new Date().toISOString().slice(0, 10));
   const [tempatSurat, setTempatSurat] = useState('Pasuruan');
-  const [namaGuruBk, setNamaGuruBk] = useState('WIWIK ISMIATI, S.Pd');
-  const [nipGuruBk, setNipGuruBk] = useState('19831116 200904 2 003');
+  const [namaGuruBk, setNamaGuruBk] = useState(getActiveGuruBK().nama);
+  const [nipGuruBk, setNipGuruBk] = useState(getActiveGuruBK().nip);
   const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
   const [keterangan, setKeterangan] = useState('');
@@ -129,8 +130,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
 
       setTanggalSurat(initialData.tanggal_surat || new Date().toISOString().slice(0, 10));
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
-      setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
-      setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
+      setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
+      setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
       setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
       setKeterangan(initialData.keterangan || '');
@@ -261,8 +262,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
 
     setTanggalSurat(new Date().toISOString().slice(0, 10));
     setTempatSurat('Pasuruan');
-    setNamaGuruBk('WIWIK ISMIATI, S.Pd');
-    setNipGuruBk('19831116 200904 2 003');
+    setNamaGuruBk(getActiveGuruBK().nama);
+    setNipGuruBk(getActiveGuruBK().nip);
     setNamaKepalaSekolah('NUR FADILAH, S.Pd');
     setNipKepalaSekolah('19860410 201001 2 030');
     setKeterangan('');
@@ -936,26 +937,44 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                   <label className="block text-xs font-bold text-slate-600 mb-1">
                     Nama Guru BK / Konselor
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={namaGuruBk}
-                    onChange={(e) => setNamaGuruBk(e.target.value)}
-                    placeholder="e.g. WIWIK ISMIATI, S.Pd"
-                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                  />
+                    onChange={(e) => {
+                      setNamaGuruBk(e.target.value);
+                      const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
+                      if (preset) setNipGuruBk(preset.nip);
+                    }}
+                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none cursor-pointer"
+                  >
+                    {PRESET_GURU_BK.map(g => (
+                      <option key={g.nip} value={g.nama}>{g.nama}</option>
+                    ))}
+                    {!PRESET_GURU_BK.some(g => g.nama === namaGuruBk) && (
+                      <option value={namaGuruBk}>{namaGuruBk}</option>
+                    )}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">
                     NIP Guru BK / Konselor
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={nipGuruBk}
-                    onChange={(e) => setNipGuruBk(e.target.value)}
-                    placeholder="e.g. 19831116 200904 2 003"
-                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                  />
+                    onChange={(e) => {
+                      setNipGuruBk(e.target.value);
+                      const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
+                      if (preset) setNamaGuruBk(preset.nama);
+                    }}
+                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none cursor-pointer"
+                  >
+                    {PRESET_GURU_BK.map(g => (
+                      <option key={g.nip} value={g.nip}>{g.nip}</option>
+                    ))}
+                    {!PRESET_GURU_BK.some(g => g.nip === nipGuruBk) && (
+                      <option value={nipGuruBk}>{nipGuruBk}</option>
+                    )}
+                  </select>
                 </div>
               </div>
 

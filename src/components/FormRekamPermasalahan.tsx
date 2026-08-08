@@ -1,3 +1,4 @@
+import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { RekamPermasalahan, FormRekamPermasalahanData, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
@@ -88,8 +89,8 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
     hasil_dan_kesimpulan: '',
     link_foto_kegiatan: '',
     keterangan: 'Proses Pendampingan BK',
-    nama_guru_bk: 'WIWIK ISMIATI, S.Pd',
-    nip_guru_bk: '19831116 200904 2 003',
+    nama_guru_bk: getActiveGuruBK().nama,
+    nip_guru_bk: getActiveGuruBK().nip,
     nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
     nip_kepala_sekolah: '19860410 201001 2 030',
   });
@@ -118,8 +119,8 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
         hasil_dan_kesimpulan: initialData.hasil_dan_kesimpulan || '',
         link_foto_kegiatan: initialData.link_foto_kegiatan || '',
         keterangan: initialData.keterangan || 'Proses Pendampingan BK',
-        nama_guru_bk: initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd',
-        nip_guru_bk: initialData.nip_guru_bk || '19831116 200904 2 003',
+        nama_guru_bk: initialData.nama_guru_bk || getActiveGuruBK().nama,
+        nip_guru_bk: initialData.nip_guru_bk || getActiveGuruBK().nip,
         nama_kepala_sekolah: initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
         nip_kepala_sekolah: initialData.nip_kepala_sekolah || '19860410 201001 2 030',
       });
@@ -502,25 +503,47 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Guru BK</label>
-                  <input
-                    type="text"
+                  <select
                     name="nama_guru_bk"
                     value={formData.nama_guru_bk || ''}
-                    onChange={handleChange}
-                    placeholder="WIWIK ISMIATI, S.Pd"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
+                    onChange={(e) => {
+                      handleChange(e);
+                      const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
+                      if (preset) {
+                        handleChange({ target: { name: 'nip_guru_bk', value: preset.nip } });
+                      }
+                    }}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                  >
+                    {PRESET_GURU_BK.map(g => (
+                      <option key={g.nip} value={g.nama}>{g.nama}</option>
+                    ))}
+                    {!PRESET_GURU_BK.some(g => g.nama === formData.nama_guru_bk) && (
+                      <option value={formData.nama_guru_bk || ''}>{formData.nama_guru_bk}</option>
+                    )}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">NIP Guru BK</label>
-                  <input
-                    type="text"
+                  <select
                     name="nip_guru_bk"
                     value={formData.nip_guru_bk || ''}
-                    onChange={handleChange}
-                    placeholder="19831116 200904 2 003"
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
+                    onChange={(e) => {
+                      handleChange(e);
+                      const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
+                      if (preset) {
+                        handleChange({ target: { name: 'nama_guru_bk', value: preset.nama } });
+                      }
+                    }}
+                    className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none cursor-pointer"
+                  >
+                    {PRESET_GURU_BK.map(g => (
+                      <option key={g.nip} value={g.nip}>{g.nip}</option>
+                    ))}
+                    {!PRESET_GURU_BK.some(g => g.nip === formData.nip_guru_bk) && (
+                      <option value={formData.nip_guru_bk || ''}>{formData.nip_guru_bk}</option>
+                    )}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Nama Kepala Sekolah</label>

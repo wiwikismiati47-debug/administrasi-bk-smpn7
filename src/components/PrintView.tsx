@@ -1,3 +1,4 @@
+import { getActiveGuruBK } from '../lib/guruBk';
 import React from 'react';
 import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
@@ -454,8 +455,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div className="text-center w-64">
                     <p>Guru BK</p>
                     <div className="h-20" />
-                    <p className="font-bold underline uppercase">{currentItem.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</p>
-                    <p className="text-xs font-mono">NIP. {currentItem.nip_guru_bk || '19831116 200904 2 003'}</p>
+                    <p className="font-bold underline uppercase">{currentItem.nama_guru_bk || getActiveGuruBK().nama}</p>
+                    <p className="text-xs font-mono">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
                   </div>
                 </div>
 
@@ -516,7 +517,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                       <td className="p-2.5 border-r border-slate-900 font-bold text-center">6</td>
                       <td className="p-2.5 border-r border-slate-900 font-bold">Konsultan/Nara Sumber</td>
                       <td className="p-2.5 leading-relaxed">
-                        1. {currentItem.nama_guru_bk || 'Wiwik Ismiati, S.Pd'} (Konselor)<br/>
+                        1. {currentItem.nama_guru_bk || getActiveGuruBK().nama} (Konselor)<br/>
                         2. {currentItem.nama_orang_tua} {currentItem.pekerjaan_orang_tua ? `(${currentItem.pekerjaan_orang_tua})` : ''}
                       </td>
                     </tr>
@@ -566,8 +567,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <p>{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
                     <p>Guru BK/ Konselor</p>
                     <div className="h-16" />
-                    <p className="font-bold underline uppercase">{currentItem.nama_guru_bk || 'Wiwik Ismiati, S.Pd'}</p>
-                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_guru_bk || '19831116 200904 2 003'}</p>
+                    <p className="font-bold underline uppercase">{currentItem.nama_guru_bk || getActiveGuruBK().nama}</p>
+                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
                   </div>
                 </div>
               </>
@@ -726,7 +727,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
                 <div className="pl-6 space-y-1 my-2">
                   <div className="grid grid-cols-[50px_10px_1fr]">
-                    <span>Sdr.</span><span>:</span><u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.petugas_1 || currentHomeVisit.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</u>
+                    <span>Sdr.</span><span>:</span><u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.petugas_1 || currentHomeVisit.nama_guru_bk || getActiveGuruBK().nama}</u>
                   </div>
                   <div className="grid grid-cols-[50px_10px_1fr]">
                     <span>Sdr</span><span>:</span><u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.petugas_2 || '....................................'}</u>
@@ -906,8 +907,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>
                     <div>Guru BK / Konselor</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">{currentHomeVisit.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
-                    <div>NIP. {currentHomeVisit.nip_guru_bk || '19831116 200904 2 003'}</div>
+                    <div className="font-bold underline uppercase">{currentHomeVisit.nama_guru_bk || getActiveGuruBK().nama}</div>
+                    <div>NIP. {currentHomeVisit.nip_guru_bk || getActiveGuruBK().nip}</div>
                   </div>
                   <div>
                     <div>Pasuruan, {formatIndoDate(currentHomeVisit.tanggal_surat || currentHomeVisit.tanggal)}</div>
@@ -1025,7 +1026,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
                 <div className="mt-4 text-justify">
                   Dengan ini menyatakan kesediaan kami untuk menerima kunjungan saudara :<br/>
-                  ........................................ <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.petugas_penerima_kunjungan || currentHomeVisit.petugas_1 || currentHomeVisit.nama_guru_bk || 'WIWIK ISMIATI, S.Pd dkk'}</u> ........................................<br/>
+                  ........................................ <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.petugas_penerima_kunjungan || currentHomeVisit.petugas_1 || currentHomeVisit.nama_guru_bk || getActiveGuruBK().nama}</u> ........................................<br/>
                   Kerumah kami pada :
                 </div>
 
@@ -1160,8 +1161,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Pasuruan, {currentRekamPermasalahan.tanggal_surat ? formatIndoDate(currentRekamPermasalahan.tanggal_surat) : todayStr}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">{currentRekamPermasalahan.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
-                    <div>NIP. {currentRekamPermasalahan.nip_guru_bk || '19831116 200904 2 003'}</div>
+                    <div className="font-bold underline uppercase">{currentRekamPermasalahan.nama_guru_bk || getActiveGuruBK().nama}</div>
+                    <div>NIP. {currentRekamPermasalahan.nip_guru_bk || getActiveGuruBK().nip}</div>
                   </div>
                 </div>
               </>
@@ -1327,8 +1328,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Pasuruan, {formatIndoDate(currentKonselingIndividu.tanggal)}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">{currentKonselingIndividu.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
-                    <div>NIP. {currentKonselingIndividu.nip_guru_bk || '19831116 200904 2 003'}</div>
+                    <div className="font-bold underline uppercase">{currentKonselingIndividu.nama_guru_bk || getActiveGuruBK().nama}</div>
+                    <div>NIP. {currentKonselingIndividu.nip_guru_bk || getActiveGuruBK().nip}</div>
                   </div>
                 </div>
               </>
@@ -1493,8 +1494,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Pasuruan, {formatIndoDate(currentKonselingKelompok.tanggal)}</div>
                     <div>Guru Bimbingan dan Konseling</div>
                     <div className="h-16" />
-                    <div className="font-bold underline uppercase">{currentKonselingKelompok.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}</div>
-                    <div>NIP. {currentKonselingKelompok.nip_guru_bk || '19831116 200904 2 003'}</div>
+                    <div className="font-bold underline uppercase">{currentKonselingKelompok.nama_guru_bk || getActiveGuruBK().nama}</div>
+                    <div>NIP. {currentKonselingKelompok.nip_guru_bk || getActiveGuruBK().nip}</div>
                   </div>
                 </div>
               </>
@@ -2096,9 +2097,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Notulis / Guru BK</div>
                 <div className="h-16" />
                 <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                 </div>
-                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
               </div>
             </div>
           </div>
@@ -2183,9 +2184,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Notulis Rapat</div>
                 <div className="h-16" />
                 <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                 </div>
-                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
               </div>
             </div>
           </div>
@@ -2270,9 +2271,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Guru BK / Notulis</div>
                 <div className="h-16" />
                 <div className="font-bold underline uppercase">
-                  {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                  {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                 </div>
-                <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
               </div>
             </div>
           </div>
@@ -2369,9 +2370,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Notulis / Guru BK</div>
                   <div className="h-16" />
                   <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                    {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                   </div>
-                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
                 </div>
               </div>
             </div>
@@ -2454,9 +2455,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Notulis Rapat</div>
                   <div className="h-16" />
                   <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                    {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                   </div>
-                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
                 </div>
               </div>
             </div>
@@ -2539,9 +2540,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Guru BK / Notulis</div>
                   <div className="h-16" />
                   <div className="font-bold underline uppercase">
-                    {currentKonferensiKasus.nama_guru_bk || 'WIWIK ISMIATI, S.Pd'}
+                    {currentKonferensiKasus.nama_guru_bk || getActiveGuruBK().nama}
                   </div>
-                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || '19831116 200904 2 003'}</div>
+                  <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
                 </div>
               </div>
             </div>

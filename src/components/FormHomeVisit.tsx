@@ -1,3 +1,4 @@
+import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { HomeVisit, FormHomeVisitData, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
@@ -76,14 +77,14 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   // Administration & Print Settings
   const [tanggalSurat, setTanggalSurat] = useState(getTodayISO());
   const [tempatSurat, setTempatSurat] = useState('Pasuruan');
-  const [namaGuruBk, setNamaGuruBk] = useState('WIWIK ISMIATI, S.Pd');
-  const [nipGuruBk, setNipGuruBk] = useState('19831116 200904 2 003');
+  const [namaGuruBk, setNamaGuruBk] = useState(getActiveGuruBK().nama);
+  const [nipGuruBk, setNipGuruBk] = useState(getActiveGuruBK().nip);
   const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
 
   // Surat Tugas Kunjungan Rumah fields (Semua underlined item)
   const [nomorSuratTugas, setNomorSuratTugas] = useState('015');
-  const [petugas1, setPetugas1] = useState('WIWIK ISMIATI, S.Pd');
+  const [petugas1, setPetugas1] = useState(getActiveGuruBK().nama);
   const [petugas2, setPetugas2] = useState('');
   const [jabatanPetugas1, setJabatanPetugas1] = useState('Guru Bimbingan dan Konseling');
   const [jabatanPetugas2, setJabatanPetugas2] = useState('Wali Kelas / Waka Kesiswaan');
@@ -91,7 +92,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
   // Surat Pernyataan Kesediaan Menerima Kunjungan Orang Tua fields
   const [tanggalSuratTugas, setTanggalSuratTugas] = useState(getTodayISO());
-  const [petugasPenerimaKunjungan, setPetugasPenerimaKunjungan] = useState('WIWIK ISMIATI, S.Pd dkk');
+  const [petugasPenerimaKunjungan, setPetugasPenerimaKunjungan] = useState(getActiveGuruBK().nama);
   const [tanggalPernyataanOrtu, setTanggalPernyataanOrtu] = useState(getTodayISO());
 
   // 14 Field Laporan Kunjungan Rumah Resmi (Sesuai Lampiran User)
@@ -157,20 +158,20 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
       setTanggalSurat(initialData.tanggal_surat || getTodayISO());
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
-      setNamaGuruBk(initialData.nama_guru_bk || 'WIWIK ISMIATI, S.Pd');
-      setNipGuruBk(initialData.nip_guru_bk || '19831116 200904 2 003');
+      setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
+      setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
       setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030');
 
       setNomorSuratTugas(initialData.nomor_surat_tugas || '015');
-      setPetugas1(initialData.petugas_1 || 'WIWIK ISMIATI, S.Pd');
+      setPetugas1(initialData.petugas_1 || getActiveGuruBK().nama);
       setPetugas2(initialData.petugas_2 || '');
       setJabatanPetugas1(initialData.jabatan_petugas_1 || 'Guru Bimbingan dan Konseling');
       setJabatanPetugas2(initialData.jabatan_petugas_2 || 'Wali Kelas / Waka Kesiswaan');
       setNisSiswa(initialData.nis_siswa || '');
 
       setTanggalSuratTugas(initialData.tanggal_surat_tugas || initialData.tanggal_surat || getTodayISO());
-      setPetugasPenerimaKunjungan(initialData.petugas_penerima_kunjungan || initialData.petugas_1 || 'WIWIK ISMIATI, S.Pd dkk');
+      setPetugasPenerimaKunjungan(initialData.petugas_penerima_kunjungan || initialData.petugas_1 || getActiveGuruBK().nama);
       setTanggalPernyataanOrtu(initialData.tanggal_pernyataan_ortu || getTodayISO());
 
       setSemesterLaporan(initialData.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
@@ -213,20 +214,20 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
       setTanggalSurat(getTodayISO());
       setTempatSurat('Pasuruan');
-      setNamaGuruBk('WIWIK ISMIATI, S.Pd');
-      setNipGuruBk('19831116 200904 2 003');
+      setNamaGuruBk(getActiveGuruBK().nama);
+      setNipGuruBk(getActiveGuruBK().nip);
       setNamaKepalaSekolah('NUR FADILAH, S.Pd');
       setNipKepalaSekolah('NIP. 19860410 201001 2 030');
 
       setNomorSuratTugas('015');
-      setPetugas1('WIWIK ISMIATI, S.Pd');
+      setPetugas1(getActiveGuruBK().nama);
       setPetugas2('');
       setJabatanPetugas1('Guru Bimbingan dan Konseling');
       setJabatanPetugas2('Wali Kelas / Waka Kesiswaan');
       setNisSiswa('');
 
       setTanggalSuratTugas(getTodayISO());
-      setPetugasPenerimaKunjungan('WIWIK ISMIATI, S.Pd dkk');
+      setPetugasPenerimaKunjungan(getActiveGuruBK().nama + ' dkk');
       setTanggalPernyataanOrtu(getTodayISO());
 
       setSemesterLaporan('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
@@ -334,7 +335,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setTempatSurat('Pasuruan');
 
       setNomorSuratTugas('015');
-      setPetugas1('WIWIK ISMIATI, S.Pd');
+      setPetugas1(getActiveGuruBK().nama);
       setPetugas2('');
       setJabatanPetugas1('Guru Bimbingan dan Konseling');
       setJabatanPetugas2('Wali Kelas / Waka Kesiswaan');
@@ -710,25 +711,43 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                   Nama Guru BK / Konselor
                 </label>
-                <input
-                  type="text"
+                <select
                   value={namaGuruBk}
-                  onChange={(e) => setNamaGuruBk(e.target.value)}
-                  placeholder="WIWIK ISMIATI, S.Pd"
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold"
-                />
+                  onChange={(e) => {
+                    setNamaGuruBk(e.target.value);
+                    const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
+                    if (preset) setNipGuruBk(preset.nip);
+                  }}
+                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold cursor-pointer"
+                >
+                  {PRESET_GURU_BK.map(g => (
+                    <option key={g.nip} value={g.nama}>{g.nama}</option>
+                  ))}
+                  {!PRESET_GURU_BK.some(g => g.nama === namaGuruBk) && (
+                    <option value={namaGuruBk}>{namaGuruBk}</option>
+                  )}
+                </select>
               </div>
               <div>
                 <label className="block text-[11px] font-semibold text-slate-400 mb-1">
                   NIP Guru BK / Konselor
                 </label>
-                <input
-                  type="text"
+                <select
                   value={nipGuruBk}
-                  onChange={(e) => setNipGuruBk(e.target.value)}
-                  placeholder="19831116 200904 2 003"
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-slate-300"
-                />
+                  onChange={(e) => {
+                    setNipGuruBk(e.target.value);
+                    const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
+                    if (preset) setNamaGuruBk(preset.nama);
+                  }}
+                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-slate-300 cursor-pointer"
+                >
+                  {PRESET_GURU_BK.map(g => (
+                    <option key={g.nip} value={g.nip}>{g.nip}</option>
+                  ))}
+                  {!PRESET_GURU_BK.some(g => g.nip === nipGuruBk) && (
+                    <option value={nipGuruBk}>{nipGuruBk}</option>
+                  )}
+                </select>
               </div>
             </div>
 
@@ -1088,7 +1107,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
             <div className="mt-2">
               Dengan ini menyatakan kesediaan kami untuk menerima kunjungan saudara :<br/>
-              ........................................ <span className="font-bold underline text-red-600">{petugasPenerimaKunjungan || 'WIWIK ISMIATI, S.Pd dkk'}</span> ........................................<br/>
+              ........................................ <span className="font-bold underline text-red-600">{petugasPenerimaKunjungan || getActiveGuruBK().nama}</span> ........................................<br/>
               Kerumah kami pada :
             </div>
 
