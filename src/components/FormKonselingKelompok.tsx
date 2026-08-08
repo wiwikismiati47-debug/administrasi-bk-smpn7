@@ -584,7 +584,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                       handleChange(e);
                       const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
                       if (preset) {
-                        handleChange({ target: { name: 'nip_guru_bk', value: preset.nip } });
+                        handleChange({ target: { name: 'nip_guru_bk', value: preset.nip } } as any);
                       }
                     }}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none cursor-pointer"
@@ -606,7 +606,7 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                       handleChange(e);
                       const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
                       if (preset) {
-                        handleChange({ target: { name: 'nama_guru_bk', value: preset.nama } });
+                        handleChange({ target: { name: 'nama_guru_bk', value: preset.nama } } as any);
                       }
                     }}
                     className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-mono text-slate-900 focus:ring-2 focus:ring-pink-500 outline-none cursor-pointer"

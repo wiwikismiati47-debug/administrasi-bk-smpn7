@@ -22,6 +22,7 @@ export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok
 export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
 export const DEFAULT_KONFERENSI_KASUS_TABLE_NAME = 'konferensi_kasus_siswa';
 export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
+export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
 // Get active config from localStorage or import.meta.env
 export function getSavedSupabaseConfig(): SupabaseConfig {
@@ -1784,6 +1785,19 @@ export function getSupabaseSqlSetup(
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- 10. TABEL TANDA TANGAN (signatures_bk)
+--------------------------------------------------------------------------------
+create table if not exists public.signatures_bk (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()),
+  updated_at timestamp with time zone default timezone('utc'::text, now()),
+  record_id text not null,
+  role text not null,
+  signature_data text not null,
+  unique(record_id, role)
+);
+
 -- 1. TABEL A: AGENDA KERJA BK (${tableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${tableName} (

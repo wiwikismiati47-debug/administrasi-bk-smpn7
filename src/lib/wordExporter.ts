@@ -614,7 +614,7 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
       </tr>
       <tr>
         <td>
-          <b><u>${guruBk.toUpperCase()}</u></b><br/>
+          <b><u>${guruBk.toUpperCase().replace(/S\.PD/g, 'S.Pd')}</u></b><br/>
           NIP. ${nipGuruBk}
         </td>
         <td>
@@ -630,7 +630,7 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
         <td style="width: 100%;">
           Mengetahui,<br/>
           Kepala Sekolah SMPN 7 Pasuruan<br/><br/><br/><br/>
-          <b><u>${kepalaSekolah.toUpperCase()}</u></b><br/>
+          <b><u>${kepalaSekolah.toUpperCase().replace(/S\.PD/g, 'S.Pd')}</u></b><br/>
           ${nipKepalaSekolah}
         </td>
       </tr>

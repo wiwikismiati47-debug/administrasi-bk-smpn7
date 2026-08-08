@@ -14,7 +14,11 @@ export function getActiveGuruBK(): GuruBK {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_GURU_BK);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.nama) {
+        parsed.nama = parsed.nama.replace(/S\.PD/g, 'S.Pd').replace(/S\.pd/g, 'S.Pd');
+      }
+      return parsed;
     }
   } catch (e) {
     console.error('Error reading Guru BK from local storage', e);

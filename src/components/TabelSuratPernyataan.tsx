@@ -19,6 +19,12 @@ import {
 } from 'lucide-react';
 import { downloadSuratPernyataanWord, downloadBulkSuratPernyataanWord } from '../lib/wordExporter';
 
+
+function formatName(name: string | undefined | null) {
+  if (!name) return name;
+  return name.replace(/S\.PD/g, 'S.Pd').replace(/S\.pd/g, 'S.Pd');
+}
+
 interface TabelSuratPernyataanProps {
   items: SuratPernyataan[];
   onEdit: (item: SuratPernyataan) => void;

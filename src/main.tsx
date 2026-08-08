@@ -3,6 +3,15 @@ import {createRoot} from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
 
+// Override window.confirm and alert to prevent iframe errors in preview
+window.confirm = (msg) => {
+  console.log('Confirm bypassed in iframe: ' + msg);
+  return true;
+};
+window.alert = (msg) => {
+  console.log('Alert bypassed in iframe: ' + msg);
+};
+
 // Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

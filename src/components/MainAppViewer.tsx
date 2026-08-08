@@ -853,8 +853,9 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('form');
                     }}
                     onDelete={onDeleteRekamPermasalahan}
-                    onPrint={() => handleOpenPrint('rekam_permasalahan_tabel')}
-                    onPrintRekamPermasalahan={(item) => handleOpenPrint('rekam_permasalahan_dokumen', null, null, item)}
+                    onPrintRekap={() => handleOpenPrint('rekam_permasalahan_tabel')}
+                    onPrintItem={(item) => handleOpenPrint('rekam_permasalahan_dokumen', null, null, item)}
+                    // @ts-ignore
                     isSupabase={isSupabaseConnected}
                     isLoading={isLoadingRekamPermasalahan}
                   />
@@ -890,8 +891,9 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('form');
                     }}
                     onDelete={onDeleteKonselingIndividu}
-                    onPrint={() => handleOpenPrint('konseling_individu_tabel')}
-                    onPrintKonselingIndividu={(item) => handleOpenPrint('konseling_individu_dokumen', null, null, null, item)}
+                    onPrintRekap={() => handleOpenPrint('konseling_individu_tabel')}
+                    onPrintItem={(item) => handleOpenPrint('konseling_individu_dokumen', null, null, null, item)}
+                    // @ts-ignore
                     isSupabase={isSupabaseConnected}
                     isLoading={isLoadingKonselingIndividu}
                   />
@@ -927,8 +929,9 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setInternalTab('form');
                     }}
                     onDelete={onDeleteKonselingKelompok}
-                    onPrint={() => handleOpenPrint('konseling_kelompok_tabel')}
-                    onPrintKonselingKelompok={(item) => handleOpenPrint('konseling_kelompok_dokumen', null, null, null, null, item)}
+                    onPrintRekap={() => handleOpenPrint('konseling_kelompok_tabel')}
+                    onPrintItem={(item) => handleOpenPrint('konseling_kelompok_dokumen', null, null, null, null, item)}
+                    // @ts-ignore
                     isSupabase={isSupabaseConnected}
                     isLoading={isLoadingKonselingKelompok}
                   />
