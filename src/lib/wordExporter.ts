@@ -370,40 +370,20 @@ export function generateLaporanKonsultasiHTML(item: UndanganOrangTua): string {
       </tr>
     </table>
 
-    <!-- TANDA TANGAN 3 BAGIAN -->
+    <!-- TANDA TANGAN 2 BAGIAN -->
     <table class="sig-table">
       <tr>
-        <td style="width: 50%;"></td>
-        <td style="width: 50%;">${item.tempat_surat || 'Pasuruan'}, ${item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo}</td>
-      </tr>
-      <tr>
-        <td>Guru BK/ Konselor</td>
-        <td>Konsultan/ Narasumber</td>
-      </tr>
-      <tr>
-        <td style="height: 60px;"></td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>
-          <b><u>${guruBk}</u></b><br/>
-          NIP. ${nipGuruBk}
-        </td>
-        <td>
-          <b><u>${item.nama_orang_tua || 'Orang Tua Siswa'}</u></b><br/>
-          Wali Siswa
-        </td>
-      </tr>
-    </table>
-
-    <br/>
-    <table class="sig-table">
-      <tr>
-        <td style="width: 100%;">
+        <td style="width: 50%;">
           Mengetahui,<br/>
           Kepala Sekolah SMPN 7 Pasuruan<br/><br/><br/><br/>
           <b><u>${kepalaSekolah}</u></b><br/>
           NIP. ${nipKepalaSekolah}
+        </td>
+        <td style="width: 50%;">
+          ${item.tempat_surat || 'Pasuruan'}, ${item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo}<br/>
+          Guru BK/ Konselor<br/><br/><br/><br/>
+          <b><u>${guruBk}</u></b><br/>
+          NIP. ${nipGuruBk}
         </td>
       </tr>
     </table>

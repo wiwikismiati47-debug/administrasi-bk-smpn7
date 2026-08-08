@@ -552,30 +552,23 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   </tbody>
                 </table>
 
-                {/* SIGNATURE 3 BAGIAN */}
-                <div className="pt-4 grid grid-cols-2 text-center text-xs font-semibold">
+                {/* SIGNATURE 2 BAGIAN */}
+                <div className="pt-6 grid grid-cols-2 text-center text-xs font-semibold gap-4">
                   <div>
-                    <p>Guru BK/ Konselor</p>
+                    <p>Mengetahui,</p>
+                    <p className="font-bold">Kepala Sekolah SMPN 7 Pasuruan</p>
                     <div className="h-16" />
-                    <p className="font-bold underline">{currentItem.nama_guru_bk || 'Wiwik Ismiati, S.Pd'}</p>
-                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_guru_bk || '19831116 200904 2 003'}</p>
+                    <p className="font-bold underline uppercase">{currentItem.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</p>
+                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                   </div>
 
                   <div>
                     <p>{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
-                    <p>Konsultan/ Narasumber</p>
-                    <div className="h-14" />
-                    <p className="font-bold underline">{currentItem.nama_orang_tua || 'Orang Tua / Wali Siswa'}</p>
-                    <p className="text-[11px]">Orang Tua / Wali</p>
+                    <p>Guru BK/ Konselor</p>
+                    <div className="h-16" />
+                    <p className="font-bold underline uppercase">{currentItem.nama_guru_bk || 'Wiwik Ismiati, S.Pd'}</p>
+                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_guru_bk || '19831116 200904 2 003'}</p>
                   </div>
-                </div>
-
-                <div className="pt-8 text-center text-xs font-semibold">
-                  <p>Mengetahui,</p>
-                  <p className="font-bold">Kepala Sekolah SMPN 7 Pasuruan</p>
-                  <div className="h-16" />
-                  <p className="font-bold underline uppercase">{currentItem.nama_kepala_sekolah || 'NUR FADILAH, S.Pd'}</p>
-                  <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                 </div>
               </>
             ) : (
