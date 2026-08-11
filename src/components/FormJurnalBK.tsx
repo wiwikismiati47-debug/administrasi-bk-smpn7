@@ -23,7 +23,11 @@ import {
   UserCheck,
   UserCog,
   X,
-  Check
+  Check,
+  Image as ImageIcon,
+  Link as LinkIcon,
+  Upload,
+  Eye
 } from 'lucide-react';
 
 interface FormJurnalBKProps {
@@ -161,6 +165,25 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
   const [fungsiLayanan, setFungsiLayanan] = useState<string>(FUNGSI_LAYANAN_OPTIONS[0]);
   const [hasilLayananBmb3, setHasilLayananBmb3] = useState<string>('');
   const [linkFoto, setLinkFoto] = useState<string>('');
+  const [previewError, setPreviewError] = useState<boolean>(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setLinkFoto(dataUrl);
+        setPreviewError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
   const [keterangan, setKeterangan] = useState<string>('');
   const [namaGuruBK, setNamaGuruBK] = useState<string>(activeGuruBK.nama);
   const [nipGuruBK, setNipGuruBK] = useState<string>(activeGuruBK.nip);
@@ -377,14 +400,30 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-8">
         {/* SECTION 1: WAKTU & HARI / TANGGAL / BULAN / TAHUN */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Calendar className="w-5 h-5 text-emerald-600" />
-            <h3 className="text-base font-bold text-slate-800">1. Waktu & Pelaksanaan Layanan BK</h3>
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-emerald-600" />
+              <h3 className="text-base font-bold text-slate-800">1. Waktu & Pelaksanaan Layanan BK</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const dStr = now.toISOString().split('T')[0];
+                setDateVal(dStr);
+                setHari(NAMA_HARI[now.getDay()]);
+                setBulan(NAMA_BULAN[now.getMonth()]);
+                setTahun(String(now.getFullYear()));
+              }}
+              className="text-xs font-bold text-emerald-600 hover:text-emerald-800 transition-colors"
+            >
+              Hari Ini
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="max-w-md">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Layanan</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Layanan <span className="text-red-500">*</span></label>
               <input
                 type="date"
                 value={dateVal}
@@ -393,39 +432,11 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
               />
             </div>
+          </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Hari</label>
-              <input
-                type="text"
-                value={hari}
-                onChange={(e) => setHari(e.target.value)}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-700"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Bulan</label>
-              <input
-                type="text"
-                value={bulan}
-                onChange={(e) => setBulan(e.target.value)}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-700"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Tahun</label>
-              <input
-                type="text"
-                value={tahun}
-                onChange={(e) => setTahun(e.target.value)}
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-sm font-medium text-slate-700"
-              />
-            </div>
+          <div className="px-3 py-1.5 bg-emerald-50/60 border border-emerald-100 rounded-xl flex items-center gap-2 text-xs font-bold text-emerald-900">
+            <Calendar className="w-3.5 h-3.5 text-emerald-600" />
+            <span>{hari}, {new Date(dateVal || defaultDateStr).getDate()} {bulan} {tahun}</span>
           </div>
 
           {/* ROW 2: Jam Ke, Kelas, Sasaran Peserta (Model Pilihan Agenda BK SMPN7) */}
@@ -494,51 +505,20 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                   <span>Kelas <span className="text-rose-500">*</span></span>
                 </label>
 
-                <select
-                  value={
-                    PRESET_KELAS.includes(kelas)
-                      ? kelas
-                      : PRESET_KELAS.find((k) => k.toLowerCase() === kelas.toLowerCase()) || (isManualKelas ? '__manual__' : kelas)
-                  }
+                <input
+                  type="text"
+                  value={kelas}
                   onChange={(e) => {
                     const val = e.target.value;
-                    if (val === '__manual__') {
-                      setIsManualKelas(true);
-                    } else {
-                      setIsManualKelas(false);
-                      setKelas(val);
-                      if (val && (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas'))) {
-                        setSasaranPeserta(`Siswa Kelas ${val}`);
-                      }
+                    setKelas(val);
+                    if (val && (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas'))) {
+                      setSasaranPeserta(`Siswa Kelas ${val}`);
                     }
                   }}
-                  required={!kelas}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer shadow-sm focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="">-- Pilih Kelas --</option>
-                  {PRESET_KELAS.map((k) => (
-                    <option key={k} value={k}>
-                      {k}
-                    </option>
-                  ))}
-                  <option value="__manual__">Ketik Kelas Manual...</option>
-                </select>
-
-                {isManualKelas && (
-                  <input
-                    type="text"
-                    value={kelas}
-                    onChange={(e) => {
-                      setKelas(e.target.value);
-                      if (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas')) {
-                        setSasaranPeserta(`Siswa Kelas ${e.target.value}`);
-                      }
-                    }}
-                    placeholder="Contoh: VIII A"
-                    required
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
-                  />
-                )}
+                  placeholder="Contoh: VIII A"
+                  required
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
+                />
               </div>
 
               {/* Sasaran Peserta / Konseli */}
@@ -548,68 +528,16 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                   <span>Sasaran Peserta / Konseli <span className="text-rose-500">*</span></span>
                 </label>
 
-                <select
-                  value={
-                    PRESET_SASARAN_PESERTA.includes(sasaranPeserta)
-                      ? sasaranPeserta
-                      : PRESET_SASARAN_PESERTA.find((s) => s.toLowerCase() === sasaranPeserta.toLowerCase()) || (isManualSasaran ? '__manual__' : sasaranPeserta)
-                  }
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '__manual__') {
-                      setIsManualSasaran(true);
-                    } else {
-                      setIsManualSasaran(false);
-                      if (val) setSasaranPeserta(val);
-                    }
-                  }}
-                  required={!sasaranPeserta}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer shadow-sm focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="">-- Pilih Sasaran Peserta --</option>
-                  {PRESET_SASARAN_PESERTA.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                  <option value="__manual__">Ketik Sasaran Manual...</option>
-                </select>
-
-                {isManualSasaran && (
-                  <input
-                    type="text"
-                    value={sasaranPeserta}
-                    onChange={(e) => setSasaranPeserta(e.target.value)}
-                    placeholder="Contoh: Siswa Kelas VIII A"
-                    required
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
-                  />
-                )}
+                <input
+                  type="text"
+                  value={sasaranPeserta}
+                  onChange={(e) => setSasaranPeserta(e.target.value)}
+                  placeholder="Contoh: Siswa Kelas VIII A"
+                  required
+                  className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
+                />
               </div>
 
-            </div>
-
-            {/* Selector Cari & Pilih dari Roster Siswa */}
-            <div className="pt-2 border-t border-slate-200/60">
-              <span className="text-[11px] text-slate-600 font-semibold mb-1 block">
-                Atau Cari & Pilih Nama Siswa / Kelas dari Database Roster Siswa:
-              </span>
-              <SiswaSelector
-                siswaItems={siswaItems}
-                selectedKelas=""
-                onSelectKelas={(k) => {
-                  if (k) {
-                    setKelas(k);
-                    setSasaranPeserta(`Siswa Kelas ${k}`);
-                  }
-                }}
-                selectedNamaSiswa={sasaranPeserta}
-                onSelectNamaSiswa={(val) => setSasaranPeserta(val)}
-                isMultiSelect={true}
-                kelasLabel="Pilih Kelas Database"
-                siswaLabel="Pilih Nama Siswa / Konseli"
-                themeColor="emerald"
-              />
             </div>
           </div>
         </div>
@@ -834,20 +762,84 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Link Foto / Dokumentasi Kegiatan
+            {/* LINK FOTO KEGIATAN */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3 md:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-teal-600" />
+                  LINK FOTO KEGIATAN
+                </span>
+                <span className="text-[11px] text-slate-500">Bisa Input Link URL atau Upload Foto</span>
               </label>
-              <input
-                type="url"
-                value={linkFoto}
-                onChange={(e) => setLinkFoto(e.target.value)}
-                placeholder="https://drive.google.com/... atau URL foto"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
-              />
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+                
+                {/* Input URL */}
+                <div className="md:col-span-2 space-y-2">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <LinkIcon className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <input
+                      type="url"
+                      value={linkFoto}
+                      onChange={(e) => {
+                        setLinkFoto(e.target.value);
+                        setPreviewError(false);
+                      }}
+                      placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all placeholder:text-slate-400"
+                    />
+                  </div>
+
+                  {/* Local File Upload Button */}
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 shadow-sm transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-teal-600" />
+                      <span>Upload Foto dari Perangkat</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      {linkFoto.startsWith('data:image')
+                        ? '✓ Foto berhasil diunggah'
+                        : 'Format JPG, PNG, WEBP'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Photo Preview Thumbnail */}
+                <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg border border-slate-200 min-h-[90px]">
+                  {linkFoto && !previewError ? (
+                    <div className="relative group w-full h-20 overflow-hidden rounded border border-slate-200 flex items-center justify-center bg-slate-900/5">
+                      <img
+                        src={linkFoto}
+                        alt="Preview Kegiatan"
+                        onError={() => setPreviewError(true)}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1">
+                        <Eye className="w-3.5 h-3.5" /> Preview
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-2 text-slate-400">
+                      <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                      <span className="text-[11px] block">
+                        {previewError ? 'Link foto tidak valid' : 'Belum ada foto'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+              </div>
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Keterangan Catatan Tambahan
               </label>
@@ -856,7 +848,7 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                 value={keterangan}
                 onChange={(e) => setKeterangan(e.target.value)}
                 placeholder="Catatan pendukung pelaksanaan..."
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
+                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-teal-500 transition-all"
               />
             </div>
           </div>

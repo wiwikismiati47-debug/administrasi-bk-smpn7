@@ -16,6 +16,9 @@ import {
   AlertTriangle,
   CheckSquare,
   Image as ImageIcon,
+  Link as LinkIcon,
+  Upload,
+  Eye,
   RotateCcw,
   CheckCircle2,
   Pencil
@@ -72,6 +75,25 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [uraianPermasalahan, setUraianPermasalahan] = useState('');
   const [tindakLanjut, setTindakLanjut] = useState('');
   const [linkFotoKegiatan, setLinkFotoKegiatan] = useState('');
+  const [previewError, setPreviewError] = useState<boolean>(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setLinkFotoKegiatan(dataUrl);
+        setPreviewError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
   const [keterangan, setKeterangan] = useState('');
 
   // Administration & Print Settings
@@ -405,12 +427,24 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
         
         {/* SECTION 1: Hari / Tanggal & Jam */}
         <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider">
-            <Calendar className="w-4 h-4" />
-            <span>1. WAKTU & JAM KUNJUNGAN RUMAH</span>
+          <div className="flex items-center justify-between text-amber-400 font-extrabold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span>1. WAKTU & JAM KUNJUNGAN RUMAH <span className="text-red-400">*</span></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayISO();
+                handleDateChange(today);
+              }}
+              className="text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors lowercase"
+            >
+              Hari Ini
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             {/* Tanggal Picker */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
@@ -426,22 +460,6 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               />
             </div>
 
-            {/* Hari */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">HARI</label>
-              <select
-                value={hari}
-                onChange={(e) => setHari(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
-              >
-                {DAYS_LIST.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Jam / Waktu */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
@@ -454,10 +472,14 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                 onChange={(e) => setWaktu(e.target.value)}
                 placeholder="Contoh: 09:00 WIB s/d Selesai"
                 required
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-amber-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all"
               />
             </div>
+          </div>
 
+          <div className="px-3 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-2 text-xs font-bold text-amber-300">
+            <Calendar className="w-3.5 h-3.5 text-amber-400" />
+            <span>{hari}, {new Date(tanggal || getTodayISO()).getDate()} {bulan} {tahun} ({waktu})</span>
           </div>
         </div>
 
@@ -612,40 +634,82 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* Link Foto Kegiatan */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                LINK FOTO KEGIATAN (URL)
-              </label>
-              <input
-                type="text"
-                value={linkFotoKegiatan}
-                onChange={(e) => setLinkFotoKegiatan(e.target.value)}
-                placeholder="https://drive.google.com/... atau URL foto dokumentasi"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500"
-              />
-              <p className="text-[10px] text-slate-400 mt-1">
-                * Tempelkan URL foto bukti pelaksanaan Home Visit dari Google Drive / Cloud storage.
-              </p>
+          {/* LINK FOTO KEGIATAN */}
+          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3 md:col-span-2">
+            <label className="block text-xs font-semibold text-slate-300 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-amber-400">
+                <ImageIcon className="w-4 h-4 text-amber-400" />
+                LINK FOTO KEGIATAN
+              </span>
+              <span className="text-[11px] text-slate-400">Bisa Input Link URL atau Upload Foto</span>
+            </label>
 
-              {/* Photo Preview if valid image URL */}
-              {linkFotoKegiatan && (linkFotoKegiatan.startsWith('http://') || linkFotoKegiatan.startsWith('https://')) && (
-                <div className="mt-2.5 p-2 bg-slate-900 rounded-xl border border-slate-800 flex items-center gap-3">
-                  <img
-                    src={linkFotoKegiatan}
-                    alt="Pratinjau Foto"
-                    className="w-12 h-12 object-cover rounded-lg shrink-0 border border-slate-700"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="text-[11px] text-slate-300 truncate">
-                    <p className="font-bold text-amber-300">Pratinjau Link Foto Terpasang</p>
-                    <p className="text-slate-400 truncate">{linkFotoKegiatan}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+              
+              {/* Input URL */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LinkIcon className="w-4 h-4 text-slate-500" />
                   </div>
+                  <input
+                    type="url"
+                    value={linkFotoKegiatan}
+                    onChange={(e) => {
+                      setLinkFotoKegiatan(e.target.value);
+                      setPreviewError(false);
+                    }}
+                    placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all placeholder:text-slate-500"
+                  />
                 </div>
-              )}
+
+                {/* Local File Upload Button */}
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 shadow-sm transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Upload Foto dari Perangkat</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-400">
+                    {linkFotoKegiatan.startsWith('data:image')
+                      ? '✓ Foto berhasil diunggah'
+                      : 'Format JPG, PNG, WEBP'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Photo Preview Thumbnail */}
+              <div className="flex flex-col items-center justify-center p-2 bg-slate-950 rounded-lg border border-slate-800 min-h-[90px]">
+                {linkFotoKegiatan && !previewError ? (
+                  <div className="relative group w-full h-20 overflow-hidden rounded border border-slate-700 flex items-center justify-center bg-slate-900">
+                    <img
+                      src={linkFotoKegiatan}
+                      alt="Preview Kegiatan"
+                      onError={() => setPreviewError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1">
+                      <Eye className="w-3.5 h-3.5" /> Preview
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-2 text-slate-500">
+                    <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <span className="text-[11px] block">
+                      {previewError ? 'Link foto tidak valid' : 'Belum ada foto'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
             </div>
+          </div>
 
             {/* Keterangan */}
             <div>

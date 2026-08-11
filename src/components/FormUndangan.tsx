@@ -14,6 +14,9 @@ import {
   AlertTriangle,
   CheckSquare,
   Image as ImageIcon,
+  Link as LinkIcon,
+  Upload,
+  Eye,
   HelpCircle,
   Save,
   RotateCcw,
@@ -75,6 +78,25 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
   const [uraianPermasalahan, setUraianPermasalahan] = useState('');
   const [tindakLanjut, setTindakLanjut] = useState('');
   const [linkFotoKegiatan, setLinkFotoKegiatan] = useState('');
+  const [previewError, setPreviewError] = useState<boolean>(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setLinkFotoKegiatan(dataUrl);
+        setPreviewError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
   const [keterangan, setKeterangan] = useState('');
 
   // Administration & Print Settings
@@ -257,12 +279,24 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
         
         {/* ROW 1: Hari, Tanggal, Waktu, Tempat */}
         <div className="bg-purple-50/40 p-4 sm:p-5 rounded-2xl border border-purple-100 space-y-4">
-          <div className="flex items-center gap-2 text-purple-900 font-extrabold text-xs uppercase tracking-wider">
-            <Calendar className="w-4 h-4 text-purple-600" />
-            <span>1. WAKTU PELAKSANAAN UNDANGAN</span>
+          <div className="flex items-center justify-between text-purple-900 font-extrabold text-xs uppercase tracking-wider">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-purple-600" />
+              <span>1. WAKTU PELAKSANAAN UNDANGAN <span className="text-red-500">*</span></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const today = getTodayISO();
+                handleDateChange(today);
+              }}
+              className="text-xs font-bold text-purple-600 hover:text-purple-800 transition-colors lowercase"
+            >
+              Hari Ini
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
             {/* Tanggal Picker */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
@@ -276,22 +310,6 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 required
                 className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all [color-scheme:dark]"
               />
-            </div>
-
-            {/* Hari */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">HARI</label>
-              <select
-                value={hari}
-                onChange={(e) => setHari(e.target.value)}
-                className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
-              >
-                {DAYS_LIST.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
             </div>
 
             {/* Waktu */}
@@ -326,11 +344,16 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
               />
             </div>
           </div>
+
+          <div className="px-3 py-1.5 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center gap-2 text-xs font-bold text-purple-300">
+            <Calendar className="w-3.5 h-3.5 text-purple-400" />
+            <span>{hari}, {new Date(tanggal || getTodayISO()).getDate()} {bulan} {tahun} ({waktu})</span>
+          </div>
         </div>
 
         {/* ROW 2: Kelas, Nama Siswa, Nama Ortu, Pekerjaan Ortu, Alamat */}
-        <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-purple-400 font-extrabold text-xs uppercase tracking-wider">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-purple-700 font-extrabold text-xs uppercase tracking-wider">
             <GraduationCap className="w-4 h-4" />
             <span>2. IDENTITAS SISWA & ORANG TUA / WALI</span>
           </div>
@@ -354,8 +377,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
 
             {/* Nama Orang Tua */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5 text-purple-400" />
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-purple-600" />
                 <span>NAMA ORANG TUA / WALI <span className="text-slate-400 text-[10px] font-normal">(Opsional)</span></span>
               </label>
               <input
@@ -363,7 +386,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={namaOrangTua}
                 onChange={(e) => setNamaOrangTua(e.target.value)}
                 placeholder="Contoh: Bapak Santoso / Ibu Rahma (boleh dikosongkan)"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
@@ -373,8 +396,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
             
             {/* Pekerjaan Orang Tua */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <Briefcase className="w-3.5 h-3.5 text-purple-400" />
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5 text-purple-600" />
                 <span>PEKERJAAN ORANG TUA <span className="text-slate-400 text-[10px] font-normal">(Opsional)</span></span>
               </label>
               <input
@@ -382,14 +405,14 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={pekerjaanOrangTua}
                 onChange={(e) => setPekerjaanOrangTua(e.target.value)}
                 placeholder="Contoh: Wiraswasta / PNS / Karyawan Swasta"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-medium"
               />
             </div>
 
             {/* Alamat */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-purple-400" />
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-purple-600" />
                 <span>ALAMAT TEMPAT TINGGAL <span className="text-slate-400 text-[10px] font-normal">(Opsional)</span></span>
               </label>
               <input
@@ -397,7 +420,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={alamat}
                 onChange={(e) => setAlamat(e.target.value)}
                 placeholder="Contoh: Jl. Pahlawan No. 45, Pasuruan"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-medium"
               />
             </div>
 
@@ -405,16 +428,16 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
         </div>
 
         {/* ROW 3: Perihal Undangan, Uraian Permasalahan Siswa, Tindak Lanjut */}
-        <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-rose-400 font-extrabold text-xs uppercase tracking-wider">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-rose-700 font-extrabold text-xs uppercase tracking-wider">
             <FileText className="w-4 h-4" />
             <span>3. PERIHAL & URAIAN PERMASALAHAN SISWA</span>
           </div>
 
           {/* Perihal Undangan */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">
-              PERIHAL UNDANGAN <span className="text-red-400">*</span>
+            <label className="block text-xs font-bold text-slate-700 mb-1">
+              PERIHAL UNDANGAN <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -422,7 +445,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
               onChange={(e) => setPerihalUndangan(e.target.value)}
               placeholder="Perihal undangan ke orang tua..."
               required
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold focus:ring-2 focus:ring-purple-500 mb-2"
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-bold focus:ring-2 focus:ring-purple-500 mb-2"
             />
             
             {/* Presets */}
@@ -432,7 +455,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   key={preset}
                   type="button"
                   onClick={() => setPerihalUndangan(preset)}
-                  className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-purple-950 text-slate-300 hover:text-purple-300 border border-slate-800 transition-colors"
+                  className="text-[10px] px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 transition-colors font-semibold"
                 >
                   + {preset}
                 </button>
@@ -442,8 +465,8 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
 
           {/* Uraian Permasalahan Siswa */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
               <span>URAIAN PERMASALAHAN SISWA</span>
             </label>
             <textarea
@@ -451,14 +474,14 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
               value={uraianPermasalahan}
               onChange={(e) => setUraianPermasalahan(e.target.value)}
               placeholder="Jelaskan detail permasalahan siswa yang melatarbelakangi dipanggilnya orang tua/wali..."
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-purple-500 font-normal leading-relaxed"
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 focus:ring-2 focus:ring-purple-500 font-normal leading-relaxed"
             />
           </div>
 
           {/* Tindak Lanjut */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
-              <CheckSquare className="w-3.5 h-3.5 text-emerald-400" />
+            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5">
+              <CheckSquare className="w-3.5 h-3.5 text-emerald-600" />
               <span>TINDAK LANJUT HASIL PERTEMUAN / SOLUSI</span>
             </label>
             <textarea
@@ -466,58 +489,100 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
               value={tindakLanjut}
               onChange={(e) => setTindakLanjut(e.target.value)}
               placeholder="Rencana tindakan, kesepakatan orang tua & guru BK, atau solusi yang diambil..."
-              className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white focus:ring-2 focus:ring-purple-500 font-normal leading-relaxed"
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 focus:ring-2 focus:ring-purple-500 font-normal leading-relaxed"
             />
           </div>
         </div>
 
         {/* ROW 4: Link Foto Kegiatan & Keterangan */}
-        <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-cyan-400 font-extrabold text-xs uppercase tracking-wider">
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-cyan-700 font-extrabold text-xs uppercase tracking-wider">
             <ImageIcon className="w-4 h-4" />
             <span>4. DOKUMENTASI FOTO KEGIATAN & KETERANGAN</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
-            {/* Link Foto Kegiatan */}
-            <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                LINK FOTO KEGIATAN (URL)
-              </label>
-              <input
-                type="text"
-                value={linkFotoKegiatan}
-                onChange={(e) => setLinkFotoKegiatan(e.target.value)}
-                placeholder="https://drive.google.com/... atau URL foto"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-purple-500"
-              />
-              <p className="text-[10px] text-slate-400 mt-1">
-                * Tempelkan URL foto dokumentasi dari Google Drive / Cloud storage.
-              </p>
+          {/* LINK FOTO KEGIATAN */}
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 md:col-span-2">
+            <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-cyan-700">
+                <ImageIcon className="w-4 h-4 text-cyan-600" />
+                LINK FOTO KEGIATAN
+              </span>
+              <span className="text-[11px] text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+            </label>
 
-              {/* Photo Preview if valid image URL */}
-              {linkFotoKegiatan && (linkFotoKegiatan.startsWith('http://') || linkFotoKegiatan.startsWith('https://')) && (
-                <div className="mt-2.5 p-2 bg-slate-900 rounded-xl border border-slate-800 flex items-center gap-3">
-                  <img
-                    src={linkFotoKegiatan}
-                    alt="Pratinjau Foto"
-                    className="w-12 h-12 object-cover rounded-lg shrink-0 border border-slate-700"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="text-[11px] text-slate-300 truncate">
-                    <p className="font-bold text-amber-300">Pratinjau Link Foto Terpasang</p>
-                    <p className="text-slate-400 truncate">{linkFotoKegiatan}</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+              
+              {/* Input URL */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LinkIcon className="w-4 h-4 text-slate-400" />
                   </div>
+                  <input
+                    type="url"
+                    value={linkFotoKegiatan}
+                    onChange={(e) => {
+                      setLinkFotoKegiatan(e.target.value);
+                      setPreviewError(false);
+                    }}
+                    placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                    className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-mono focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all placeholder:text-slate-400"
+                  />
                 </div>
-              )}
+
+                {/* Local File Upload Button */}
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 shadow-sm transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-cyan-600" />
+                    <span>Upload Foto dari Perangkat</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-500">
+                    {linkFotoKegiatan.startsWith('data:image')
+                      ? '✓ Foto berhasil diunggah'
+                      : 'Format JPG, PNG, WEBP'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Photo Preview Thumbnail */}
+              <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg border border-slate-200 min-h-[90px]">
+                {linkFotoKegiatan && !previewError ? (
+                  <div className="relative group w-full h-20 overflow-hidden rounded border border-slate-200 flex items-center justify-center bg-slate-100">
+                    <img
+                      src={linkFotoKegiatan}
+                      alt="Preview Kegiatan"
+                      onError={() => setPreviewError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1">
+                      <Eye className="w-3.5 h-3.5" /> Preview
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-2 text-slate-400">
+                    <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <span className="text-[11px] block">
+                      {previewError ? 'Link foto tidak valid' : 'Belum ada foto'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
             </div>
+          </div>
 
             {/* Keterangan */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 KETERANGAN TAMBAHAN
               </label>
               <textarea
@@ -525,7 +590,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={keterangan}
                 onChange={(e) => setKeterangan(e.target.value)}
                 placeholder="Catatan tambahan seperti kehadiran orang tua, perwakilan wali, status kasus, dll."
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-medium"
               />
             </div>
 
@@ -533,31 +598,31 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
         </div>
 
         {/* ROW 5: ADMINISTRASI SURAT (TANGGAL PEMBUATAN, NOMOR SURAT, GURU BK / KONSELOR, KEPALA SEKOLAH) */}
-        <div className="bg-slate-950/80 p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-indigo-400 font-extrabold text-xs uppercase tracking-wider">
-            <FileText className="w-4 h-4 text-amber-400" />
+        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 text-indigo-700 font-extrabold text-xs uppercase tracking-wider">
+            <FileText className="w-4 h-4 text-amber-600" />
             <span>5. ADMINISTRASI CETAK SURAT UNDANGAN & LAPORAN</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             {/* Tanggal Pembuatan Surat */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-amber-600" />
                 <span>TANGGAL PEMBUATAN SURAT (KALENDER)</span>
               </label>
               <input
                 type="date"
                 value={tanggalSurat}
                 onChange={(e) => setTanggalSurat(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-purple-500 [color-scheme:dark]"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-mono focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             {/* Tempat Pembuatan Surat */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-amber-400" />
+              <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-amber-600" />
                 <span>TEMPAT PEMBUATAN SURAT</span>
               </label>
               <input
@@ -565,13 +630,13 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={tempatSurat}
                 onChange={(e) => setTempatSurat(e.target.value)}
                 placeholder="Contoh: Pasuruan"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-semibold focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             {/* Nomor Surat */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 NOMOR SURAT UNDANGAN
               </label>
               <input
@@ -579,13 +644,13 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={nomorSurat}
                 onChange={(e) => setNomorSurat(e.target.value)}
                 placeholder="400/  /423.102.54/2026"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-mono focus:ring-2 focus:ring-purple-500"
               />
             </div>
 
             {/* Semester */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1">
                 SEMESTER & TAHUN PELAJARAN
               </label>
               <input
@@ -593,19 +658,19 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 value={semester}
                 onChange={(e) => setSemester(e.target.value)}
                 placeholder="SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026"
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-medium focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-purple-500"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-800/80">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
             {/* Nama & NIP Guru BK / Konselor */}
-            <div className="space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-              <span className="text-xs font-bold text-purple-300 block">
+            <div className="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-xs font-bold text-purple-700 block">
                 PEJABAT KONSELOR / GURU BK
               </span>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                   Nama Guru BK / Konselor
                 </label>
                 <select
@@ -615,7 +680,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                     const preset = PRESET_GURU_BK.find(g => g.nama === e.target.value);
                     if (preset) setNipGuruBk(preset.nip);
                   }}
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold cursor-pointer"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-bold cursor-pointer"
                 >
                   {PRESET_GURU_BK.map(g => (
                     <option key={g.nip} value={g.nama}>{g.nama}</option>
@@ -626,7 +691,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                 </select>
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                   NIP Guru BK / Konselor
                 </label>
                 <select
@@ -636,7 +701,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                     const preset = PRESET_GURU_BK.find(g => g.nip === e.target.value);
                     if (preset) setNamaGuruBk(preset.nama);
                   }}
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-slate-300 cursor-pointer"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-mono text-slate-700 cursor-pointer"
                 >
                   {PRESET_GURU_BK.map(g => (
                     <option key={g.nip} value={g.nip}>{g.nip}</option>
@@ -649,12 +714,12 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
             </div>
 
             {/* Nama & NIP Kepala Sekolah */}
-            <div className="space-y-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
-              <span className="text-xs font-bold text-amber-300 block">
+            <div className="space-y-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <span className="text-xs font-bold text-amber-700 block">
                 KEPALA SEKOLAH
               </span>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                   Nama Kepala Sekolah
                 </label>
                 <input
@@ -662,11 +727,11 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   value={namaKepalaSekolah}
                   onChange={(e) => setNamaKepalaSekolah(e.target.value)}
                   placeholder="NUR FADILAH, S.Pd,. M.Pd"
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-bold"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
                   NIP Kepala Sekolah
                 </label>
                 <input
@@ -674,7 +739,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   value={nipKepalaSekolah}
                   onChange={(e) => setNipKepalaSekolah(e.target.value)}
                   placeholder="19860410 201001 2 030"
-                  className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-slate-300"
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-900 font-mono text-slate-700"
                 />
               </div>
             </div>

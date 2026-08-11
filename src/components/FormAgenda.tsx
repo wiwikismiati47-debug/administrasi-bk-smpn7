@@ -294,13 +294,31 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
         
         {/* ROW 1: Hari / Tanggal / Bulan / Tahun */}
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-4">
-          <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm border-b border-slate-200 pb-2">
-            <Calendar className="w-4 h-4 text-blue-600" />
-            <span>HARI / TANGGAL / BULAN / TAHUN</span>
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
+              <Calendar className="w-4 h-4 text-blue-600" />
+              <span>HARI / TANGGAL / BULAN / TAHUN <span className="text-red-500">*</span></span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date();
+                const dStr = now.toISOString().split('T')[0];
+                setFormData(prev => ({
+                  ...prev,
+                  tanggal: dStr,
+                  hari: NAMA_HARI[now.getDay()],
+                  bulan: NAMA_BULAN[now.getMonth()],
+                  tahun: String(now.getFullYear())
+                }));
+              }}
+              className="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Hari Ini
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            
+          <div className="max-w-md">
             {/* Tanggal Picker */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -314,58 +332,11 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
                 className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all [color-scheme:light]"
               />
             </div>
+          </div>
 
-            {/* Hari (Auto-calculated but customizable) */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Hari
-              </label>
-              <select
-                value={formData.hari}
-                onChange={(e) => setFormData({ ...formData, hari: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              >
-                {NAMA_HARI.map((h) => (
-                  <option key={h} value={h} className="text-slate-900">
-                    {h}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Bulan */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Bulan
-              </label>
-              <select
-                value={formData.bulan}
-                onChange={(e) => setFormData({ ...formData, bulan: e.target.value })}
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              >
-                {NAMA_BULAN.map((m) => (
-                  <option key={m} value={m} className="text-slate-900">
-                    {m}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tahun */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Tahun
-              </label>
-              <input
-                type="text"
-                value={formData.tahun}
-                onChange={(e) => setFormData({ ...formData, tahun: e.target.value })}
-                required
-                className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder:text-slate-400"
-                placeholder="2026"
-              />
-            </div>
-
+          <div className="px-3 py-1.5 bg-blue-50/60 border border-blue-100 rounded-xl flex items-center gap-2 text-xs font-bold text-blue-900">
+            <Calendar className="w-3.5 h-3.5 text-blue-600" />
+            <span>{formData.hari}, {new Date(formData.tanggal || defaultDateStr).getDate()} {formData.bulan} {formData.tahun}</span>
           </div>
         </div>
 
@@ -468,6 +439,45 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
             <span className="text-[11px] text-slate-500 font-medium">Pilih Kelas & Siswa atau Ketik Manual Sasaran</span>
           </label>
 
+          {/* Quick Preset Selector for 7A-7H, 8A-8H, 9A-9H & Groups */}
+          <div className="flex items-center gap-2 bg-blue-50/60 p-2.5 rounded-xl border border-blue-100">
+            <span className="text-[11px] font-bold text-blue-800 whitespace-nowrap">Pilih Cepat Sasaran:</span>
+            <select
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  setFormData((prev) => ({ ...prev, sasaran: val }));
+                }
+              }}
+              value=""
+              className="w-full bg-white border border-blue-200 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Pilih Kelas (7A-7H, 8A-8H, 9A-9H) atau Kelompok --</option>
+              <optgroup label="Kelas 7 (7A - 7H)">
+                {['7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H'].map((k) => (
+                  <option key={`7${k}`} value={`Siswa Kelas ${k}`}>Siswa Kelas {k}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Kelas 8 (8A - 8H)">
+                {['8A', '8B', '8C', '8D', '8E', '8F', '8G', '8H'].map((k) => (
+                  <option key={`8${k}`} value={`Siswa Kelas ${k}`}>Siswa Kelas {k}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Kelas 9 (9A - 9H)">
+                {['9A', '9B', '9C', '9D', '9E', '9F', '9G', '9H'].map((k) => (
+                  <option key={`9${k}`} value={`Siswa Kelas ${k}`}>Siswa Kelas {k}</option>
+                ))}
+              </optgroup>
+              <optgroup label="Kelompok / Seluruh Siswa / Guru">
+                <option value="Seluruh Siswa Kelas 7, 8, 9">SELURUH SISWA 7, 8, 9</option>
+                <option value="Seluruh Siswa Kelas 7">Seluruh Siswa Kelas 7</option>
+                <option value="Seluruh Siswa Kelas 8">Seluruh Siswa Kelas 8</option>
+                <option value="Seluruh Siswa Kelas 9">Seluruh Siswa Kelas 9</option>
+                <option value="Konselor / Guru BK">Konselor / Guru BK</option>
+              </optgroup>
+            </select>
+          </div>
+
           <SiswaSelector
             siswaItems={siswaItems}
             selectedKelas=""
@@ -484,27 +494,6 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
             themeColor="blue"
             required={true}
           />
-
-          {/* Quick preset combobox */}
-          <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center pt-2">
-            <span className="text-[11px] text-slate-500 font-medium">Pilih Cepat Sasaran Umum:</span>
-            <select
-              value={PRESET_SASARAN.includes(formData.sasaran) ? formData.sasaran : ''}
-              onChange={(e) => {
-                if (e.target.value) {
-                  setFormData({ ...formData, sasaran: e.target.value });
-                }
-              }}
-              className="px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all cursor-pointer shadow-sm min-w-[200px]"
-            >
-              <option value="">-- Klik untuk memilih sasaran umum --</option>
-              {PRESET_SASARAN.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {/* ROW 5: Link Foto Kegiatan */}

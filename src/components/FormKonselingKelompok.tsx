@@ -10,6 +10,9 @@ import {
   Users,
   GraduationCap,
   Image as ImageIcon,
+  Link as LinkIcon,
+  Upload,
+  Eye,
   CheckCircle2,
   AlertCircle,
   Save,
@@ -128,6 +131,25 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
 
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [selectedPresetTab, setSelectedPresetTab] = useState<number>(0);
+  const [previewError, setPreviewError] = useState<boolean>(false);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setFormData(prev => ({ ...prev, link_foto_kegiatan: dataUrl }));
+        setPreviewError(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const studentsInClass = (siswaItems || []).filter(
     (s) => (s.kelas || '').toLowerCase().replace(/\s+/g, '') === (formData.kelas || '').toLowerCase().replace(/\s+/g, '')
@@ -313,9 +335,27 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* TANGGAL */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                HARI / TANGGAL <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-slate-700">
+                  HARI / TANGGAL <span className="text-rose-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const today = getTodayISO();
+                    setFormData(prev => ({
+                      ...prev,
+                      tanggal: today,
+                      hari: getDayNameFromDate(today),
+                      bulan: getBulanFromDate(today),
+                      tahun: getTahunFromDate(today)
+                    }));
+                  }}
+                  className="text-xs font-bold text-pink-600 hover:text-pink-800 transition-colors"
+                >
+                  Hari Ini
+                </button>
+              </div>
               <input
                 type="date"
                 name="tanggal"
@@ -324,9 +364,10 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
                 required
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
               />
-              <p className="text-[11px] text-slate-500 mt-1 font-semibold">
-                Hari: <span className="text-pink-700 font-bold">{formData.hari}</span> ({formData.bulan} {formData.tahun})
-              </p>
+              <div className="mt-2 px-3 py-1.5 bg-pink-50/60 border border-pink-100 rounded-xl flex items-center gap-2 text-xs font-bold text-pink-900">
+                <Calendar className="w-3.5 h-3.5 text-pink-600" />
+                <span>{formData.hari}, {new Date(formData.tanggal || getTodayISO()).getDate()} {formData.bulan} {formData.tahun}</span>
+              </div>
             </div>
 
             {/* WAKTU */}
@@ -532,23 +573,83 @@ export const FormKonselingKelompok: React.FC<FormKonselingKelompokProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-            {/* LINK FOTO KEGIATAN */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                LINK FOTO KEGIATAN (URL GOOGLE DRIVE / CLOUD)
-              </label>
-              <div className="relative">
-                <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="url"
-                  name="link_foto_kegiatan"
-                  value={formData.link_foto_kegiatan}
-                  onChange={handleChange}
-                  placeholder="https://drive.google.com/..."
-                  className="w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
-                />
+          {/* LINK FOTO KEGIATAN */}
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
+            <label className="block text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-pink-600" />
+                LINK FOTO KEGIATAN
+              </span>
+              <span className="text-[11px] text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 items-center">
+              
+              {/* Input URL */}
+              <div className="md:col-span-2 space-y-2">
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <LinkIcon className="w-4 h-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="url"
+                    name="link_foto_kegiatan"
+                    value={formData.link_foto_kegiatan}
+                    onChange={(e) => {
+                      handleChange(e);
+                      setPreviewError(false);
+                    }}
+                    placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-semibold focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all placeholder:text-slate-400"
+                  />
+                </div>
+
+                {/* Local File Upload Button */}
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 text-xs font-medium rounded-lg border border-slate-300 shadow-sm transition-colors">
+                    <Upload className="w-3.5 h-3.5 text-pink-600" />
+                    <span>Upload Foto dari Perangkat</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-[11px] text-slate-500">
+                    {formData.link_foto_kegiatan.startsWith('data:image')
+                      ? '✓ Foto berhasil diunggah'
+                      : 'Format JPG, PNG, WEBP'}
+                  </span>
+                </div>
               </div>
+
+              {/* Photo Preview Thumbnail */}
+              <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg border border-slate-200 min-h-[90px]">
+                {formData.link_foto_kegiatan && !previewError ? (
+                  <div className="relative group w-full h-20 overflow-hidden rounded border border-slate-200 flex items-center justify-center bg-slate-900/5">
+                    <img
+                      src={formData.link_foto_kegiatan}
+                      alt="Preview Kegiatan"
+                      onError={() => setPreviewError(true)}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium gap-1">
+                      <Eye className="w-3.5 h-3.5" /> Preview
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center p-2 text-slate-400">
+                    <ImageIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <span className="text-[11px] block">
+                      {previewError ? 'Link foto tidak valid' : 'Belum ada foto'}
+                    </span>
+                  </div>
+                )}
+              </div>
+
             </div>
+          </div>
 
             {/* KETERANGAN */}
             <div>

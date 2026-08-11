@@ -195,77 +195,45 @@ export const SiswaSelector: React.FC<SiswaSelectorProps> = ({
 
   return (
     <div className="space-y-3">
-      {/* ROW 1: KELAS & TAHUN AJARAN (IF SHOW_TA) */}
-      <div className={`grid grid-cols-1 ${showTahunAjaran ? 'sm:grid-cols-2' : 'grid-cols-1'} gap-3`}>
-        {/* PILIHAN KELAS */}
+      {/* ROW 1: TAHUN AJARAN (IF SHOW_TA) */}
+      {showTahunAjaran && onSelectTahunAjaran && (
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center justify-between">
-            <span className="flex items-center gap-1">
-              <GraduationCap className={`w-3.5 h-3.5 ${theme.accent}`} />
-              <span>{kelasLabel} {required && <span className="text-rose-500">*</span>}</span>
-            </span>
-            <span className="text-[10px] text-slate-500 font-semibold">
-              {siswaItems.length} Siswa di DB
-            </span>
+          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
+            <Calendar className={`w-3.5 h-3.5 ${theme.accent}`} />
+            <span>{taLabel} {required && <span className="text-rose-500">*</span>}</span>
           </label>
 
-          <div className="flex gap-2">
+          <div className="space-y-1">
             <select
-              value={selectedKelas || ''}
-              onChange={(e) => onSelectKelas(e.target.value)}
+              value={DEFAULT_TA.includes(selectedTahunAjaran) ? selectedTahunAjaran : '__custom__'}
+              onChange={(e) => {
+                if (e.target.value !== '__custom__') {
+                  onSelectTahunAjaran(e.target.value);
+                }
+              }}
               className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
             >
-              <option value="">-- Pilih Kelas --</option>
-              <option value="Semua Kelas">Semua Kelas (Tampilkan Semua Siswa)</option>
-              {classOptions.map((k) => (
-                <option key={k} value={k}>
-                  Kelas {k}
+              <option value="">-- Pilih Tahun Ajaran --</option>
+              {DEFAULT_TA.map((ta) => (
+                <option key={ta} value={ta}>
+                  T.A. {ta}
                 </option>
               ))}
+              <option value="__custom__">Input Manual / Lainnya...</option>
             </select>
+
+            {(!DEFAULT_TA.includes(selectedTahunAjaran || '') || selectedTahunAjaran === '') && (
+              <input
+                type="text"
+                value={selectedTahunAjaran || ''}
+                onChange={(e) => onSelectTahunAjaran(e.target.value)}
+                placeholder="e.g. 2026/2027"
+                className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
+              />
+            )}
           </div>
         </div>
-
-        {/* PILIHAN TAHUN AJARAN */}
-        {showTahunAjaran && onSelectTahunAjaran && (
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1">
-              <Calendar className={`w-3.5 h-3.5 ${theme.accent}`} />
-              <span>{taLabel} {required && <span className="text-rose-500">*</span>}</span>
-            </label>
-
-            <div className="space-y-1">
-              <select
-                value={DEFAULT_TA.includes(selectedTahunAjaran) ? selectedTahunAjaran : '__custom__'}
-                onChange={(e) => {
-                  if (e.target.value !== '__custom__') {
-                    onSelectTahunAjaran(e.target.value);
-                  }
-                }}
-                className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-              >
-                <option value="">-- Pilih Tahun Ajaran --</option>
-                {DEFAULT_TA.map((ta) => (
-                  <option key={ta} value={ta}>
-                    T.A. {ta}
-                  </option>
-                ))}
-                <option value="__custom__">Input Manual / Lainnya...</option>
-              </select>
-
-              {(!DEFAULT_TA.includes(selectedTahunAjaran || '') || selectedTahunAjaran === '') && (
-                <input
-                  type="text"
-                  value={selectedTahunAjaran || ''}
-                  onChange={(e) => onSelectTahunAjaran(e.target.value)}
-                  placeholder="e.g. 2026/2027"
-                  className={`w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-                />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* ROW 2: NAMA SISWA SELECTOR + MULTI SELECT BUTTON */}
       <div>
@@ -298,84 +266,20 @@ export const SiswaSelector: React.FC<SiswaSelectorProps> = ({
           </div>
         </div>
 
-        {/* DROPDOWN SELECTOR SINGLE */}
-        {availableStudents.length > 0 ? (
-          <div className="space-y-2">
-            <select
-              required={required && !selectedNamaSiswa}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === '__manual__') {
-                  setIsManualMode(true);
-                  onSelectNamaSiswa('');
-                } else if (val) {
-                  setIsManualMode(false);
-                  onSelectNamaSiswa(val);
-                  const found = availableStudents.find((s) => s.nama_siswa === val);
-                  if (found && onSelectStudentDetails) {
-                    onSelectStudentDetails(found);
-                  }
-                } else {
-                  setIsManualMode(false);
-                  onSelectNamaSiswa('');
-                }
-              }}
-              value={
-                availableStudents.some((s) => s.nama_siswa === selectedNamaSiswa)
-                  ? selectedNamaSiswa
-                  : isManualMode
-                  ? '__manual__'
-                  : ''
-              }
-              className={`w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-            >
-              <option value="">
-                -- Pilih Nama Siswa ({selectedKelas ? `Kelas ${selectedKelas}` : 'Semua Kelas'}) --
-              </option>
-              {availableStudents.map((s) => (
-                <option key={s.id} value={s.nama_siswa}>
-                  {s.nama_siswa} {s.kelas ? `[Kelas ${s.kelas}]` : ''} {s.nis ? `(NIS: ${s.nis})` : ''}
-                </option>
-              ))}
-              <option value="__manual__">Ketik Manual / Tambah Luar Database...</option>
-            </select>
-
-            {/* MANUAL / PREVIEW INPUT FIELD (Only shown when manual mode active) */}
-            {isManualMode && (
-              <div className="relative">
-                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-                <input
-                  type="text"
-                  value={selectedNamaSiswa || ''}
-                  onChange={(e) => onSelectNamaSiswa(e.target.value)}
-                  placeholder="Masukkan nama siswa secara manual..."
-                  required={required}
-                  autoFocus={isManualMode}
-                  className={`w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-                />
-              </div>
-            )}
+        {/* TEXT INPUT FIELD (No dropdown select) */}
+        <div>
+          <div className="relative">
+            <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={selectedNamaSiswa || ''}
+              onChange={(e) => onSelectNamaSiswa(e.target.value)}
+              placeholder="Masukkan nama siswa atau pilih dari Multi-Pilih..."
+              required={required}
+              className={`w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
+            />
           </div>
-        ) : (
-          <div>
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                value={selectedNamaSiswa || ''}
-                onChange={(e) => onSelectNamaSiswa(e.target.value)}
-                placeholder="Masukkan nama lengkap siswa..."
-                required={required}
-                className={`w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-              />
-            </div>
-            <p className="text-[10px] text-slate-500 mt-1 italic">
-              {selectedKelas
-                ? `Belum ada data siswa untuk Kelas ${selectedKelas} di Management Siswa. Silakan ketik langsung.`
-                : 'Belum ada data siswa di Management Siswa. Anda dapat menambahkan siswa di menu Data Siswa.'}
-            </p>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* MODAL MULTI-SELECT SISWA (> 10 SISWA) */}
