@@ -79,7 +79,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [tempatSurat, setTempatSurat] = useState('Pasuruan');
   const [namaGuruBk, setNamaGuruBk] = useState(getActiveGuruBK().nama);
   const [nipGuruBk, setNipGuruBk] = useState(getActiveGuruBK().nip);
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd,. M.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
 
   // Surat Tugas Kunjungan Rumah fields (Semua underlined item)
@@ -160,7 +160,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
       setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
       setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030');
 
       setNomorSuratTugas(initialData.nomor_surat_tugas || '015');
@@ -216,7 +216,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setTempatSurat('Pasuruan');
       setNamaGuruBk(getActiveGuruBK().nama);
       setNipGuruBk(getActiveGuruBK().nip);
-      setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah('NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah('NIP. 19860410 201001 2 030');
 
       setNomorSuratTugas('015');
@@ -764,7 +764,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                   type="text"
                   value={namaKepalaSekolah}
                   onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                  placeholder="NUR FADILAH, S.Pd"
+                  placeholder="NUR FADILAH, S.Pd,. M.Pd"
                   className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold"
                 />
               </div>
@@ -940,7 +940,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               <div>Mengetahui,</div>
               <div>Kepala SMP Negeri 7 Pasuruan</div>
               <div className="h-8" />
-              <div className="font-bold underline text-red-600">{namaKepalaSekolah || 'NUR FADILAH, S.Pd'}</div>
+              <div className="font-bold underline text-red-600">{namaKepalaSekolah || 'NUR FADILAH, S.Pd,. M.Pd'}</div>
               <div>{nipKepalaSekolah || 'NIP. 19860410 201001 2 030'}</div>
             </div>
           </div>

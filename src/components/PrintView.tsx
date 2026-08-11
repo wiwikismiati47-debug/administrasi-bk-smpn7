@@ -109,6 +109,13 @@ export const PrintView: React.FC<PrintViewProps> = ({
     });
   };
 
+  const formatKepalaSekolah = (name?: string): string => {
+    if (!name || (name.includes('NUR FADILAH') && !name.includes('M.Pd'))) {
+      return 'NUR FADILAH, S.Pd,. M.Pd';
+    }
+    return name.replace(/S\.PD/g, 'S.Pd').replace(/S\.pd/g, 'S.Pd');
+  };
+
   // Pick single item if selected, else first item if available
   const currentItem = selectedUndangan || (undanganItems.length > 0 ? undanganItems[0] : null);
   const currentHomeVisit = selectedHomeVisit || (homeVisitItems.length > 0 ? homeVisitItems[0] : null);
@@ -472,7 +479,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <p>Mengetahui,</p>
                     <p className="font-bold">Kepala SMP Negeri 7 Pasuruan</p>
                     <SignatureBox recordId={currentItem.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{( currentItem.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
+                    <p className="font-bold underline">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
                     <p className="text-xs font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                   </div>
                   <div>
@@ -583,7 +590,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <p>Mengetahui,</p>
                     <p className="font-bold">Kepala Sekolah SMPN 7 Pasuruan</p>
                     <SignatureBox recordId={currentItem.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{( currentItem.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
+                    <p className="font-bold underline">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
                     <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                   </div>
 
@@ -663,7 +670,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="undangan_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -739,7 +746,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="agenda_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -846,7 +853,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <SignatureBox recordId={currentHomeVisit.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                     <div className="font-bold">
-                      <u className="print:no-underline print:border-b print:border-black">{( currentHomeVisit.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</u>
+                      <u className="print:no-underline print:border-b print:border-black">{formatKepalaSekolah(currentHomeVisit.nama_kepala_sekolah)}</u>
                     </div>
                     <div>{currentHomeVisit.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030'}</div>
                   </div>
@@ -991,7 +998,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Mengetahui,</div>
                   <div>Kepala SMP Negeri 7 Pasuruan</div>
                   <SignatureBox recordId={currentHomeVisit.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                  <div className="font-bold underline">{( currentHomeVisit.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</div>
+                  <div className="font-bold underline">{formatKepalaSekolah(currentHomeVisit.nama_kepala_sekolah)}</div>
                   <div>{currentHomeVisit.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030'}</div>
                 </div>
               </>
@@ -1061,7 +1068,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="home_visit_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -1248,7 +1255,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <SignatureBox recordId={currentRekamPermasalahan.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <div className="font-bold underline">{( currentRekamPermasalahan.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</div>
+                    <div className="font-bold underline">{formatKepalaSekolah(currentRekamPermasalahan.nama_kepala_sekolah)}</div>
                     <div>NIP. {currentRekamPermasalahan.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
@@ -1338,7 +1345,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="rekam_permasalahan_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -1439,7 +1446,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMPN 7 Pasuruan</div>
                     <SignatureBox recordId={currentKonselingIndividu.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <div className="font-bold underline">{( currentKonselingIndividu.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</div>
+                    <div className="font-bold underline">{formatKepalaSekolah(currentKonselingIndividu.nama_kepala_sekolah)}</div>
                     <div>NIP. {currentKonselingIndividu.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
@@ -1528,7 +1535,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="konseling_individu_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -1623,7 +1630,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <div>Mengetahui,</div>
                     <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <SignatureBox recordId={currentKonselingKelompok.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <div className="font-bold underline">{( currentKonselingKelompok.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</div>
+                    <div className="font-bold underline">{formatKepalaSekolah(currentKonselingKelompok.nama_kepala_sekolah)}</div>
                     <div>NIP. {currentKonselingKelompok.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
@@ -2069,7 +2076,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="surat_pernyataan_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -2165,7 +2172,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Mengetahui,</div>
                 <div className="font-bold">Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="konferensi_kasus_tabel_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                <div className="font-bold underline">NUR FADILAH, S.Pd</div>
+                <div className="font-bold underline">NUR FADILAH, S.Pd,. M.Pd</div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>
               <div>
@@ -2259,7 +2266,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala Sekolah</div>
                 <SignatureBox recordId={currentKonferensiKasus.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  {( currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                  {formatKepalaSekolah(currentKonferensiKasus.nama_kepala_sekolah)}
                 </div>
                 <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
               </div>
@@ -2433,7 +2440,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala Sekolah</div>
                 <SignatureBox recordId={currentKonferensiKasus.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  {( currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                  {formatKepalaSekolah(currentKonferensiKasus.nama_kepala_sekolah)}
                 </div>
                 <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
               </div>
@@ -2532,7 +2539,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Kepala Sekolah</div>
                 <SignatureBox recordId={currentKonferensiKasus.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  {( currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                  {formatKepalaSekolah(currentKonferensiKasus.nama_kepala_sekolah)}
                   </div>
                   <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                 </div>
@@ -2702,8 +2709,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Kepala Sekolah</div>
                 <SignatureBox recordId={currentKonferensiKasus.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  {( currentKonferensiKasus.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
-                  </div>
+                  {formatKepalaSekolah(currentKonferensiKasus.nama_kepala_sekolah)}
+                </div>
                   <div>NIP. {currentKonferensiKasus.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                 </div>
                 <div>
@@ -2808,7 +2815,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId={currentJurnalBK.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  {( currentJurnalBK.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                  {formatKepalaSekolah(currentJurnalBK.nama_kepala_sekolah)}
                 </div>
                 <div>NIP. {currentJurnalBK.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
               </div>
@@ -2891,7 +2898,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Kepala SMP Negeri 7 Pasuruan</div>
                 <SignatureBox recordId="jurnal_bk_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline">
-                  NUR FADILAH, S.Pd
+                  NUR FADILAH, S.Pd,. M.Pd
                 </div>
                 <div>NIP. 19860410 201001 2 030</div>
               </div>

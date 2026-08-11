@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { JurnalBK, FormJurnalBKData, SiswaTidakHadir, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
-import { getActiveGuruBK } from '../lib/guruBk';
+import { getActiveGuruBK, PRESET_GURU_BK, setActiveGuruBK, GuruBK } from '../lib/guruBk';
 import {
   BookOpen,
   Calendar,
@@ -19,7 +19,11 @@ import {
   AlertCircle,
   FileText,
   Building,
-  GraduationCap
+  GraduationCap,
+  UserCheck,
+  UserCog,
+  X,
+  Check
 } from 'lucide-react';
 
 interface FormJurnalBKProps {
@@ -68,14 +72,59 @@ export const PRESET_JAM = [
   'Jam Ke 3 - 4 (08.35 - 09.55 WIB)',
   'Jam Ke 5 - 6 (10.35 - 11.55 WIB)',
   'Jam Ke 7 - 8 (11.55 - 13.15 WIB)',
-  'Jam Ke 1',
-  'Jam Ke 2',
-  'Jam Ke 3',
-  'Jam Ke 4',
-  'Jam Ke 5',
-  'Jam Ke 6',
-  'Jam Ke 7',
-  'Jam Ke 8'
+  'Jam Ke 1 (07.15 - 07.55 WIB)',
+  'Jam Ke 2 (07.55 - 08.35 WIB)',
+  'Jam Ke 3 (08.35 - 09.15 WIB)',
+  'Jam Ke 4 (09.15 - 09.55 WIB)',
+  'Jam Ke 5 (10.35 - 11.15 WIB)',
+  'Jam Ke 6 (11.15 - 11.55 WIB)',
+  'Jam Ke 7 (11.55 - 12.35 WIB)',
+  'Jam Ke 8 (12.35 - 13.15 WIB)'
+];
+
+export const PRESET_KELAS = [
+  'VII A', 'VII B', 'VII C', 'VII D', 'VII E', 'VII F', 'VII G', 'VII H',
+  'VIII A', 'VIII B', 'VIII C', 'VIII D', 'VIII E', 'VIII F', 'VIII G', 'VIII H',
+  'IX A', 'IX B', 'IX C', 'IX D', 'IX E', 'IX F', 'IX G', 'IX H',
+  'Kelas 7-A', 'Kelas 7-B', 'Kelas 7-C', 'Kelas 7-D', 'Kelas 7-E', 'Kelas 7-F', 'Kelas 7-G', 'Kelas 7-H',
+  'Kelas 8-A', 'Kelas 8-B', 'Kelas 8-C', 'Kelas 8-D', 'Kelas 8-E', 'Kelas 8-F', 'Kelas 8-G', 'Kelas 8-H',
+  'Kelas 9-A', 'Kelas 9-B', 'Kelas 9-C', 'Kelas 9-D', 'Kelas 9-E', 'Kelas 9-F', 'Kelas 9-G', 'Kelas 9-H',
+  'Lintas Kelas 7', 'Lintas Kelas 8', 'Lintas Kelas 9', 'Gabungan Kelas 7, 8 & 9'
+];
+
+export const PRESET_SASARAN_PESERTA = [
+  'Siswa Kelas VII A',
+  'Siswa Kelas VII B',
+  'Siswa Kelas VII C',
+  'Siswa Kelas VII D',
+  'Siswa Kelas VII E',
+  'Siswa Kelas VII F',
+  'Siswa Kelas VII G',
+  'Siswa Kelas VII H',
+  'Siswa Kelas VIII A',
+  'Siswa Kelas VIII B',
+  'Siswa Kelas VIII C',
+  'Siswa Kelas VIII D',
+  'Siswa Kelas VIII E',
+  'Siswa Kelas VIII F',
+  'Siswa Kelas VIII G',
+  'Siswa Kelas VIII H',
+  'Siswa Kelas IX A',
+  'Siswa Kelas IX B',
+  'Siswa Kelas IX C',
+  'Siswa Kelas IX D',
+  'Siswa Kelas IX E',
+  'Siswa Kelas IX F',
+  'Siswa Kelas IX G',
+  'Siswa Kelas IX H',
+  'Seluruh Siswa Kelas 7',
+  'Seluruh Siswa Kelas 8',
+  'Seluruh Siswa Kelas 9',
+  'Seluruh Siswa Kelas 7, 8, 9',
+  'Siswa Kelompok Bimbingan',
+  'Konseli Individual',
+  'Orang Tua / Wali Siswa',
+  'Wali Kelas & Guru Mata Pelajaran'
 ];
 
 export const PRESET_ALASAN_ABSEN = [
@@ -115,8 +164,9 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
   const [keterangan, setKeterangan] = useState<string>('');
   const [namaGuruBK, setNamaGuruBK] = useState<string>(activeGuruBK.nama);
   const [nipGuruBK, setNipGuruBK] = useState<string>(activeGuruBK.nip);
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState<string>('NUR FADILAH, S.Pd');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState<string>('NUR FADILAH, S.Pd,. M.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState<string>('19860410 201001 2 030');
+  const [showGuruBkPopup, setShowGuruBkPopup] = useState<boolean>(false);
 
   // List of non-attending students
   const [siswaTidakMengikuti, setSiswaTidakMengikuti] = useState<SiswaTidakHadir[]>([]);
@@ -126,6 +176,32 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
 
   const [showSuccessNotif, setShowSuccessNotif] = useState(false);
   const [notifMessage, setNotifMessage] = useState('');
+  const [currentTime, setCurrentTime] = useState<string>('');
+
+  const [isManualJam, setIsManualJam] = useState<boolean>(false);
+  const [isManualKelas, setIsManualKelas] = useState<boolean>(false);
+  const [isManualSasaran, setIsManualSasaran] = useState<boolean>(false);
+  const [isManualGuruBk, setIsManualGuruBk] = useState<boolean>(false);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hrs = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      setCurrentTime(`${hrs}.${mins}.${secs} WIB`);
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUseCurrentTime = () => {
+    const now = new Date();
+    const hrs = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    setJamKe(`Jam (${hrs}.${mins} WIB)`);
+  };
 
   // Auto calculate Hari, Bulan, Tahun when date changes
   useEffect(() => {
@@ -161,7 +237,7 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
       setKeterangan(initialData.keterangan || '');
       setNamaGuruBK(initialData.nama_guru_bk || activeGuruBK.nama);
       setNipGuruBK(initialData.nip_guru_bk || activeGuruBK.nip);
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
     }
   }, [initialData]);
@@ -352,50 +428,187 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Jam Ke</label>
-              <input
-                type="text"
-                value={jamKe}
-                onChange={(e) => setJamKe(e.target.value)}
-                placeholder="Contoh: Jam Ke 1 - 2"
-                list="preset-jam-list"
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
-              />
-              <datalist id="preset-jam-list">
-                {PRESET_JAM.map((j) => (
-                  <option key={j} value={j} />
-                ))}
-              </datalist>
+          {/* ROW 2: Jam Ke, Kelas, Sasaran Peserta (Model Pilihan Agenda BK SMPN7) */}
+          <div className="bg-slate-50/80 p-4 rounded-xl border border-slate-200/80 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              
+              {/* Jam Ke */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Jam Ke <span className="text-rose-500">*</span></span>
+                  </label>
+                  {currentTime && (
+                    <button
+                      type="button"
+                      onClick={handleUseCurrentTime}
+                      className="text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md transition-all inline-flex items-center gap-1 shrink-0"
+                      title="Gunakan jam realtime saat ini"
+                    >
+                      <Sparkles className="w-3 h-3 text-emerald-600 animate-pulse" />
+                      <span>{currentTime}</span>
+                    </button>
+                  )}
+                </div>
+
+                <select
+                  value={PRESET_JAM.includes(jamKe) ? jamKe : isManualJam ? '__manual__' : jamKe ? jamKe : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__manual__') {
+                      setIsManualJam(true);
+                    } else {
+                      setIsManualJam(false);
+                      setJamKe(val);
+                    }
+                  }}
+                  required={!jamKe}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer shadow-sm focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Pilih Jam Ke --</option>
+                  {PRESET_JAM.map((j) => (
+                    <option key={j} value={j}>
+                      {j}
+                    </option>
+                  ))}
+                  <option value="__manual__">Ketik Jam Ke Manual...</option>
+                </select>
+
+                {isManualJam && (
+                  <input
+                    type="text"
+                    value={jamKe}
+                    onChange={(e) => setJamKe(e.target.value)}
+                    placeholder="Contoh: Jam Ke 1 - 2 (07.15 - 08.35 WIB)"
+                    required
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
+                  />
+                )}
+              </div>
+
+              {/* Kelas */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 flex items-center gap-1">
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Kelas <span className="text-rose-500">*</span></span>
+                </label>
+
+                <select
+                  value={
+                    PRESET_KELAS.includes(kelas)
+                      ? kelas
+                      : PRESET_KELAS.find((k) => k.toLowerCase() === kelas.toLowerCase()) || (isManualKelas ? '__manual__' : kelas)
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__manual__') {
+                      setIsManualKelas(true);
+                    } else {
+                      setIsManualKelas(false);
+                      setKelas(val);
+                      if (val && (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas'))) {
+                        setSasaranPeserta(`Siswa Kelas ${val}`);
+                      }
+                    }
+                  }}
+                  required={!kelas}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer shadow-sm focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Pilih Kelas --</option>
+                  {PRESET_KELAS.map((k) => (
+                    <option key={k} value={k}>
+                      {k}
+                    </option>
+                  ))}
+                  <option value="__manual__">Ketik Kelas Manual...</option>
+                </select>
+
+                {isManualKelas && (
+                  <input
+                    type="text"
+                    value={kelas}
+                    onChange={(e) => {
+                      setKelas(e.target.value);
+                      if (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas')) {
+                        setSasaranPeserta(`Siswa Kelas ${e.target.value}`);
+                      }
+                    }}
+                    placeholder="Contoh: VIII A"
+                    required
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
+                  />
+                )}
+              </div>
+
+              {/* Sasaran Peserta / Konseli */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-bold text-slate-700 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Sasaran Peserta / Konseli <span className="text-rose-500">*</span></span>
+                </label>
+
+                <select
+                  value={
+                    PRESET_SASARAN_PESERTA.includes(sasaranPeserta)
+                      ? sasaranPeserta
+                      : PRESET_SASARAN_PESERTA.find((s) => s.toLowerCase() === sasaranPeserta.toLowerCase()) || (isManualSasaran ? '__manual__' : sasaranPeserta)
+                  }
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === '__manual__') {
+                      setIsManualSasaran(true);
+                    } else {
+                      setIsManualSasaran(false);
+                      if (val) setSasaranPeserta(val);
+                    }
+                  }}
+                  required={!sasaranPeserta}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer shadow-sm focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Pilih Sasaran Peserta --</option>
+                  {PRESET_SASARAN_PESERTA.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                  <option value="__manual__">Ketik Sasaran Manual...</option>
+                </select>
+
+                {isManualSasaran && (
+                  <input
+                    type="text"
+                    value={sasaranPeserta}
+                    onChange={(e) => setSasaranPeserta(e.target.value)}
+                    placeholder="Contoh: Siswa Kelas VIII A"
+                    required
+                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
+                  />
+                )}
+              </div>
+
             </div>
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Kelas</label>
-              <input
-                type="text"
-                value={kelas}
-                onChange={(e) => {
-                  setKelas(e.target.value);
-                  if (!sasaranPeserta || sasaranPeserta.startsWith('Siswa Kelas')) {
-                    setSasaranPeserta(`Siswa Kelas ${e.target.value}`);
+            {/* Selector Cari & Pilih dari Roster Siswa */}
+            <div className="pt-2 border-t border-slate-200/60">
+              <span className="text-[11px] text-slate-600 font-semibold mb-1 block">
+                Atau Cari & Pilih Nama Siswa / Kelas dari Database Roster Siswa:
+              </span>
+              <SiswaSelector
+                siswaItems={siswaItems}
+                selectedKelas=""
+                onSelectKelas={(k) => {
+                  if (k) {
+                    setKelas(k);
+                    setSasaranPeserta(`Siswa Kelas ${k}`);
                   }
                 }}
-                placeholder="Contoh: VIII A"
-                required
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Sasaran Peserta / Konseli</label>
-              <input
-                type="text"
-                value={sasaranPeserta}
-                onChange={(e) => setSasaranPeserta(e.target.value)}
-                placeholder="Contoh: Siswa Kelas VIII A"
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all"
+                selectedNamaSiswa={sasaranPeserta}
+                onSelectNamaSiswa={(val) => setSasaranPeserta(val)}
+                isMultiSelect={true}
+                kelasLabel="Pilih Kelas Database"
+                siswaLabel="Pilih Nama Siswa / Konseli"
+                themeColor="emerald"
               />
             </div>
           </div>
@@ -525,6 +738,7 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                   selectedNamaSiswa={newNamaSiswa}
                   onSelectNamaSiswa={(val) => setNewNamaSiswa(val)}
                   themeColor="emerald"
+                  required={false}
                 />
               </div>
 
@@ -657,22 +871,65 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">Guru Bimbingan Konseling (Konselor)</label>
-              <input
-                type="text"
-                value={namaGuruBK}
-                onChange={(e) => setNamaGuruBK(e.target.value)}
-                placeholder="Nama Guru BK"
-                required
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
-              />
-              <input
-                type="text"
-                value={nipGuruBK}
-                onChange={(e) => setNipGuruBK(e.target.value)}
-                placeholder="NIP Guru BK"
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600"
-              />
+              <div className="flex items-center justify-between gap-2">
+                <label className="block text-xs font-bold text-slate-700">Guru Bimbingan Konseling (Konselor)</label>
+                <button
+                  type="button"
+                  onClick={() => setShowGuruBkPopup(true)}
+                  className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                  title="Klik untuk memilih Guru BK via Pop-up"
+                >
+                  <UserCog className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Pop-up Pilih Guru BK</span>
+                </button>
+              </div>
+
+              <select
+                value={PRESET_GURU_BK.some((g) => g.nama === namaGuruBK) ? namaGuruBK : isManualGuruBk ? '__manual__' : ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '__manual__') {
+                    setIsManualGuruBk(true);
+                  } else {
+                    setIsManualGuruBk(false);
+                    const preset = PRESET_GURU_BK.find((g) => g.nama === val);
+                    if (preset) {
+                      setNamaGuruBK(preset.nama);
+                      setNipGuruBK(preset.nip);
+                      setActiveGuruBK(preset);
+                    }
+                  }
+                }}
+                className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg text-slate-800 font-semibold cursor-pointer focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              >
+                <option value="">-- Pilih Guru BK (Konselor) --</option>
+                {PRESET_GURU_BK.map((g) => (
+                  <option key={g.nip} value={g.nama}>
+                    {g.nama} (NIP. {g.nip})
+                  </option>
+                ))}
+                <option value="__manual__">Ketik Guru BK Manual...</option>
+              </select>
+
+              {isManualGuruBk && (
+                <div className="space-y-2 pt-1 animate-in fade-in duration-150">
+                  <input
+                    type="text"
+                    value={namaGuruBK}
+                    onChange={(e) => setNamaGuruBK(e.target.value)}
+                    placeholder="Nama Guru BK"
+                    required
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500"
+                  />
+                  <input
+                    type="text"
+                    value={nipGuruBK}
+                    onChange={(e) => setNipGuruBK(e.target.value)}
+                    placeholder="NIP Guru BK"
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -683,18 +940,99 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                 onChange={(e) => setNamaKepalaSekolah(e.target.value)}
                 placeholder="Nama Kepala Sekolah"
                 required
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500"
               />
               <input
                 type="text"
                 value={nipKepalaSekolah}
                 onChange={(e) => setNipKepalaSekolah(e.target.value)}
                 placeholder="NIP Kepala Sekolah"
-                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600"
+                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600 focus:ring-2 focus:ring-emerald-500"
               />
             </div>
           </div>
         </div>
+
+        {/* POP-UP MODAL PILIH GURU BK */}
+        {showGuruBkPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
+              <div className="bg-gradient-to-r from-indigo-700 to-emerald-700 p-4 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-amber-300" />
+                  <h3 className="font-bold text-sm">Pilih Guru Bimbingan Konseling (Konselor)</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowGuruBkPopup(false)}
+                  className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <p className="text-xs text-slate-600">
+                  Pilih salah satu nama Guru BK / Konselor di bawah ini untuk diterapkan secara otomatis pada laporan:
+                </p>
+
+                <div className="space-y-2">
+                  {PRESET_GURU_BK.map((guru, index) => {
+                    const isSelected = namaGuruBK === guru.nama;
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          setNamaGuruBK(guru.nama);
+                          setNipGuruBK(guru.nip);
+                          setActiveGuruBK(guru);
+                          setShowGuruBkPopup(false);
+                        }}
+                        className={`w-full p-3.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-indigo-50/80 border-indigo-300 ring-2 ring-indigo-500/30'
+                            : 'bg-white border-slate-200 hover:border-indigo-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${
+                            isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            {guru.nama.charAt(0)}
+                          </div>
+                          <div>
+                            <div className="font-bold text-xs text-slate-800">{guru.nama}</div>
+                            <div className="text-[11px] text-slate-500 font-mono mt-0.5">NIP. {guru.nip}</div>
+                          </div>
+                        </div>
+                        {isSelected ? (
+                          <span className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 bg-indigo-100 rounded-lg flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Terpilih
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 rounded-lg">
+                            Pilih
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowGuruBkPopup(false)}
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                  >
+                    Tutup Pop-up
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* SUBMIT & ACTION BUTTONS */}
         <div className="pt-4 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-slate-200">

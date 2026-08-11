@@ -101,12 +101,13 @@ export const SiswaSelector: React.FC<SiswaSelectorProps> = ({
   taLabel = 'Tahun Ajaran',
   siswaLabel = 'Nama Siswa',
   themeColor = 'indigo',
-  required = true,
+  required = false,
   onSelectStudentDetails
 }) => {
   const [showMultiModal, setShowMultiModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [isManualMode, setIsManualMode] = useState(false);
 
   const theme = THEME_STYLES[themeColor] || THEME_STYLES.indigo;
 
@@ -301,17 +302,31 @@ export const SiswaSelector: React.FC<SiswaSelectorProps> = ({
         {availableStudents.length > 0 ? (
           <div className="space-y-2">
             <select
+              required={required && !selectedNamaSiswa}
               onChange={(e) => {
                 const val = e.target.value;
-                if (val && val !== '__manual__') {
+                if (val === '__manual__') {
+                  setIsManualMode(true);
+                  onSelectNamaSiswa('');
+                } else if (val) {
+                  setIsManualMode(false);
                   onSelectNamaSiswa(val);
                   const found = availableStudents.find((s) => s.nama_siswa === val);
                   if (found && onSelectStudentDetails) {
                     onSelectStudentDetails(found);
                   }
+                } else {
+                  setIsManualMode(false);
+                  onSelectNamaSiswa('');
                 }
               }}
-              value={availableStudents.some((s) => s.nama_siswa === selectedNamaSiswa) ? selectedNamaSiswa : ''}
+              value={
+                availableStudents.some((s) => s.nama_siswa === selectedNamaSiswa)
+                  ? selectedNamaSiswa
+                  : isManualMode
+                  ? '__manual__'
+                  : ''
+              }
               className={`w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
             >
               <option value="">
@@ -325,18 +340,21 @@ export const SiswaSelector: React.FC<SiswaSelectorProps> = ({
               <option value="__manual__">Ketik Manual / Tambah Luar Database...</option>
             </select>
 
-            {/* MANUAL / PREVIEW INPUT FIELD */}
-            <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              <input
-                type="text"
-                value={selectedNamaSiswa || ''}
-                onChange={(e) => onSelectNamaSiswa(e.target.value)}
-                placeholder="Masukkan atau pilih nama siswa..."
-                required={required}
-                className={`w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
-              />
-            </div>
+            {/* MANUAL / PREVIEW INPUT FIELD (Only shown when manual mode active) */}
+            {isManualMode && (
+              <div className="relative">
+                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                <input
+                  type="text"
+                  value={selectedNamaSiswa || ''}
+                  onChange={(e) => onSelectNamaSiswa(e.target.value)}
+                  placeholder="Masukkan nama siswa secara manual..."
+                  required={required}
+                  autoFocus={isManualMode}
+                  className={`w-full bg-white border border-slate-300 rounded-xl pl-10 pr-3.5 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 ${theme.ring}`}
+                />
+              </div>
+            )}
           </div>
         ) : (
           <div>

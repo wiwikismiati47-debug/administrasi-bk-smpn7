@@ -72,7 +72,7 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
   const [keterangan, setKeterangan] = useState(initialData?.keterangan || '');
   const [namaGuruBk, setNamaGuruBk] = useState(initialData?.nama_guru_bk || getActiveGuruBK().nama);
   const [nipGuruBk, setNipGuruBk] = useState(initialData?.nip_guru_bk || getActiveGuruBK().nip);
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState(initialData?.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState(initialData?.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState(initialData?.nip_kepala_sekolah || '19860410 201001 2 030');
   const [autoUpdatedNotice, setAutoUpdatedNotice] = useState(false);
 
@@ -93,7 +93,7 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
       setKeterangan(initialData.keterangan || '');
       setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
       setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
     }
   }, [initialData]);
@@ -140,7 +140,7 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
     setKeterangan('');
     setNamaGuruBk(getActiveGuruBK().nama);
     setNipGuruBk(getActiveGuruBK().nip);
-    setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+    setNamaKepalaSekolah('NUR FADILAH, S.Pd,. M.Pd');
     setNipKepalaSekolah('19860410 201001 2 030');
   };
 
@@ -471,7 +471,7 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
                 type="text"
                 value={namaKepalaSekolah}
                 onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                placeholder="NUR FADILAH, S.Pd"
+                placeholder="NUR FADILAH, S.Pd,. M.Pd"
                 className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
               />
             </div>

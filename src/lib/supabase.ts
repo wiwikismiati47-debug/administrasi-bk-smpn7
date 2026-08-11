@@ -1313,7 +1313,7 @@ export function getLocalKonferensiKasusList(): KonferensiKasus[] {
         tempat_surat: 'Pasuruan',
         nama_guru_bk: getActiveGuruBK().nama,
         nip_guru_bk: getActiveGuruBK().nip,
-        nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+        nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
         nip_kepala_sekolah: '19860410 201001 2 030',
         keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
       }
@@ -1799,7 +1799,7 @@ export function getLocalJurnalBKList(): JurnalBK[] {
         keterangan: 'Layanan berjalan lancar dan interaktif.',
         nama_guru_bk: getActiveGuruBK().nama,
         nip_guru_bk: getActiveGuruBK().nip,
-        nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+        nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
         nip_kepala_sekolah: '19860410 201001 2 030',
         tanggal_surat: '2026-08-03',
         tempat_surat: 'Pasuruan'
@@ -1912,7 +1912,7 @@ export async function saveOrUpdateJurnalBK(
     keterangan: item.keterangan || '',
     nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
     nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
-    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
     tanggal_surat: item.tanggal_surat || item.tanggal,
     tempat_surat: item.tempat_surat || 'Pasuruan'

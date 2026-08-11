@@ -91,7 +91,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
     keterangan: 'Proses Pendampingan BK',
     nama_guru_bk: getActiveGuruBK().nama,
     nip_guru_bk: getActiveGuruBK().nip,
-    nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+    nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
     nip_kepala_sekolah: '19860410 201001 2 030',
   });
 
@@ -121,7 +121,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
         keterangan: initialData.keterangan || 'Proses Pendampingan BK',
         nama_guru_bk: initialData.nama_guru_bk || getActiveGuruBK().nama,
         nip_guru_bk: initialData.nip_guru_bk || getActiveGuruBK().nip,
-        nama_kepala_sekolah: initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
+        nama_kepala_sekolah: initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
         nip_kepala_sekolah: initialData.nip_kepala_sekolah || '19860410 201001 2 030',
       });
     }
@@ -552,7 +552,7 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
                     name="nama_kepala_sekolah"
                     value={formData.nama_kepala_sekolah || ''}
                     onChange={handleChange}
-                    placeholder="NUR FADILAH, S.Pd"
+                    placeholder="NUR FADILAH, S.Pd,. M.Pd"
                     className="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                 </div>

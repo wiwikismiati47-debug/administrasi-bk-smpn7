@@ -86,7 +86,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   const [tempatSurat, setTempatSurat] = useState('Pasuruan');
   const [namaGuruBk, setNamaGuruBk] = useState(getActiveGuruBK().nama);
   const [nipGuruBk, setNipGuruBk] = useState(getActiveGuruBK().nip);
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd,. M.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
   const [keterangan, setKeterangan] = useState('');
 
@@ -132,7 +132,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       setTempatSurat(initialData.tempat_surat || 'Pasuruan');
       setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
       setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
       setKeterangan(initialData.keterangan || '');
     }
@@ -264,7 +264,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     setTempatSurat('Pasuruan');
     setNamaGuruBk(getActiveGuruBK().nama);
     setNipGuruBk(getActiveGuruBK().nip);
-    setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+    setNamaKepalaSekolah('NUR FADILAH, S.Pd,. M.Pd');
     setNipKepalaSekolah('19860410 201001 2 030');
     setKeterangan('');
     setActiveTab('notula');
@@ -987,7 +987,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                     type="text"
                     value={namaKepalaSekolah}
                     onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                    placeholder="e.g. NUR FADILAH, S.Pd"
+                    placeholder="e.g. NUR FADILAH, S.Pd,. M.Pd"
                     className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
                   />
                 </div>

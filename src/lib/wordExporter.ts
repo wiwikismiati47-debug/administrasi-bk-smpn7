@@ -9,7 +9,7 @@ import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, Kons
 
 const DEFAULT_GURU_BK = getActiveGuruBK().nama;
 const DEFAULT_NIP_GURU_BK = getActiveGuruBK().nip;
-const DEFAULT_KEPALA_SEKOLAH = 'NUR FADILAH, S.Pd';
+const DEFAULT_KEPALA_SEKOLAH = 'NUR FADILAH, S.Pd,. M.Pd';
 const DEFAULT_NIP_KEPALA_SEKOLAH = '19860410 201001 2 030';
 
 function formatTanggalIndo(dateStr: string, bulanFallback: string = '', tahunFallback: string = ''): string {
@@ -652,7 +652,7 @@ export function generateSuratTugasHomeVisitHTML(item: HomeVisit): string {
   const jabatanPetugas1 = item.jabatan_petugas_1 || 'Guru Bimbingan dan Konseling';
   const jabatanPetugas2 = item.jabatan_petugas_2 || 'Wali Kelas / Waka Kesiswaan';
   const nisSiswa = item.nis_siswa || '-';
-  const kepalaSekolah = item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd';
+  const kepalaSekolah = item.nama_kepala_sekolah || DEFAULT_KEPALA_SEKOLAH;
   const nipKepalaSekolah = item.nip_kepala_sekolah || 'NIP. 19860410 201001 2 030';
   const namaOrangTua = item.nama_orang_tua || '....................................';
 

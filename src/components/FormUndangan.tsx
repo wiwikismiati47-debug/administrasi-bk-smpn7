@@ -83,7 +83,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
   const [nomorSurat, setNomorSurat] = useState('400/  /423.102.54/2026');
   const [namaGuruBk, setNamaGuruBk] = useState(getActiveGuruBK().nama);
   const [nipGuruBk, setNipGuruBk] = useState(getActiveGuruBK().nip);
-  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd');
+  const [namaKepalaSekolah, setNamaKepalaSekolah] = useState('NUR FADILAH, S.Pd,. M.Pd');
   const [nipKepalaSekolah, setNipKepalaSekolah] = useState('19860410 201001 2 030');
   const [semester, setSemester] = useState('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
 
@@ -125,7 +125,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
       setNomorSurat(initialData.nomor_surat || '400/  /423.102.54/2026');
       setNamaGuruBk(initialData.nama_guru_bk || getActiveGuruBK().nama);
       setNipGuruBk(initialData.nip_guru_bk || getActiveGuruBK().nip);
-      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
       setSemester(initialData.semester || 'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
     } else {
@@ -145,7 +145,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
       setNomorSurat('400/  /423.102.54/2026');
       setNamaGuruBk(getActiveGuruBK().nama);
       setNipGuruBk(getActiveGuruBK().nip);
-      setNamaKepalaSekolah('NUR FADILAH, S.Pd');
+      setNamaKepalaSekolah('NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah('19860410 201001 2 030');
       setSemester('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026');
     }
@@ -661,7 +661,7 @@ export const FormUndangan: React.FC<FormUndanganProps> = ({
                   type="text"
                   value={namaKepalaSekolah}
                   onChange={(e) => setNamaKepalaSekolah(e.target.value)}
-                  placeholder="NUR FADILAH, S.Pd"
+                  placeholder="NUR FADILAH, S.Pd,. M.Pd"
                   className="w-full px-3 py-2 text-xs bg-slate-950 border border-slate-700 rounded-lg text-white font-bold"
                 />
               </div>
