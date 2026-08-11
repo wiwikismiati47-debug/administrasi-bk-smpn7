@@ -1,7 +1,7 @@
 import { getActiveGuruBK } from '../lib/guruBk';
 import React from 'react';
 import { SignatureBox } from './SignatureBox';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow, JurnalBK } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
 import {
   downloadSuratUndanganWord,
@@ -21,7 +21,9 @@ import {
   downloadKonselingKelompokWord,
   downloadBulkKonselingKelompokWord,
   downloadSuratPernyataanWord,
-  downloadBulkSuratPernyataanWord
+  downloadBulkSuratPernyataanWord,
+  downloadJurnalBKWord,
+  downloadBulkJurnalBKWord
 } from '../lib/wordExporter';
 
 interface PrintViewProps {
@@ -46,7 +48,9 @@ interface PrintViewProps {
     | 'konferensi_kasus_notula'
     | 'konferensi_kasus_notulen_rapat'
     | 'konferensi_kasus_daftar_hadir'
-    | 'konferensi_kasus_gabungan';
+    | 'konferensi_kasus_gabungan'
+    | 'jurnal_bk_tabel'
+    | 'jurnal_bk_dokumen';
   agendaItems?: AgendaKerja[];
   undanganItems?: UndanganOrangTua[];
   selectedUndangan?: UndanganOrangTua | null;
@@ -62,6 +66,8 @@ interface PrintViewProps {
   selectedSuratPernyataan?: SuratPernyataan | null;
   konferensiKasusItems?: KonferensiKasus[];
   selectedKonferensiKasus?: KonferensiKasus | null;
+  jurnalBKItems?: JurnalBK[];
+  selectedJurnalBK?: JurnalBK | null;
   onBack: () => void;
 }
 
@@ -82,6 +88,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
   selectedSuratPernyataan = null,
   konferensiKasusItems = [],
   selectedKonferensiKasus = null,
+  jurnalBKItems = [],
+  selectedJurnalBK = null,
   onBack,
 }) => {
   const todayStr = new Date().toLocaleDateString('id-ID', {
@@ -109,6 +117,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
   const currentKonselingKelompok = selectedKonselingKelompok || (konselingKelompokItems.length > 0 ? konselingKelompokItems[0] : null);
   const currentSuratPernyataan = selectedSuratPernyataan || (suratPernyataanItems.length > 0 ? suratPernyataanItems[0] : null);
   const currentKonferensiKasus = selectedKonferensiKasus || (konferensiKasusItems.length > 0 ? konferensiKasusItems[0] : null);
+  const currentJurnalBK = selectedJurnalBK || (jurnalBKItems.length > 0 ? jurnalBKItems[0] : null);
 
   const handleTriggerPrint = () => {
     try {
@@ -260,6 +269,12 @@ export const PrintView: React.FC<PrintViewProps> = ({
         downloadSuratPernyataanWord(currentSuratPernyataan);
       } else {
         downloadBulkSuratPernyataanWord(suratPernyataanItems);
+      }
+    } else if (docType === 'jurnal_bk_dokumen' || docType === 'jurnal_bk_tabel') {
+      if (currentJurnalBK) {
+        downloadJurnalBKWord(currentJurnalBK);
+      } else {
+        downloadBulkJurnalBKWord(jurnalBKItems);
       }
     }
   };
@@ -2700,6 +2715,194 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   </div>
                   <div>NIP. {currentKonferensiKasus.nip_guru_bk || getActiveGuruBK().nip}</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* JURNAL BK DOKUMEN CETAK */}
+        {docType === 'jurnal_bk_dokumen' && currentJurnalBK && (
+          <div className="space-y-6">
+            <div className="text-center my-3">
+              <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                JURNAL LAYANAN BIMBINGAN DAN KONSELING
+              </h2>
+              <p className="text-xs font-bold uppercase mt-1">
+                UPT SMP NEGERI 7 PASURUAN
+              </p>
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed text-left">
+              <tbody>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold w-1/3 bg-slate-50">Hari / Tanggal / Jam</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.hari}, {formatIndoDate(currentJurnalBK.tanggal)} ({currentJurnalBK.jam_ke || '-'})</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Kelas / Sasaran Peserta</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.kelas || '-'} ({currentJurnalBK.sasaran_peserta || '-'})</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Materi Layanan BK</td>
+                  <td className="p-2.5 border border-black font-bold">{currentJurnalBK.materi_layanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Bidang Layanan BK</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.bidang_layanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Jenis Layanan / Kegiatan</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.jenis_layanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Fungsi Layanan BK</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.fungsi_layanan}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Hasil yang Dicapai (BMB3)</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.hasil_layanan_bmb3 || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2.5 border border-black font-bold bg-slate-50">Keterangan / Dokumentasi</td>
+                  <td className="p-2.5 border border-black">{currentJurnalBK.keterangan || '-'} {currentJurnalBK.link_foto_kegiatan ? `(Foto: ${currentJurnalBK.link_foto_kegiatan})` : ''}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="text-xs font-bold uppercase mt-4 mb-2">
+              Siswa / Konseli Yang Tidak Mengikuti Layanan BK:
+            </div>
+            <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed text-left">
+              <thead>
+                <tr className="bg-slate-100 border-b border-black text-center font-bold">
+                  <th className="p-2 border border-black w-10">No</th>
+                  <th className="p-2 border border-black">Nama Siswa</th>
+                  <th className="p-2 border border-black">Alasan</th>
+                  <th className="p-2 border border-black">Tindak Lanjut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentJurnalBK.siswa_tidak_mengikuti && currentJurnalBK.siswa_tidak_mengikuti.length > 0 ? (
+                  currentJurnalBK.siswa_tidak_mengikuti.map((absen, aIdx) => (
+                    <tr key={aIdx} className="border-b border-black">
+                      <td className="p-2 border border-black text-center font-bold">{aIdx + 1}</td>
+                      <td className="p-2 border border-black font-semibold uppercase">{absen.nama_siswa}</td>
+                      <td className="p-2 border border-black text-rose-900">{absen.alasan}</td>
+                      <td className="p-2 border border-black">{absen.tindak_lanjut}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="p-3 text-center italic text-slate-600 border border-black">
+                      Nihil (Seluruh konseli/siswa mengikuti layanan dengan lengkap).
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Signatures with Digital Signature Box */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui,</div>
+                <div>Kepala SMP Negeri 7 Pasuruan</div>
+                <SignatureBox recordId={currentJurnalBK.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline">
+                  {( currentJurnalBK.nama_kepala_sekolah || 'NUR FADILAH, S.Pd' )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                </div>
+                <div>NIP. {currentJurnalBK.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
+              </div>
+              <div>
+                <div>{currentJurnalBK.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentJurnalBK.tanggal_surat || currentJurnalBK.tanggal)}</div>
+                <div>Guru Bimbingan dan Konseling</div>
+                <SignatureBox recordId={currentJurnalBK.id} role="guru_bk" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline">
+                  {( ( currentJurnalBK.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}
+                </div>
+                <div>NIP. {currentJurnalBK.nip_guru_bk || getActiveGuruBK().nip}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* JURNAL BK TABEL REKAPITULASI CETAK */}
+        {docType === 'jurnal_bk_tabel' && (
+          <div className="space-y-6">
+            <div className="text-center my-3">
+              <h2 className="text-base font-extrabold uppercase tracking-wide underline">
+                REKAPITULASI JURNAL LAYANAN BIMBINGAN DAN KONSELING
+              </h2>
+              <p className="text-xs font-bold uppercase mt-1">
+                UPT SMP NEGERI 7 PASURUAN
+              </p>
+            </div>
+
+            <table className="w-full border-collapse border border-black text-xs font-serif leading-relaxed text-left">
+              <thead>
+                <tr className="bg-slate-100 border-b border-black text-center font-bold">
+                  <th className="p-2 border border-black w-8">No</th>
+                  <th className="p-2 border border-black w-24">Hari, Tgl & Jam</th>
+                  <th className="p-2 border border-black w-16">Kelas</th>
+                  <th className="p-2 border border-black">Materi Layanan BK</th>
+                  <th className="p-2 border border-black">Bidang & Jenis</th>
+                  <th className="p-2 border border-black">Fungsi Layanan</th>
+                  <th className="p-2 border border-black">Hasil BMB3</th>
+                  <th className="p-2 border border-black w-20">Siswa Absen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {jurnalBKItems.length > 0 ? (
+                  jurnalBKItems.map((j, idx) => (
+                    <tr key={j.id || idx} className="border-b border-black">
+                      <td className="p-2 border border-black text-center font-bold">{idx + 1}</td>
+                      <td className="p-2 border border-black">
+                        <div>{j.hari}, {j.tanggal}</div>
+                        <div className="text-[10px] italic">{j.jam_ke}</div>
+                      </td>
+                      <td className="p-2 border border-black text-center font-semibold">{j.kelas || '-'}</td>
+                      <td className="p-2 border border-black font-semibold">{j.materi_layanan}</td>
+                      <td className="p-2 border border-black">
+                        <div className="font-bold">{j.bidang_layanan}</div>
+                        <div className="text-[10px]">{j.jenis_layanan}</div>
+                      </td>
+                      <td className="p-2 border border-black text-[10px]">{j.fungsi_layanan}</td>
+                      <td className="p-2 border border-black text-[10px]">{j.hasil_layanan_bmb3 || '-'}</td>
+                      <td className="p-2 border border-black text-center font-medium">
+                        {j.siswa_tidak_mengikuti && j.siswa_tidak_mengikuti.length > 0
+                          ? `${j.siswa_tidak_mengikuti.length} Siswa`
+                          : 'Nihil'}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center italic text-slate-500 border border-black">
+                      Belum ada rekap data Jurnal BK.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Signatures with Digital Signature Box */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui,</div>
+                <div>Kepala SMP Negeri 7 Pasuruan</div>
+                <SignatureBox recordId="jurnal_bk_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline">
+                  NUR FADILAH, S.Pd
+                </div>
+                <div>NIP. 19860410 201001 2 030</div>
+              </div>
+              <div>
+                <div>Pasuruan, {todayStr}</div>
+                <div>Guru Bimbingan dan Konseling</div>
+                <SignatureBox recordId="jurnal_bk_rekap" role="guru_bk" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline">
+                  {getActiveGuruBK().nama}
+                </div>
+                <div>NIP. {getActiveGuruBK().nip}</div>
               </div>
             </div>
           </div>

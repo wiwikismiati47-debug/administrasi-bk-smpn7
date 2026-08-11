@@ -1,6 +1,6 @@
 import { getActiveGuruBK } from './guruBk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa, JurnalBK, FormJurnalBKData } from '../types';
 
 const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
 const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
@@ -12,6 +12,7 @@ const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
 const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
 const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
 const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_data_local';
+const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_data_local';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -22,6 +23,7 @@ export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok
 export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
 export const DEFAULT_KONFERENSI_KASUS_TABLE_NAME = 'konferensi_kasus_siswa';
 export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
+export const DEFAULT_JURNAL_BK_TABLE_NAME = 'jurnal_bk_siswa';
 export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
 // Get active config from localStorage or import.meta.env
@@ -1769,6 +1771,221 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
   return { success: true, isSupabase: false };
 }
 
+// Local Storage Helpers - Jurnal BK
+export function getLocalJurnalBKList(): JurnalBK[] {
+  const str = localStorage.getItem(STORAGE_KEY_JURNAL_BK);
+  if (!str) {
+    const demoData: JurnalBK[] = [
+      {
+        id: 'demo-jurnal-1',
+        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+        updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+        hari: 'Senin',
+        tanggal: '2026-08-03',
+        bulan: 'Agustus',
+        tahun: '2026',
+        jam_ke: '1 - 2',
+        kelas: 'VIII A',
+        sasaran_peserta: 'Siswa Kelas VIII A',
+        materi_layanan: 'Pengelolaan Emosi dan Kedisiplinan Belajar Mandiri',
+        bidang_layanan: 'Pribadi',
+        jenis_layanan: 'Bimbingan Klasikal / Lintas Kelas',
+        fungsi_layanan: 'Pemahaman: Membantu konseli memahami diri dan lingkungannya.',
+        hasil_layanan_bmb3: 'B: Siswa memahami dampak emosi negatif. M: Siswa merasa termotivasi mengontrol emosi. B: Siswa bersikap sopan. T: Siswa membuat jurnal refleksi harian. B: Siswa bertanggung jawab menjalankan komitmen kelas.',
+        siswa_tidak_mengikuti: [
+          { nama_siswa: 'Ahmad Rizky', alasan: 'Sakit (Izin Orang Tua)', tindak_lanjut: 'Layanan susulan modul ringkasan & bimbingan individual' }
+        ],
+        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+        keterangan: 'Layanan berjalan lancar dan interaktif.',
+        nama_guru_bk: getActiveGuruBK().nama,
+        nip_guru_bk: getActiveGuruBK().nip,
+        nama_kepala_sekolah: 'NUR FADILAH, S.Pd',
+        nip_kepala_sekolah: '19860410 201001 2 030',
+        tanggal_surat: '2026-08-03',
+        tempat_surat: 'Pasuruan'
+      }
+    ];
+    localStorage.setItem(STORAGE_KEY_JURNAL_BK, JSON.stringify(demoData));
+    return demoData;
+  }
+  try {
+    const parsed = JSON.parse(str);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveLocalJurnalBKList(data: JurnalBK[]) {
+  localStorage.setItem(STORAGE_KEY_JURNAL_BK, JSON.stringify(data));
+}
+
+export async function fetchAllJurnalBK(): Promise<{ data: JurnalBK[]; isFromSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_JURNAL_BK_TABLE_NAME)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && data) {
+        const mappedList: JurnalBK[] = data.map((row: any) => {
+          let siswaAbsenList = [];
+          if (row.siswa_tidak_mengikuti_json) {
+            try {
+              siswaAbsenList = typeof row.siswa_tidak_mengikuti_json === 'string'
+                ? JSON.parse(row.siswa_tidak_mengikuti_json)
+                : row.siswa_tidak_mengikuti_json;
+            } catch {
+              siswaAbsenList = [];
+            }
+          }
+          return {
+            id: row.id,
+            created_at: row.created_at,
+            updated_at: row.updated_at,
+            hari: row.hari || '',
+            tanggal: row.tanggal || '',
+            bulan: row.bulan || '',
+            tahun: row.tahun || '',
+            jam_ke: row.jam_ke || '',
+            materi_layanan: row.materi_layanan || '',
+            bidang_layanan: row.bidang_layanan || 'Pribadi',
+            jenis_layanan: row.jenis_layanan || 'Bimbingan Klasikal / Lintas Kelas',
+            fungsi_layanan: row.fungsi_layanan || '',
+            hasil_layanan_bmb3: row.hasil_layanan_bmb3 || '',
+            siswa_tidak_mengikuti: Array.isArray(siswaAbsenList) ? siswaAbsenList : [],
+            kelas: row.kelas || '',
+            sasaran_peserta: row.sasaran_peserta || '',
+            link_foto_kegiatan: row.link_foto_kegiatan || '',
+            keterangan: row.keterangan || '',
+            nama_guru_bk: row.nama_guru_bk || '',
+            nip_guru_bk: row.nip_guru_bk || '',
+            nama_kepala_sekolah: row.nama_kepala_sekolah || '',
+            nip_kepala_sekolah: row.nip_kepala_sekolah || '',
+            tanggal_surat: row.tanggal_surat || '',
+            tempat_surat: row.tempat_surat || 'Pasuruan'
+          };
+        });
+
+        saveLocalJurnalBKList(mappedList);
+        return { data: mappedList, isFromSupabase: true };
+      }
+    } catch (err: any) {
+      console.warn('Gagal fetch Jurnal BK dari Supabase, fallback Local Storage:', err);
+    }
+  }
+
+  return { data: getLocalJurnalBKList(), isFromSupabase: false };
+}
+
+export async function saveOrUpdateJurnalBK(
+  item: Partial<JurnalBK> & FormJurnalBKData,
+  existingId?: string
+): Promise<{ success: boolean; data?: JurnalBK; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `jurnal-${Date.now()}`;
+
+  const payloadRow = {
+    id: targetId,
+    updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    jam_ke: item.jam_ke || '',
+    materi_layanan: item.materi_layanan,
+    bidang_layanan: item.bidang_layanan,
+    jenis_layanan: item.jenis_layanan,
+    fungsi_layanan: item.fungsi_layanan,
+    hasil_layanan_bmb3: item.hasil_layanan_bmb3 || '',
+    siswa_tidak_mengikuti_json: JSON.stringify(item.siswa_tidak_mengikuti || []),
+    kelas: item.kelas || '',
+    sasaran_peserta: item.sasaran_peserta || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    tanggal_surat: item.tanggal_surat || item.tanggal,
+    tempat_surat: item.tempat_surat || 'Pasuruan'
+  };
+
+  const formattedObject: JurnalBK = {
+    ...item,
+    id: targetId,
+    created_at: item.created_at || now,
+    updated_at: now
+  };
+
+  if (client) {
+    try {
+      const { data, error } = await client
+        .from(DEFAULT_JURNAL_BK_TABLE_NAME)
+        .upsert(payloadRow, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error && data) {
+        const current = getLocalJurnalBKList();
+        const idx = current.findIndex((i) => i.id === targetId);
+        if (idx >= 0) {
+          current[idx] = formattedObject;
+        } else {
+          current.unshift(formattedObject);
+        }
+        saveLocalJurnalBKList(current);
+        return { success: true, data: formattedObject, isSupabase: true };
+      } else if (error) {
+        console.warn('Supabase upsert error Jurnal BK:', error.message);
+      }
+    } catch (err: any) {
+      console.warn('Catch error saving Jurnal BK to Supabase:', err);
+    }
+  }
+
+  // Fallback to local storage
+  const current = getLocalJurnalBKList();
+  const idx = current.findIndex((i) => i.id === targetId);
+  if (idx >= 0) {
+    current[idx] = formattedObject;
+  } else {
+    current.unshift(formattedObject);
+  }
+  saveLocalJurnalBKList(current);
+
+  return { success: true, data: formattedObject, isSupabase: false };
+}
+
+export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (client) {
+    try {
+      const { error } = await client.from(DEFAULT_JURNAL_BK_TABLE_NAME).delete().eq('id', id);
+      if (!error) {
+        const current = getLocalJurnalBKList().filter((i) => i.id !== id);
+        saveLocalJurnalBKList(current);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const current = getLocalJurnalBKList().filter((i) => i.id !== id);
+  saveLocalJurnalBKList(current);
+  return { success: true, isSupabase: false };
+}
+
 // SQL Script generator for user setup in Supabase SQL Editor
 export function getSupabaseSqlSetup(
   tableName: string = DEFAULT_TABLE_NAME,
@@ -1779,7 +1996,8 @@ export function getSupabaseSqlSetup(
   konselingKelompokTableName: string = DEFAULT_KONSELING_KELOMPOK_TABLE_NAME,
   suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME,
   konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME,
-  siswaTableName: string = DEFAULT_SISWA_TABLE_NAME
+  siswaTableName: string = DEFAULT_SISWA_TABLE_NAME,
+  jurnalBKTableName: string = DEFAULT_JURNAL_BK_TABLE_NAME
 ): string {
   return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan (ADM_BK_SMPN7)
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
@@ -2177,6 +2395,49 @@ create policy "Akses Tambah Publik Siswa" on public.${siswaTableName} for insert
 create policy "Akses Update Publik Siswa" on public.${siswaTableName} for update using (true);
 create policy "Akses Hapus Publik Siswa" on public.${siswaTableName} for delete using (true);
 
+--------------------------------------------------------------------------------
+-- 11. TABEL JURNAL LAYANAN BK (${jurnalBKTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${jurnalBKTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  bulan text not null,
+  tahun text not null,
+  jam_ke text default '',
+  materi_layanan text not null,
+  bidang_layanan text not null,
+  jenis_layanan text not null,
+  fungsi_layanan text not null,
+  hasil_layanan_bmb3 text default '',
+  siswa_tidak_mengikuti_json text default '[]',
+  kelas text default '',
+  sasaran_peserta text default '',
+  link_foto_kegiatan text default '',
+  keterangan text default '',
+  nama_guru_bk text default '',
+  nip_guru_bk text default '',
+  nama_kepala_sekolah text default '',
+  nip_kepala_sekolah text default '',
+  tanggal_surat text default '',
+  tempat_surat text default 'Pasuruan'
+);
+
+alter table public.${jurnalBKTableName} enable row level security;
+
+-- Drop policy jika sudah ada agar re-runnable (tidak error)
+drop policy if exists "Akses Baca Publik Jurnal BK" on public.${jurnalBKTableName};
+drop policy if exists "Akses Tambah Publik Jurnal BK" on public.${jurnalBKTableName};
+drop policy if exists "Akses Update Publik Jurnal BK" on public.${jurnalBKTableName};
+drop policy if exists "Akses Hapus Publik Jurnal BK" on public.${jurnalBKTableName};
+
+create policy "Akses Baca Publik Jurnal BK" on public.${jurnalBKTableName} for select using (true);
+create policy "Akses Tambah Publik Jurnal BK" on public.${jurnalBKTableName} for insert with check (true);
+create policy "Akses Update Publik Jurnal BK" on public.${jurnalBKTableName} for update using (true);
+create policy "Akses Hapus Publik Jurnal BK" on public.${jurnalBKTableName} for delete using (true);
+
 -- Indexes for performance
 create index if not exists idx_${tableName}_tanggal on public.${tableName}(tanggal);
 create index if not exists idx_${undanganTableName}_siswa on public.${undanganTableName}(nama_siswa);
@@ -2187,6 +2448,7 @@ create index if not exists idx_${konselingKelompokTableName}_kelas on public.${k
 create index if not exists idx_${suratPernyataanTableName}_siswa on public.${suratPernyataanTableName}(nama_siswa);
 create index if not exists idx_${konferensiKasusTableName}_konseli on public.${konferensiKasusTableName}(nama_konseli);
 create index if not exists idx_${siswaTableName}_kelas on public.${siswaTableName}(kelas);
+create index if not exists idx_${jurnalBKTableName}_tanggal on public.${jurnalBKTableName}(tanggal);
 `;
 }
 

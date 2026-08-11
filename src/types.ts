@@ -290,5 +290,41 @@ export interface Siswa {
 
 export type FormSiswaData = Omit<Siswa, 'id' | 'created_at' | 'updated_at'>;
 
+export interface SiswaTidakHadir {
+  nama_siswa: string;
+  alasan: string;
+  tindak_lanjut: string;
+}
+
+export interface JurnalBK {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  hari: string; // e.g. "Senin", "Selasa"
+  tanggal: string; // YYYY-MM-DD
+  bulan: string; // e.g. "Agustus"
+  tahun: string; // e.g. "2026"
+  jam_ke: string; // e.g. "1 - 2" or "3"
+  materi_layanan: string;
+  bidang_layanan: 'Pribadi' | 'Sosial' | 'Belajar' | 'Karir' | string;
+  jenis_layanan: string;
+  fungsi_layanan: string;
+  hasil_layanan_bmb3: string; // Immediate BMB3
+  siswa_tidak_mengikuti: SiswaTidakHadir[];
+  kelas: string;
+  sasaran_peserta?: string;
+  link_foto_kegiatan?: string;
+  keterangan?: string;
+  nama_guru_bk?: string;
+  nip_guru_bk?: string;
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+  tanggal_surat?: string;
+  tempat_surat?: string;
+}
+
+export type FormJurnalBKData = Omit<JurnalBK, 'id' | 'created_at' | 'updated_at'>;
+
+
 
 

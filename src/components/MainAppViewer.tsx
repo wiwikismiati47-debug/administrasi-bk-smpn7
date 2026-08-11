@@ -18,7 +18,9 @@ import {
   KonferensiKasus,
   FormKonferensiKasusData,
   Siswa,
-  FormSiswaData
+  FormSiswaData,
+  JurnalBK,
+  FormJurnalBKData
 } from '../types';
 import { FormAgenda } from './FormAgenda';
 import { TabelAgenda } from './TabelAgenda';
@@ -39,6 +41,8 @@ import { FormKonferensiKasus } from './FormKonferensiKasus';
 import { TabelKonferensiKasus } from './TabelKonferensiKasus';
 import { FormSiswa } from './FormSiswa';
 import { TabelSiswa } from './TabelSiswa';
+import { FormJurnalBK } from './FormJurnalBK';
+import { TabelJurnalBK } from './TabelJurnalBK';
 import { PrintView } from './PrintView';
 import {
   ExternalLink,
@@ -130,6 +134,13 @@ interface MainAppViewerProps {
   onDeleteSiswa: (id: string) => Promise<void>;
   onBulkImportSiswa: (students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]) => Promise<void>;
 
+  // Jurnal BK Props
+  jurnalBKItems?: JurnalBK[];
+  isLoadingJurnalBK?: boolean;
+  isSubmittingJurnalBK?: boolean;
+  onSubmitJurnalBK?: (data: Partial<JurnalBK> & FormJurnalBKData) => Promise<void>;
+  onDeleteJurnalBK?: (id: string) => Promise<void>;
+
   // Common Props
   isSupabaseConnected: boolean;
   onRefreshData: () => void;
@@ -184,6 +195,11 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   onSubmitSiswa,
   onDeleteSiswa,
   onBulkImportSiswa,
+  jurnalBKItems = [],
+  isLoadingJurnalBK = false,
+  isSubmittingJurnalBK = false,
+  onSubmitJurnalBK,
+  onDeleteJurnalBK,
   isSupabaseConnected = false,
   onRefreshData,
   onOpenSupabaseConfig,
@@ -198,6 +214,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [editingSuratPernyataan, setEditingSuratPernyataan] = useState<SuratPernyataan | null>(null);
   const [editingKonferensiKasus, setEditingKonferensiKasus] = useState<KonferensiKasus | null>(null);
   const [editingSiswa, setEditingSiswa] = useState<Siswa | null>(null);
+  const [editingJurnalBK, setEditingJurnalBK] = useState<JurnalBK | null>(null);
   
   // Printing states
   const [isPrintMode, setIsPrintMode] = useState(false);
@@ -223,6 +240,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     | 'konferensi_kasus_notulen_rapat'
     | 'konferensi_kasus_daftar_hadir'
     | 'konferensi_kasus_gabungan'
+    | 'jurnal_bk_tabel'
+    | 'jurnal_bk_dokumen'
   >('agenda');
   const [selectedForPrint, setSelectedForPrint] = useState<UndanganOrangTua | null>(null);
   const [selectedHomeVisitForPrint, setSelectedHomeVisitForPrint] = useState<HomeVisit | null>(null);
@@ -231,6 +250,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const [selectedKonselingKelompokForPrint, setSelectedKonselingKelompokForPrint] = useState<KonselingKelompok | null>(null);
   const [selectedSuratPernyataanForPrint, setSelectedSuratPernyataanForPrint] = useState<SuratPernyataan | null>(null);
   const [selectedKonferensiKasusForPrint, setSelectedKonferensiKasusForPrint] = useState<KonferensiKasus | null>(null);
+  const [selectedJurnalBKForPrint, setSelectedJurnalBKForPrint] = useState<JurnalBK | null>(null);
   
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -245,6 +265,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   const isInternalSuratPernyataan = linkUrl === 'internal:surat_pernyataan';
   const isInternalKonferensiKasus = linkUrl === 'internal:konferensi_kasus';
   const isInternalSiswa = linkUrl === 'internal:siswa';
+  const isInternalJurnalBK = linkUrl === 'internal:jurnal_bk';
   const isInternal =
     isInternalAgenda ||
     isInternalUndangan ||
@@ -254,7 +275,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     isInternalKonselingKelompok ||
     isInternalSuratPernyataan ||
     isInternalKonferensiKasus ||
-    isInternalSiswa;
+    isInternalSiswa ||
+    isInternalJurnalBK;
 
   const handleOpenPrint = (
     docType:
@@ -278,14 +300,17 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
       | 'konferensi_kasus_notula'
       | 'konferensi_kasus_notulen_rapat'
       | 'konferensi_kasus_daftar_hadir'
-      | 'konferensi_kasus_gabungan',
+      | 'konferensi_kasus_gabungan'
+      | 'jurnal_bk_tabel'
+      | 'jurnal_bk_dokumen',
     itemUndangan: UndanganOrangTua | null = null,
     itemHomeVisit: HomeVisit | null = null,
     itemRekamPermasalahan: RekamPermasalahan | null = null,
     itemKonselingIndividu: KonselingIndividu | null = null,
     itemKonselingKelompok: KonselingKelompok | null = null,
     itemSuratPernyataan: SuratPernyataan | null = null,
-    itemKonferensiKasus: KonferensiKasus | null = null
+    itemKonferensiKasus: KonferensiKasus | null = null,
+    itemJurnalBK: JurnalBK | null = null
   ) => {
     setPrintDocType(docType);
     setSelectedForPrint(itemUndangan);
@@ -295,6 +320,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
     setSelectedKonselingKelompokForPrint(itemKonselingKelompok);
     setSelectedSuratPernyataanForPrint(itemSuratPernyataan);
     setSelectedKonferensiKasusForPrint(itemKonferensiKasus);
+    setSelectedJurnalBKForPrint(itemJurnalBK);
     setIsPrintMode(true);
   };
 
@@ -317,6 +343,8 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
         selectedSuratPernyataan={selectedSuratPernyataanForPrint}
         konferensiKasusItems={konferensiKasusItems}
         selectedKonferensiKasus={selectedKonferensiKasusForPrint}
+        jurnalBKItems={jurnalBKItems}
+        selectedJurnalBK={selectedJurnalBKForPrint}
         onBack={() => setIsPrintMode(false)}
       />
     );
@@ -400,6 +428,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     if (editingSuratPernyataan) setEditingSuratPernyataan(null);
                     if (editingKonferensiKasus) setEditingKonferensiKasus(null);
                     if (editingSiswa) setEditingSiswa(null);
+                    if (editingJurnalBK) setEditingJurnalBK(null);
                   }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
                     internalTab === 'form'
@@ -409,7 +438,7 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
                   <span>
-                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan || editingKonferensiKasus || editingSiswa) ? 'Edit Form' : 'Input Form'}
+                    {(editingAgenda || editingUndangan || editingHomeVisit || editingRekamPermasalahan || editingKonselingIndividu || editingKonselingKelompok || editingSuratPernyataan || editingKonferensiKasus || editingSiswa || editingJurnalBK) ? 'Edit Form' : 'Input Form'}
                   </span>
                 </button>
  
@@ -423,7 +452,9 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 >
                   <ListFilter className="w-3.5 h-3.5" />
                   <span>
-                    {isInternalKonferensiKasus
+                    {isInternalJurnalBK
+                      ? `Daftar Jurnal BK (${(jurnalBKItems || []).length})`
+                      : isInternalKonferensiKasus
                       ? `Daftar Konferensi Kasus (${(konferensiKasusItems || []).length})`
                       : isInternalSuratPernyataan
                       ? `Daftar Surat Pernyataan (${(suratPernyataanItems || []).length})`
@@ -637,6 +668,29 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onClick={() => handleOpenPrint('konferensi_kasus_tabel')}
                     className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
                     title="Cetak Rekap Tabel Konferensi Kasus"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Cetak Tabel</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Form Jurnal BK Quick Document Shortcut Actions */}
+              {isInternalJurnalBK && (
+                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                  <button
+                    onClick={() => handleOpenPrint('jurnal_bk_dokumen')}
+                    className="px-2.5 py-1.5 bg-white text-sky-900 hover:bg-sky-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    title="Cetak / Preview Jurnal BK"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-sky-600" />
+                    <span>Cetak Jurnal</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenPrint('jurnal_bk_tabel')}
+                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    title="Cetak Rekap Tabel Jurnal BK"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
                     <span>Cetak Tabel</span>
@@ -1051,6 +1105,45 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     onBulkImport={onBulkImportSiswa}
                     isSupabase={isSupabaseConnected}
                     isLoading={isLoadingSiswa}
+                  />
+                )}
+              </>
+            )}
+
+            {/* J. JURNAL BK CONTROLLER */}
+            {isInternalJurnalBK && (
+              <>
+                {internalTab === 'form' && (
+                  <FormJurnalBK
+                    initialData={editingJurnalBK}
+                    onSubmit={async (data) => {
+                      if (onSubmitJurnalBK) {
+                        await onSubmitJurnalBK(data);
+                      }
+                      setEditingJurnalBK(null);
+                      setInternalTab('table');
+                    }}
+                    onCancelEdit={() => {
+                      setEditingJurnalBK(null);
+                      setInternalTab('table');
+                    }}
+                    isSubmitting={isSubmittingJurnalBK}
+                    siswaItems={siswaItems}
+                  />
+                )}
+
+                {internalTab === 'table' && (
+                  <TabelJurnalBK
+                    items={jurnalBKItems}
+                    onEdit={(item) => {
+                      setEditingJurnalBK(item);
+                      setInternalTab('form');
+                    }}
+                    onDelete={onDeleteJurnalBK || (async () => {})}
+                    onPrintTableRekap={() => handleOpenPrint('jurnal_bk_tabel')}
+                    onPrintItem={(item) => handleOpenPrint('jurnal_bk_dokumen', null, null, null, null, null, null, null, item)}
+                    isSupabase={isSupabaseConnected}
+                    isLoading={isLoadingJurnalBK}
                   />
                 )}
               </>

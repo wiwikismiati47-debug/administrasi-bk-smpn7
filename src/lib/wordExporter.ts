@@ -1,5 +1,5 @@
 import { getActiveGuruBK } from './guruBk';
-import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan } from '../types';
+import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JurnalBK } from '../types';
 
 /**
  * Utility to generate Microsoft Word (.doc) document from HTML structure.
@@ -1731,6 +1731,146 @@ export function downloadBulkSuratPernyataanWord(items: SuratPernyataan[]) {
   const combinedHTML = items.map(generateSuratPernyataanWordHTML).join('<div style="page-break-before: always;"></div>');
   triggerWordDownload(combinedHTML, `Kumpulan_Surat_Pernyataan_Siswa_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
 }
+
+export function generateJurnalBKHTML(item: JurnalBK): string {
+  const tglIndo = formatTanggalIndo(item.tanggal, item.bulan, item.tahun);
+  const guruBk = item.nama_guru_bk || DEFAULT_GURU_BK;
+  const nipGuruBk = item.nip_guru_bk || DEFAULT_NIP_GURU_BK;
+  const ks = item.nama_kepala_sekolah || DEFAULT_KEPALA_SEKOLAH;
+  const nipKs = item.nip_kepala_sekolah || DEFAULT_NIP_KEPALA_SEKOLAH;
+
+  const countAbsen = item.siswa_tidak_mengikuti?.length || 0;
+  const rowsAbsen = countAbsen > 0
+    ? item.siswa_tidak_mengikuti.map((s, idx) => `
+      <tr>
+        <td style="text-align: center; border: 1px solid #000; padding: 4px;">${idx + 1}</td>
+        <td style="border: 1px solid #000; padding: 4px;">${s.nama_siswa}</td>
+        <td style="border: 1px solid #000; padding: 4px;">${s.alasan}</td>
+        <td style="border: 1px solid #000; padding: 4px;">${s.tindak_lanjut}</td>
+      </tr>
+    `).join('')
+    : `
+      <tr>
+        <td colspan="4" style="text-align: center; border: 1px solid #000; padding: 8px; font-style: italic;">
+          Nihil (Seluruh konseli/siswa mengikuti layanan dengan lengkap)
+        </td>
+      </tr>
+    `;
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>Jurnal Layanan BK - ${item.materi_layanan}</title>
+    <style>
+      @page { size: 8.5in 11in; margin: 0.75in 0.75in 0.75in 0.75in; }
+      body { font-family: 'Times New Roman', Times, serif; font-size: 11pt; line-height: 1.3; color: #000; }
+      .kop { text-align: center; font-weight: bold; margin-bottom: 10px; border-bottom: 3px double #000; padding-bottom: 5px; }
+      .kop-title { font-size: 14pt; text-transform: uppercase; }
+      .kop-sub { font-size: 11pt; font-weight: normal; }
+      .doc-title { text-align: center; font-size: 12pt; font-weight: bold; margin: 15px 0; text-transform: uppercase; text-decoration: underline; }
+      .table-info, .table-absen { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+      .table-info td { padding: 5px 8px; vertical-align: top; border: 1px solid #000; }
+      .table-absen th { border: 1px solid #000; padding: 6px; background-color: #f0f0f0; font-weight: bold; text-align: center; }
+      .sig-table { width: 100%; border-collapse: collapse; margin-top: 30px; text-align: center; font-size: 11pt; }
+      .sig-table td { width: 50%; vertical-align: top; padding: 10px; }
+    </style>
+  </head>
+  <body>
+    <div class="kop">
+      <div class="kop-title">PEMERINTAH KOTA PASURUAN</div>
+      <div class="kop-title">DINAS PENDIDIKAN DAN KEBUDAYAAN</div>
+      <div class="kop-title" style="font-size: 15pt;">SMP NEGERI 7 PASURUAN</div>
+      <div class="kop-sub">Jl. Sunan Ampel No. 12 Pasuruan | Telp. (0343) 424888</div>
+    </div>
+
+    <div class="doc-title">JURNAL LAYANAN BIMBINGAN DAN KONSELING</div>
+
+    <table class="table-info">
+      <tr>
+        <td style="width: 25%; font-weight: bold; background-color: #f9f9f9;">Hari / Tanggal / Jam</td>
+        <td>${item.hari}, ${tglIndo} (${item.jam_ke || '-'})</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Kelas / Sasaran</td>
+        <td>${item.kelas || '-'} (${item.sasaran_peserta || '-'})</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Materi Layanan BK</td>
+        <td><strong>${item.materi_layanan}</strong></td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Bidang Layanan BK</td>
+        <td>${item.bidang_layanan}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Jenis Layanan / Kegiatan</td>
+        <td>${item.jenis_layanan}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Fungsi Layanan BK</td>
+        <td>${item.fungsi_layanan}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Hasil yang Dicapai (BMB3)</td>
+        <td>${item.hasil_layanan_bmb3 || '-'}</td>
+      </tr>
+      <tr>
+        <td style="font-weight: bold; background-color: #f9f9f9;">Keterangan / Catatan</td>
+        <td>${item.keterangan || '-'}</td>
+      </tr>
+    </table>
+
+    <div style="font-weight: bold; font-size: 11pt; margin-top: 15px; margin-bottom: 5px;">
+      SISWA / KONSELI YANG TIDAK MENGIKUTI LAYANAN BK:
+    </div>
+    <table class="table-absen">
+      <thead>
+        <tr>
+          <th style="width: 35px;">NO</th>
+          <th>NAMA SISWA</th>
+          <th>ALASAN</th>
+          <th>TINDAK LANJUT</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsAbsen}
+      </tbody>
+    </table>
+
+    <table class="sig-table">
+      <tr>
+        <td>
+          Mengetahui,<br>
+          <strong>Kepala SMP Negeri 7 Pasuruan</strong><br><br><br><br><br>
+          <u><strong>${ks}</strong></u><br>
+          NIP. ${nipKs}
+        </td>
+        <td>
+          Pasuruan, ${tglIndo}<br>
+          <strong>Guru Bimbingan dan Konseling</strong><br><br><br><br><br>
+          <u><strong>${guruBk}</strong></u><br>
+          NIP. ${nipGuruBk}
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+}
+
+export function downloadJurnalBKWord(item: JurnalBK) {
+  const html = generateJurnalBKHTML(item);
+  const cleanMateri = (item.materi_layanan || 'Jurnal_BK').slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_');
+  triggerWordDownload(html, `Jurnal_BK_${item.tanggal}_${cleanMateri}_SMPN7.doc`);
+}
+
+export function downloadBulkJurnalBKWord(items: JurnalBK[]) {
+  if (items.length === 0) return;
+  const combinedHTML = items.map(generateJurnalBKHTML).join('<div style="page-break-before: always;"></div>');
+  triggerWordDownload(combinedHTML, `Kumpulan_Jurnal_Layanan_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
 
 
 

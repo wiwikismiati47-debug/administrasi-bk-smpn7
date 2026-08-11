@@ -92,6 +92,17 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     colorGradient: 'from-rose-600 via-red-600 to-orange-800',
   },
   {
+    id: 'link-internal-jurnal-bk',
+    title: 'Jurnal Layanan BK',
+    url: 'internal:jurnal_bk',
+    iconName: 'BookOpen',
+    category: 'Administrasi Utama',
+    description: 'Jurnal Harian Layanan BK (Materi, Bidang, Jenis, Fungsi, Hasil BMB3 & Siswa Tidak Mengikuti)',
+    isInternal: true,
+    badge: 'JURNAL',
+    colorGradient: 'from-emerald-600 via-teal-600 to-indigo-800',
+  },
+  {
     id: 'link-internal-siswa',
     title: 'Management Siswa',
     url: 'internal:siswa',

@@ -18,7 +18,9 @@ import {
   FormKonferensiKasusData,
   AppLink,
   Siswa,
-  FormSiswaData
+  FormSiswaData,
+  JurnalBK,
+  FormJurnalBKData
 } from './types';
 import {
   fetchAllAgenda,
@@ -49,6 +51,9 @@ import {
   saveOrUpdateSiswa,
   bulkSaveOrUpdateSiswa,
   deleteSiswaItem,
+  fetchAllJurnalBK,
+  saveOrUpdateJurnalBK,
+  deleteJurnalBKItem,
   getSavedSupabaseConfig,
   getSupabaseClient
 } from './lib/supabase';
@@ -118,6 +123,11 @@ export default function App() {
   const [siswaItems, setSiswaItems] = useState<Siswa[]>([]);
   const [isLoadingSiswa, setIsLoadingSiswa] = useState<boolean>(true);
   const [isSubmittingSiswa, setIsSubmittingSiswa] = useState<boolean>(false);
+
+  // Jurnal BK state
+  const [jurnalBKItems, setJurnalBKItems] = useState<JurnalBK[]>([]);
+  const [isLoadingJurnalBK, setIsLoadingJurnalBK] = useState<boolean>(true);
+  const [isSubmittingJurnalBK, setIsSubmittingJurnalBK] = useState<boolean>(false);
 
   // Connection state
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
@@ -278,6 +288,20 @@ export default function App() {
     }
   }, []);
 
+  const loadJurnalBKData = useCallback(async () => {
+    setIsLoadingJurnalBK(true);
+    try {
+      const res = await fetchAllJurnalBK();
+      setJurnalBKItems(res.data);
+      return res.isFromSupabase;
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data Jurnal BK.', 'error');
+    } finally {
+      setIsLoadingJurnalBK(false);
+    }
+  }, []);
+
   const refreshAllData = useCallback(async () => {
     const results = await Promise.all([
       loadAgendaData(),
@@ -288,7 +312,8 @@ export default function App() {
       loadKonselingKelompokData(),
       loadSuratPernyataanData(),
       loadKonferensiKasusData(),
-      loadSiswaData()
+      loadSiswaData(),
+      loadJurnalBKData()
     ]);
     
     // Check if any load was successful but some failed
@@ -310,7 +335,8 @@ export default function App() {
     loadKonselingKelompokData,
     loadSuratPernyataanData,
     loadKonferensiKasusData,
-    loadSiswaData
+    loadSiswaData,
+    loadJurnalBKData
   ]);
 
   useEffect(() => {
@@ -695,6 +721,43 @@ export default function App() {
     }
   };
 
+  // Handle Jurnal BK submit
+  const handleSubmitJurnalBK = async (data: Partial<JurnalBK> & FormJurnalBKData) => {
+    setIsSubmittingJurnalBK(true);
+    try {
+      const res = await saveOrUpdateJurnalBK(data);
+      if (res.success) {
+        await loadJurnalBKData();
+        showToast(
+          data.id
+            ? 'Data Jurnal BK berhasil diperbarui!'
+            : 'Data Jurnal BK berhasil disimpan!',
+          'success'
+        );
+      } else {
+        showToast('Gagal menyimpan Jurnal BK.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Error: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingJurnalBK(false);
+    }
+  };
+
+  // Handle Jurnal BK delete
+  const handleDeleteJurnalBK = async (id: string) => {
+    try {
+      const res = await deleteJurnalBKItem(id);
+      if (res.success) {
+        await loadJurnalBKData();
+        showToast('Data Jurnal BK berhasil dihapus.', 'success');
+      }
+    } catch {
+      showToast('Gagal menghapus data Jurnal BK.', 'error');
+    }
+  };
+
   // --- APP LINK MANAGER HANDLERS ---
   const handleSaveLink = (linkToSave: AppLink) => {
     const existingIndex = links.findIndex((l) => l.id === linkToSave.id);
@@ -893,6 +956,11 @@ export default function App() {
           onSubmitSiswa={handleSubmitSiswa}
           onDeleteSiswa={handleDeleteSiswa}
           onBulkImportSiswa={handleBulkImportSiswa}
+          jurnalBKItems={jurnalBKItems}
+          isLoadingJurnalBK={isLoadingJurnalBK}
+          isSubmittingJurnalBK={isSubmittingJurnalBK}
+          onSubmitJurnalBK={handleSubmitJurnalBK}
+          onDeleteJurnalBK={handleDeleteJurnalBK}
           isSupabaseConnected={isSupabaseConnected}
           onRefreshData={refreshAllData}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}
