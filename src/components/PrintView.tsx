@@ -1232,12 +1232,25 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     </tr>
                     <tr className="border-b border-black">
                       <td className="p-2 border-r border-black font-bold text-center">10</td>
-                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2 border-r border-black font-bold">Dokumentasi / Foto Kegiatan</td>
                       <td className="p-2">
                         {currentRekamPermasalahan.link_foto_kegiatan ? (
-                          <a href={currentRekamPermasalahan.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
-                            {currentRekamPermasalahan.link_foto_kegiatan}
-                          </a>
+                          <div className="space-y-1">
+                            <img
+                              src={currentRekamPermasalahan.link_foto_kegiatan}
+                              alt="Dokumentasi Kegiatan"
+                              className="max-h-48 max-w-xs object-contain rounded border border-slate-300 print:max-h-40"
+                              onError={(e) => {
+                                const target = e.target as HTMLElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                            {currentRekamPermasalahan.link_foto_kegiatan.startsWith('http') && (
+                              <a href={currentRekamPermasalahan.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline text-xs block print:hidden">
+                                {currentRekamPermasalahan.link_foto_kegiatan}
+                              </a>
+                            )}
+                          </div>
                         ) : '-'}
                       </td>
                     </tr>
@@ -1417,12 +1430,25 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     </tr>
                     <tr className="border-b border-black">
                       <td className="p-2 border-r border-black font-bold text-center">9</td>
-                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2 border-r border-black font-bold">Dokumentasi / Foto Kegiatan</td>
                       <td className="p-2">
                         {currentKonselingIndividu.link_foto_kegiatan ? (
-                          <a href={currentKonselingIndividu.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
-                            {currentKonselingIndividu.link_foto_kegiatan}
-                          </a>
+                          <div className="space-y-1">
+                            <img
+                              src={currentKonselingIndividu.link_foto_kegiatan}
+                              alt="Dokumentasi Foto Konseling"
+                              className="max-h-48 max-w-xs object-contain rounded border border-slate-300 print:max-h-40"
+                              onError={(e) => {
+                                const target = e.target as HTMLElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                            {currentKonselingIndividu.link_foto_kegiatan.startsWith('http') && (
+                              <a href={currentKonselingIndividu.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline text-xs block print:hidden">
+                                {currentKonselingIndividu.link_foto_kegiatan}
+                              </a>
+                            )}
+                          </div>
                         ) : '-'}
                       </td>
                     </tr>
@@ -1435,23 +1461,17 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 </table>
 
                 {/* Signatures */}
-                <div className="grid grid-cols-3 text-center pt-6 text-[11px] gap-2 font-serif">
-                  <div>
-                    <div>Konseli / Siswa</div>
-                    <SignatureBox recordId={currentKonselingIndividu.id} role="siswa" className="h-20 w-32 mx-auto" />
-                    <div className="font-bold underline">{currentKonselingIndividu.nama_siswa}</div>
-                    <div>Siswa Kelas {currentKonselingIndividu.kelas}</div>
-                  </div>
+                <div className="grid grid-cols-2 text-center pt-6 text-xs gap-4 font-serif">
                   <div>
                     <div>Mengetahui,</div>
-                    <div>Kepala SMPN 7 Pasuruan</div>
+                    <div>Kepala SMP Negeri 7 Pasuruan</div>
                     <SignatureBox recordId={currentKonselingIndividu.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
                     <div className="font-bold underline">{formatKepalaSekolah(currentKonselingIndividu.nama_kepala_sekolah)}</div>
                     <div>NIP. {currentKonselingIndividu.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
                   </div>
                   <div>
                     <div>Pasuruan, {formatIndoDate(currentKonselingIndividu.tanggal)}</div>
-                    <div>Guru BK / Konselor</div>
+                    <div>Guru Bimbingan dan Konseling</div>
                     <SignatureBox recordId={currentKonselingIndividu.id} role="guru_bk" className="h-20 w-32 mx-auto" />
                     <div className="font-bold underline">{( ( currentKonselingIndividu.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</div>
                     <div>NIP. {currentKonselingIndividu.nip_guru_bk || getActiveGuruBK().nip}</div>
@@ -1607,12 +1627,25 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     </tr>
                     <tr className="border-b border-black">
                       <td className="p-2 border-r border-black font-bold text-center">9</td>
-                      <td className="p-2 border-r border-black font-bold">Link Foto Kegiatan</td>
+                      <td className="p-2 border-r border-black font-bold">Dokumentasi / Foto Kegiatan</td>
                       <td className="p-2">
                         {currentKonselingKelompok.link_foto_kegiatan ? (
-                          <a href={currentKonselingKelompok.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline break-all">
-                            {currentKonselingKelompok.link_foto_kegiatan}
-                          </a>
+                          <div className="space-y-1">
+                            <img
+                              src={currentKonselingKelompok.link_foto_kegiatan}
+                              alt="Dokumentasi Foto Konseling Kelompok"
+                              className="max-h-48 max-w-xs object-contain rounded border border-slate-300 print:max-h-40"
+                              onError={(e) => {
+                                const target = e.target as HTMLElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                            {currentKonselingKelompok.link_foto_kegiatan.startsWith('http') && (
+                              <a href={currentKonselingKelompok.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline text-xs block print:hidden">
+                                {currentKonselingKelompok.link_foto_kegiatan}
+                              </a>
+                            )}
+                          </div>
                         ) : '-'}
                       </td>
                     </tr>
@@ -2771,7 +2804,27 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 </tr>
                 <tr className="border-b border-black">
                   <td className="p-2.5 border border-black font-bold bg-slate-50">Keterangan / Dokumentasi</td>
-                  <td className="p-2.5 border border-black">{currentJurnalBK.keterangan || '-'} {currentJurnalBK.link_foto_kegiatan ? `(Foto: ${currentJurnalBK.link_foto_kegiatan})` : ''}</td>
+                  <td className="p-2.5 border border-black">
+                    <div>{currentJurnalBK.keterangan || '-'}</div>
+                    {currentJurnalBK.link_foto_kegiatan && (
+                      <div className="mt-2">
+                        <img
+                          src={currentJurnalBK.link_foto_kegiatan}
+                          alt="Dokumentasi Jurnal BK"
+                          className="max-h-40 max-w-xs object-contain rounded border border-slate-300 print:max-h-32"
+                          onError={(e) => {
+                            const target = e.target as HTMLElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                        {currentJurnalBK.link_foto_kegiatan.startsWith('http') && (
+                          <a href={currentJurnalBK.link_foto_kegiatan} target="_blank" rel="noreferrer" className="text-blue-700 underline text-xs block mt-1 print:hidden">
+                            {currentJurnalBK.link_foto_kegiatan}
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </td>
                 </tr>
               </tbody>
             </table>

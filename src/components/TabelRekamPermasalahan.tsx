@@ -367,17 +367,32 @@ export const TabelRekamPermasalahan: React.FC<TabelRekamPermasalahanProps> = ({
                 </div>
 
                 {selectedDetail.link_foto_kegiatan && (
-                  <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 flex items-center justify-between">
-                    <span className="font-bold text-emerald-900">Dokumentasi Foto Kegiatan:</span>
-                    <a
-                      href={selectedDetail.link_foto_kegiatan}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      <span>Buka Foto Drive</span>
-                    </a>
+                  <div className="p-3.5 bg-emerald-50 rounded-2xl border border-emerald-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-emerald-900 text-xs">Dokumentasi Foto Kegiatan:</span>
+                      {selectedDetail.link_foto_kegiatan.startsWith('http') && (
+                        <a
+                          href={selectedDetail.link_foto_kegiatan}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Buka Tautan</span>
+                        </a>
+                      )}
+                    </div>
+                    <div className="flex justify-center">
+                      <img
+                        src={selectedDetail.link_foto_kegiatan}
+                        alt="Foto Dokumentasi Permasalahan"
+                        className="max-h-48 rounded-xl border border-emerald-200 object-contain shadow-sm bg-white"
+                        onError={(e) => {
+                          const target = e.target as HTMLElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   </div>
                 )}
               </div>

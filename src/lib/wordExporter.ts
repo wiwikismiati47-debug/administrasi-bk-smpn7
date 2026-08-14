@@ -1064,8 +1064,8 @@ export function generateRekamPermasalahanHTML(item: RekamPermasalahan): string {
       </tr>
       <tr>
         <td class="no-col">10</td>
-        <td class="label-col">Link Foto Kegiatan</td>
-        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+        <td class="label-col">Dokumentasi / Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? (item.link_foto_kegiatan.startsWith('data:image') || item.link_foto_kegiatan.startsWith('http') ? `<img src="${item.link_foto_kegiatan}" style="max-height: 160px; max-width: 250px; object-fit: contain;" alt="Foto Kegiatan" />` : `<a href="${item.link_foto_kegiatan}">Lihat Foto</a>`) : '-'}</td>
       </tr>
       <tr>
         <td class="no-col">11</td>
@@ -1229,8 +1229,8 @@ export function generateKonselingIndividuHTML(item: KonselingIndividu): string {
       </tr>
       <tr>
         <td class="no-col">9</td>
-        <td class="label-col">Link Foto Kegiatan</td>
-        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+        <td class="label-col">Dokumentasi / Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? (item.link_foto_kegiatan.startsWith('data:image') || item.link_foto_kegiatan.startsWith('http') ? `<img src="${item.link_foto_kegiatan}" style="max-height: 160px; max-width: 250px; object-fit: contain;" alt="Foto Kegiatan" />` : `<a href="${item.link_foto_kegiatan}">Lihat Foto</a>`) : '-'}</td>
       </tr>
       <tr>
         <td class="no-col">10</td>
@@ -1394,8 +1394,8 @@ export function generateKonselingKelompokHTML(item: KonselingKelompok): string {
       </tr>
       <tr>
         <td class="no-col">9</td>
-        <td class="label-col">Link Foto Kegiatan</td>
-        <td>${item.link_foto_kegiatan ? `<a href="${item.link_foto_kegiatan}">${item.link_foto_kegiatan}</a>` : '-'}</td>
+        <td class="label-col">Dokumentasi / Foto Kegiatan</td>
+        <td>${item.link_foto_kegiatan ? (item.link_foto_kegiatan.startsWith('data:image') || item.link_foto_kegiatan.startsWith('http') ? `<img src="${item.link_foto_kegiatan}" style="max-height: 160px; max-width: 250px; object-fit: contain;" alt="Foto Kegiatan" />` : `<a href="${item.link_foto_kegiatan}">Lihat Foto</a>`) : '-'}</td>
       </tr>
       <tr>
         <td class="no-col">10</td>
