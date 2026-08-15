@@ -1,24 +1,41 @@
 {
-  "name": "SABDA BK SPANJU SMPN 7 PASURUAN",
+  "name": "SABDA BK SPANJU - SMPN 7 PASURUAN",
   "short_name": "SABDA BK SPANJU",
   "description": "Sistem Administrasi BK Digital dan Akuntabel SMPN 7 PASURUAN",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#1e3a8a",
   "orientation": "any",
   "icons": [
     {
-      "src": "https://iili.io/KDFk4fI.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "https://iili.io/KDFk4fI.png",
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo-bk-peduli.png",
+      "sizes": "512x512",
+      "type": "image/png"
     }
   ]
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { GuruBkSelector } from './GuruBkSelector';
+import { InstallGuideModal } from './InstallGuideModal';
 import {
   Download,
   Upload,
@@ -27,6 +28,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 }) => {
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
   const [isInstallable, setIsInstallable] = React.useState(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -38,7 +40,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     const handleAppInstalled = () => {
       setIsInstallable(false);
       setDeferredPrompt(null);
-      alert('Selamat! SABDA BK SPANJU berhasil diinstal di perangkat Anda.');
+      setIsInstallGuideOpen(false);
+      alert('Selamat! SABDA BK SPANJU dengan ikon BK Peduli berhasil diinstal di perangkat Anda.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -50,23 +53,18 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      alert(
-        'SABDA BK SPANJU mendukung instalasi langsung di HP & Laptop Anda!\n\n' +
-        'Langkah mudah untuk menginstal:\n' +
-        '📱 Di HP Android (Chrome): Klik ikon titik tiga di kanan atas, lalu pilih "Instal aplikasi" atau "Tambahkan ke Layar Utama".\n' +
-        '🍏 Di iPhone (Safari): Klik tombol "Bagikan" (Share / panah ke atas) di menu Safari bawah, lalu pilih "Tambahkan ke Layar Utama" (Add to Home Screen).\n' +
-        '💻 Di Laptop / PC (Chrome/Edge): Klik ikon instalasi (tanda tambah/monitor berpanah bawah) di sebelah kanan kolom alamat (address bar) browser Anda.'
-      );
-      return;
-    }
+  const handleInstallClick = () => {
+    setIsInstallGuideOpen(true);
+  };
+
+  const handleDirectInstall = async () => {
+    if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      console.log('User accepted install');
       setIsInstallable(false);
       setDeferredPrompt(null);
+      setIsInstallGuideOpen(false);
     }
   };
 
@@ -89,11 +87,11 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
               <div className="relative bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-lg flex items-center justify-center">
                 <img
-                  src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png"
-                  alt="Logo SMPN 7 Pasuruan"
+                  src="/logo-bk-peduli.png"
+                  alt="Logo BK Peduli SMPN 7 Pasuruan"
                   className="w-12 h-12 sm:w-14 sm:h-14 object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
+                    (e.target as HTMLImageElement).src = "https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png";
                   }}
                 />
               </div>
@@ -125,13 +123,16 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             <button
               onClick={handleInstallClick}
               className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-95 transition-all cursor-pointer relative overflow-hidden group/install"
-              title="Instal aplikasi SABDA BK SPANJU di HP atau Laptop Anda"
+              title="Instal aplikasi SABDA BK SPANJU dengan ikon BK Peduli di HP atau Laptop Anda"
             >
               <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/install:translate-y-0 transition-transform duration-300" />
               <img
-                src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png"
-                alt="Maskot"
+                src="/logo-bk-peduli.png"
+                alt="Maskot BK Peduli"
                 className="w-4 h-4 object-contain rounded-full bg-white p-0.5 shadow-sm transform group-hover/install:rotate-12 transition-transform"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png";
+                }}
               />
               <span>Instal Aplikasi</span>
               {isInstallable && (
@@ -185,6 +186,15 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
         </div>
       </div>
+
+      {/* Interactive PWA Install Guide Modal */}
+      <InstallGuideModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
+        deferredPrompt={deferredPrompt}
+        onDirectInstall={handleDirectInstall}
+      />
     </header>
   );
 };
+
