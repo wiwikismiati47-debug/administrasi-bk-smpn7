@@ -26,14 +26,15 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
   deferredPrompt,
   onDirectInstall,
 }) => {
-  // Detect mobile automatically to default tab
+  // Detect device automatically
   const [activeTab, setActiveTab] = useState<'android' | 'ios' | 'laptop'>(() => {
     if (typeof window !== 'undefined') {
       const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
       if (/android/i.test(ua)) return 'android';
       if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) return 'ios';
+      if (/Win|Mac|Linux|X11/.test(ua)) return 'laptop';
     }
-    return 'android';
+    return 'laptop';
   });
 
   if (!isOpen) return null;
@@ -245,14 +246,19 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           {/* Laptop / PC Guide */}
           {activeTab === 'laptop' && (
             <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl text-blue-900 text-xs font-bold flex items-center gap-2">
+                <Laptop className="w-4 h-4 text-blue-600 shrink-0" />
+                <span>Pasang aplikasi di komputer/laptop untuk akses mandiri seperti aplikasi desktop</span>
+              </div>
+
               <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
                 <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
                   1
                 </span>
                 <div>
-                  <p className="font-bold text-slate-900">Gunakan Chrome atau Edge</p>
+                  <p className="font-bold text-slate-900">Buka Google Chrome atau Microsoft Edge</p>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Buka link aplikasi di PC / Laptop Anda.
+                    Gunakan browser Chrome atau Edge di Laptop/Komputer Anda.
                   </p>
                 </div>
               </div>
@@ -262,9 +268,21 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                   2
                 </span>
                 <div>
-                  <p className="font-bold text-slate-900">Klik Ikon Instal di Address Bar</p>
+                  <p className="font-bold text-slate-900">Klik Ikon Instal (Address Bar) atau Menu Titik Tiga ( ⋮ )</p>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Klik ikon monitor / tanda panah di ujung kanan kolom alamat web (URL).
+                    Klik ikon komputer/panah ke bawah di ujung kanan kolom alamat URL, atau klik menu titik tiga di kanan atas lalu pilih <strong>"Instal SABDA BK SPANJU..."</strong>.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
+                  3
+                </span>
+                <div>
+                  <p className="font-bold text-slate-900">Klik "Instal"</p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Aplikasi akan terpasang di Desktop & Taskbar laptop dengan <strong>Logo BK Peduli</strong> dan terbuka di jendela mandiri yang luas tanpa tab browser!
                   </p>
                 </div>
               </div>
