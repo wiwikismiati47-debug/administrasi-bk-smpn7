@@ -1,4 +1,5 @@
 import { getSupabaseClient, getSavedSupabaseConfig, DEFAULT_SIGNATURES_TABLE_NAME } from './supabase';
+import { safeGetStorage, safeSetStorage } from './storageManager';
 
 export interface SignatureData {
   record_id: string;
@@ -6,15 +7,15 @@ export interface SignatureData {
   signature_data: string;
 }
 
-const STORAGE_KEY = 'bk_smpn7_signatures_local';
+export const STORAGE_KEY_SIGNATURES = 'bk_smpn7_signatures_local';
+const STORAGE_KEY = STORAGE_KEY_SIGNATURES;
 
 export function getLocalSignatures(): SignatureData[] {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
+  return safeGetStorage<SignatureData[]>(STORAGE_KEY, []);
 }
 
 export function saveLocalSignatures(data: SignatureData[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY, data);
 }
 
 export async function fetchSignature(recordId: string, role: string): Promise<string | null> {

@@ -1,18 +1,19 @@
 import { getActiveGuruBK } from './guruBk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa, JurnalBK, FormJurnalBKData } from '../types';
+import { safeGetStorage, safeSetStorage } from './storageManager';
 
-const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
-const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
-const STORAGE_KEY_UNDANGAN = 'bk_smpn7_undangan_data_local';
-const STORAGE_KEY_HOME_VISIT = 'bk_smpn7_home_visit_data_local';
-const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_data_local';
-const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
-const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
-const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
-const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
-const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_data_local';
-const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_data_local';
+export const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
+export const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
+export const STORAGE_KEY_UNDANGAN = 'bk_smpn7_undangan_data_local';
+export const STORAGE_KEY_HOME_VISIT = 'bk_smpn7_home_visit_data_local';
+export const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_data_local';
+export const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
+export const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
+export const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
+export const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
+export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_data_local';
+export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_data_local';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -28,20 +29,13 @@ export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
 // Get active config from localStorage or import.meta.env
 export function getSavedSupabaseConfig(): SupabaseConfig {
-  const localConfigStr = localStorage.getItem(STORAGE_KEY_CONFIG);
-  if (localConfigStr) {
-    try {
-      const parsed = JSON.parse(localConfigStr);
-      if (parsed.url && parsed.anonKey) {
-        return {
-          url: parsed.url,
-          anonKey: parsed.anonKey,
-          tableName: parsed.tableName || DEFAULT_TABLE_NAME,
-        };
-      }
-    } catch {
-      // ignore JSON parse error
-    }
+  const parsed = safeGetStorage<Partial<SupabaseConfig> | null>(STORAGE_KEY_CONFIG, null);
+  if (parsed && parsed.url && parsed.anonKey) {
+    return {
+      url: parsed.url,
+      anonKey: parsed.anonKey,
+      tableName: parsed.tableName || DEFAULT_TABLE_NAME,
+    };
   }
 
   const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
@@ -56,7 +50,7 @@ export function getSavedSupabaseConfig(): SupabaseConfig {
 }
 
 export function saveSupabaseConfigToStorage(config: SupabaseConfig) {
-  localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(config));
+  safeSetStorage(STORAGE_KEY_CONFIG, config);
 }
 
 let cachedClient: { key: string; client: SupabaseClient } | null = null;
@@ -83,92 +77,75 @@ export function getSupabaseClient(config?: SupabaseConfig): SupabaseClient | nul
 }
 
 // Local Storage Helpers - Agenda BK
+const INITIAL_DEMO_AGENDA: AgendaKerja[] = [
+  {
+    id: 'demo-1',
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    hari: 'Senin',
+    tanggal: '2026-08-03',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '07:30 - 08:30 WIB',
+    uraian_kegiatan: 'Layanan Bimbingan Klasikal: Pengenalan Lingkungan Sekolah & Etika Pergaulan SMP',
+    sasaran: 'Siswa Kelas VII A & VII B',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Terlaksana dengan lancar, siswa antusias mengikuti diskusi.',
+  },
+  {
+    id: 'demo-2',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Selasa',
+    tanggal: '2026-08-04',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '09:00 - 10:30 WIB',
+    uraian_kegiatan: 'Konseling Individual: Pendampingan Kesulitan Belajar dan Kedisiplinan Siswa',
+    sasaran: 'Siswa Kelas VIII C (A.n. Budi)',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Dibuatkan kontrak perilaku dan perlu tindak lanjut minggu depan.',
+  },
+];
+
 export function getLocalAgendaList(): AgendaKerja[] {
-  const str = localStorage.getItem(STORAGE_KEY_DATA);
-  if (!str) {
-    // Seed initial demo data for SMPN 7 Pasuruan if empty
-    const demoData: AgendaKerja[] = [
-      {
-        id: 'demo-1',
-        created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-        hari: 'Senin',
-        tanggal: '2026-08-03',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '07:30 - 08:30 WIB',
-        uraian_kegiatan: 'Layanan Bimbingan Klasikal: Pengenalan Lingkungan Sekolah & Etika Pergaulan SMP',
-        sasaran: 'Siswa Kelas VII A & VII B',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Terlaksana dengan lancar, siswa antusias mengikuti diskusi.',
-      },
-      {
-        id: 'demo-2',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Selasa',
-        tanggal: '2026-08-04',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '09:00 - 10:30 WIB',
-        uraian_kegiatan: 'Konseling Individual: Pendampingan Kesulitan Belajar dan Kedisiplinan Siswa',
-        sasaran: 'Siswa Kelas VIII C (A.n. Budi)',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Dibuatkan kontrak perilaku dan perlu tindak lanjut minggu depan.',
-      },
-    ];
-    localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, INITIAL_DEMO_AGENDA);
 }
 
 export function saveLocalAgendaList(data: AgendaKerja[]) {
-  localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_DATA, data);
 }
 
 // Local Storage Helpers - Undangan Orang Tua
+const INITIAL_DEMO_UNDANGAN: UndanganOrangTua[] = [
+  {
+    id: 'demo-u1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Rabu',
+    tanggal: '2026-08-05',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '08:30 WIB',
+    kelas: 'VIII A',
+    nama_siswa: 'Ahmad Rizky Pratama',
+    nama_orang_tua: 'Bapak Santoso',
+    pekerjaan_orang_tua: 'Wiraswasta',
+    alamat: 'Jl. Pahlawan No. 45, Pasuruan',
+    perihal_undangan: 'Konsultasi Perkembangan Belajar & Kedisiplinan Siswa',
+    uraian_permasalahan: 'Siswa sering terlambat masuk sekolah lebih dari 3 kali dalam seminggu dan nilai akademik menurun.',
+    tindak_lanjut: 'Musyawarah bersama orang tua, penyusunan komitmen belajar rumah, dan pemantauan harian oleh guru BK.',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Orang tua hadir tepat waktu dan menyepakati komitmen pendampingan.',
+  }
+];
+
 export function getLocalUndanganList(): UndanganOrangTua[] {
-  const str = localStorage.getItem(STORAGE_KEY_UNDANGAN);
-  if (!str) {
-    const demoData: UndanganOrangTua[] = [
-      {
-        id: 'demo-u1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Rabu',
-        tanggal: '2026-08-05',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '08:30 WIB',
-        kelas: 'VIII A',
-        nama_siswa: 'Ahmad Rizky Pratama',
-        nama_orang_tua: 'Bapak Santoso',
-        pekerjaan_orang_tua: 'Wiraswasta',
-        alamat: 'Jl. Pahlawan No. 45, Pasuruan',
-        perihal_undangan: 'Konsultasi Perkembangan Belajar & Kedisiplinan Siswa',
-        uraian_permasalahan: 'Siswa sering terlambat masuk sekolah lebih dari 3 kali dalam seminggu dan nilai akademik menurun.',
-        tindak_lanjut: 'Musyawarah bersama orang tua, penyusunan komitmen belajar rumah, dan pemantauan harian oleh guru BK.',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Orang tua hadir tepat waktu dan menyepakati komitmen pendampingan.',
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_UNDANGAN, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, INITIAL_DEMO_UNDANGAN);
 }
 
 export function saveLocalUndanganList(data: UndanganOrangTua[]) {
-  localStorage.setItem(STORAGE_KEY_UNDANGAN, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_UNDANGAN, data);
 }
 
 // Unified API Functions - Agenda BK
@@ -424,43 +401,35 @@ export async function deleteUndanganItem(id: string): Promise<{ success: boolean
 }
 
 // Local Storage Helpers - Home Visit / Kunjungan Rumah
+const INITIAL_DEMO_HOME_VISIT: HomeVisit[] = [
+  {
+    id: 'demo-hv1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Kamis',
+    tanggal: '2026-08-06',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '09:00 WIB',
+    kelas: 'IX C',
+    nama_siswa: 'Rian Adiputra',
+    nama_orang_tua: 'Bapak Hartono',
+    pekerjaan_orang_tua: 'Pedagang',
+    alamat: 'Jl. Bugul Kidul No. 12, Pasuruan',
+    perihal_home_visit: 'Kunjungan Rumah Terkait Presensi & Pendampingan Siswa',
+    uraian_permasalahan: 'Siswa tidak masuk sekolah tanpa keterangan selama 4 hari berturut-turut.',
+    tindak_lanjut: 'Kunjungan rumah langsung bersama Guru BK & Wali Kelas. Orang tua siap mendampingi jam belajar malam dan memastikan presensi sekolah.',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Kunjungan rumah terlaksana baik, orang tua kooperatif.',
+  }
+];
+
 export function getLocalHomeVisitList(): HomeVisit[] {
-  const str = localStorage.getItem(STORAGE_KEY_HOME_VISIT);
-  if (!str) {
-    const demoData: HomeVisit[] = [
-      {
-        id: 'demo-hv1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Kamis',
-        tanggal: '2026-08-06',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '09:00 WIB',
-        kelas: 'IX C',
-        nama_siswa: 'Rian Adiputra',
-        nama_orang_tua: 'Bapak Hartono',
-        pekerjaan_orang_tua: 'Pedagang',
-        alamat: 'Jl. Bugul Kidul No. 12, Pasuruan',
-        perihal_home_visit: 'Kunjungan Rumah Terkait Presensi & Pendampingan Siswa',
-        uraian_permasalahan: 'Siswa tidak masuk sekolah tanpa keterangan selama 4 hari berturut-turut.',
-        tindak_lanjut: 'Kunjungan rumah langsung bersama Guru BK & Wali Kelas. Orang tua siap mendampingi jam belajar malam dan memastikan presensi sekolah.',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Kunjungan rumah terlaksana baik, orang tua kooperatif.',
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_HOME_VISIT, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, INITIAL_DEMO_HOME_VISIT);
 }
 
 export function saveLocalHomeVisitList(data: HomeVisit[]) {
-  localStorage.setItem(STORAGE_KEY_HOME_VISIT, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_HOME_VISIT, data);
 }
 
 // Unified API Functions - Home Visit / Kunjungan Rumah
@@ -590,121 +559,97 @@ export async function deleteHomeVisitItem(id: string): Promise<{ success: boolea
 }
 
 // Local Storage Helpers - Rekam Permasalahan Siswa
+const INITIAL_DEMO_REKAM_PERMASALAHAN: RekamPermasalahan[] = [
+  {
+    id: 'demo-rp1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Kamis',
+    tanggal: '2026-08-06',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '08:00 WIB',
+    kelas: 'VIII B',
+    nama_siswa: 'Dion Saputra',
+    nama_orang_tua: 'Bapak Mulyono',
+    pekerjaan_orang_tua: 'Karyawan Swasta',
+    alamat: 'Jl. Panglima Sudirman No. 88, Pasuruan',
+    ringkasan_uraian_permasalahan: 'Siswa mengalami penurunan motivasi belajar dan beberapa kali tidak mengumpulkan tugas mata pelajaran Matematika & IPA.',
+    upaya_konselor_walikelas: 'Konseling individual oleh Guru BK, diskusi intensif dengan Wali Kelas VIII B, serta pemanggilan orang tua untuk koordinasi jam belajar rumah.',
+    hasil_dan_kesimpulan: 'Siswa berkomitmen membuat jadwal belajar mandiri di rumah dan wali kelas serta orang tua melakukan pemantauan berkala. Hasil evaluasi awal menunjukkan respons positif.',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Proses pendampingan berjalan lancar, dijadwalkan evaluasi lanjutan bulan depan.',
+  }
+];
+
 export function getLocalRekamPermasalahanList(): RekamPermasalahan[] {
-  const str = localStorage.getItem(STORAGE_KEY_REKAM_PERMASALAHAN);
-  if (!str) {
-    const demoData: RekamPermasalahan[] = [
-      {
-        id: 'demo-rp1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Kamis',
-        tanggal: '2026-08-06',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '08:00 WIB',
-        kelas: 'VIII B',
-        nama_siswa: 'Dion Saputra',
-        nama_orang_tua: 'Bapak Mulyono',
-        pekerjaan_orang_tua: 'Karyawan Swasta',
-        alamat: 'Jl. Panglima Sudirman No. 88, Pasuruan',
-        ringkasan_uraian_permasalahan: 'Siswa mengalami penurunan motivasi belajar dan beberapa kali tidak mengumpulkan tugas mata pelajaran Matematika & IPA.',
-        upaya_konselor_walikelas: 'Konseling individual oleh Guru BK, diskusi intensif dengan Wali Kelas VIII B, serta pemanggilan orang tua untuk koordinasi jam belajar rumah.',
-        hasil_dan_kesimpulan: 'Siswa berkomitmen membuat jadwal belajar mandiri di rumah dan wali kelas serta orang tua melakukan pemantauan berkala. Hasil evaluasi awal menunjukkan respons positif.',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Proses pendampingan berjalan lancar, dijadwalkan evaluasi lanjutan bulan depan.',
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_REKAM_PERMASALAHAN, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, INITIAL_DEMO_REKAM_PERMASALAHAN);
 }
 
 export function saveLocalRekamPermasalahanList(data: RekamPermasalahan[]) {
-  localStorage.setItem(STORAGE_KEY_REKAM_PERMASALAHAN, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, data);
 }
 
 // Local Storage Helpers - Konseling Individu
+const INITIAL_DEMO_KONSELING_INDIVIDU: KonselingIndividu[] = [
+  {
+    id: 'demo-ki1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Kamis',
+    tanggal: '2026-08-06',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '08:30 WIB',
+    kelas: 'VIII A',
+    nama_siswa: 'Ahmad Rizky Pratama',
+    topik_permasalahan: 'Kesulitan Pengelolaan Waktu Belajar dan Kecanduan Game Online',
+    media_yang_diperlukan: 'Format Jadwal Harian, Lembar Kontrak Perilaku (Behavioral Contract)',
+    ringkasan_uraian_permasalahan: 'Siswa sering tidur larut malam karena bermain game online sehingga sering mengantuk di kelas dan prestasi belajar menurun.',
+    pendekatan_dan_teknik_konseling: 'Pendekatan Behavioral dengan Teknik Kontrak Perilaku (Behavioral Contracting) & Manajemen Diri (Self Management)',
+    hasil_yang_dicapai: 'Siswa menyepakati jadwal batasan bermain game maksimal 1 jam per hari dan menyusun target belajar harian.',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Siswa kooperatif, akan dilakukan pemantauan berkala minggu depan.'
+  }
+];
+
 export function getLocalKonselingIndividuList(): KonselingIndividu[] {
-  const str = localStorage.getItem(STORAGE_KEY_KONSELING_INDIVIDU);
-  if (!str) {
-    const demoData: KonselingIndividu[] = [
-      {
-        id: 'demo-ki1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Kamis',
-        tanggal: '2026-08-06',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '08:30 WIB',
-        kelas: 'VIII A',
-        nama_siswa: 'Ahmad Rizky Pratama',
-        topik_permasalahan: 'Kesulitan Pengelolaan Waktu Belajar dan Kecanduan Game Online',
-        media_yang_diperlukan: 'Format Jadwal Harian, Lembar Kontrak Perilaku (Behavioral Contract)',
-        ringkasan_uraian_permasalahan: 'Siswa sering tidur larut malam karena bermain game online sehingga sering mengantuk di kelas dan prestasi belajar menurun.',
-        pendekatan_dan_teknik_konseling: 'Pendekatan Behavioral dengan Teknik Kontrak Perilaku (Behavioral Contracting) & Manajemen Diri (Self Management)',
-        hasil_yang_dicapai: 'Siswa menyepakati jadwal batasan bermain game maksimal 1 jam per hari dan menyusun target belajar harian.',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Siswa kooperatif, akan dilakukan pemantauan berkala minggu depan.'
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_KONSELING_INDIVIDU, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, INITIAL_DEMO_KONSELING_INDIVIDU);
 }
 
 export function saveLocalKonselingIndividuList(data: KonselingIndividu[]) {
-  localStorage.setItem(STORAGE_KEY_KONSELING_INDIVIDU, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, data);
 }
 
 // Local Storage Helpers - Konseling Kelompok
+const INITIAL_DEMO_KONSELING_KELOMPOK: KonselingKelompok[] = [
+  {
+    id: 'demo-kk1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    hari: 'Jumat',
+    tanggal: '2026-08-07',
+    bulan: 'Agustus',
+    tahun: '2026',
+    waktu: '09:00 WIB',
+    kelas: 'VII C',
+    nama_siswa: '1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana',
+    topik_permasalahan: 'Peningkatan Sikap Asertif dan Kedisiplinan Kehadiran Sekolah',
+    media_yang_diperlukan: 'Kartu Peran (Role Play Cards), Modul Sikap Asertif, Flipchart',
+    ringkasan_uraian_permasalahan: 'Anggota kelompok memiliki kecenderungan kurang disiplin masuk kelas tepat waktu dan mudah terpengaruh ajakan membolos.',
+    pendekatan_dan_teknik_konseling: 'Pendekatan Kelompok dengan Teknik Simulation Game / Role Playing & Diskusi Kelompok Interaktif',
+    hasil_yang_dicapai: 'Anggota kelompok menyadari dampak perilaku kurang disiplin, saling mendukung untuk mengingatkan kehadiran, dan melatih komunikasi asertif.',
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Dinamika kelompok berjalan aktif, direncanakan sesi tindak lanjut 2 minggu ke depan.'
+  }
+];
+
 export function getLocalKonselingKelompokList(): KonselingKelompok[] {
-  const str = localStorage.getItem(STORAGE_KEY_KONSELING_KELOMPOK);
-  if (!str) {
-    const demoData: KonselingKelompok[] = [
-      {
-        id: 'demo-kk1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        hari: 'Jumat',
-        tanggal: '2026-08-07',
-        bulan: 'Agustus',
-        tahun: '2026',
-        waktu: '09:00 WIB',
-        kelas: 'VII C',
-        nama_siswa: '1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana',
-        topik_permasalahan: 'Peningkatan Sikap Asertif dan Kedisiplinan Kehadiran Sekolah',
-        media_yang_diperlukan: 'Kartu Peran (Role Play Cards), Modul Sikap Asertif, Flipchart',
-        ringkasan_uraian_permasalahan: 'Anggota kelompok memiliki kecenderungan kurang disiplin masuk kelas tepat waktu dan mudah terpengaruh ajakan membolos.',
-        pendekatan_dan_teknik_konseling: 'Pendekatan Kelompok dengan Teknik Simulation Game / Role Playing & Diskusi Kelompok Interaktif',
-        hasil_yang_dicapai: 'Anggota kelompok menyadari dampak perilaku kurang disiplin, saling mendukung untuk mengingatkan kehadiran, dan melatih komunikasi asertif.',
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Dinamika kelompok berjalan aktif, direncanakan sesi tindak lanjut 2 minggu ke depan.'
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_KONSELING_KELOMPOK, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, INITIAL_DEMO_KONSELING_KELOMPOK);
 }
 
 export function saveLocalKonselingKelompokList(data: KonselingKelompok[]) {
-  localStorage.setItem(STORAGE_KEY_KONSELING_KELOMPOK, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, data);
 }
 
 // Unified API Functions - Rekam Permasalahan Siswa
@@ -1086,59 +1031,51 @@ export async function deleteKonselingKelompokItem(id: string): Promise<{ success
 }
 
 // Local Storage Helpers - Surat Pernyataan Siswa
+const INITIAL_DEMO_SURAT_PERNYATAAN: SuratPernyataan[] = [
+  {
+    id: 'demo-sp1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    jenis_sp: 'SP_1',
+    nama_siswa: 'Ahmad Rizky Pratama',
+    kelas: 'VIII A',
+    nama_orang_tua: 'Bapak Santoso',
+    pekerjaan_orang_tua: 'Wiraswasta',
+    alamat_orang_tua: 'Jl. Pahlawan No. 45, Pasuruan',
+    hubungan_keluarga: 'Orang Tua / Wali',
+    peraturan_diketahui:
+      '1. Hadir di sekolah Tepat Waktu\n2. Tidak Absen lagi mulai terhitung Surat Perjanjian ini dibuat\n3. Mengerjakan semua Tugas tertulis /praktek dari Bapak /Ibu Guru Mata Pelajaran yang belum Tuntas',
+    alasan_pengunduran: '',
+    tanggal_surat: '2026-08-06',
+    tempat_surat: 'Pasuruan',
+    keterangan: 'Penerbitan Surat Peringatan 1 (SP 1) Pembinaan Kedisiplinan Siswa.',
+  },
+  {
+    id: 'demo-sp-ortu1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    jenis_sp: 'SP_ORTU_1',
+    nama_siswa: 'Budi Santoso',
+    kelas: 'VIII B',
+    nama_orang_tua: 'Bapak Suparno',
+    pekerjaan_orang_tua: 'PNS',
+    alamat_orang_tua: 'Jl. Veteran No. 12, Pasuruan',
+    hubungan_keluarga: 'Orang Tua Kandung',
+    peraturan_diketahui:
+      'Apabila dikemudian hari nanti di kelas VIII sikap anak saya masih tetap /tidak berubah sehingga mempengaruhi nilai akademis dan non akademis menjadi rendah, sehingga anak saya tidak naik kelas atau mengulang di kelas VIII, maka saya sebagai orang tua tidak akan menuntut kepada pihak sekolah.',
+    alasan_pengunduran: '',
+    tanggal_surat: '2026-08-06',
+    tempat_surat: 'Pasuruan',
+    keterangan: 'Surat Pernyataan Orang Tua / Wali Siswa terkait komitmen disiplin.',
+  },
+];
+
 export function getLocalSuratPernyataanList(): SuratPernyataan[] {
-  const str = localStorage.getItem(STORAGE_KEY_SURAT_PERNYATAAN);
-  if (!str) {
-    const demoData: SuratPernyataan[] = [
-      {
-        id: 'demo-sp1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        jenis_sp: 'SP_1',
-        nama_siswa: 'Ahmad Rizky Pratama',
-        kelas: 'VIII A',
-        nama_orang_tua: 'Bapak Santoso',
-        pekerjaan_orang_tua: 'Wiraswasta',
-        alamat_orang_tua: 'Jl. Pahlawan No. 45, Pasuruan',
-        hubungan_keluarga: 'Orang Tua / Wali',
-        peraturan_diketahui:
-          '1. Hadir di sekolah Tepat Waktu\n2. Tidak Absen lagi mulai terhitung Surat Perjanjian ini dibuat\n3. Mengerjakan semua Tugas tertulis /praktek dari Bapak /Ibu Guru Mata Pelajaran yang belum Tuntas',
-        alasan_pengunduran: '',
-        tanggal_surat: '2026-08-06',
-        tempat_surat: 'Pasuruan',
-        keterangan: 'Penerbitan Surat Peringatan 1 (SP 1) Pembinaan Kedisiplinan Siswa.',
-      },
-      {
-        id: 'demo-sp-ortu1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        jenis_sp: 'SP_ORTU_1',
-        nama_siswa: 'Budi Santoso',
-        kelas: 'VIII B',
-        nama_orang_tua: 'Bapak Suparno',
-        pekerjaan_orang_tua: 'PNS',
-        alamat_orang_tua: 'Jl. Veteran No. 12, Pasuruan',
-        hubungan_keluarga: 'Orang Tua Kandung',
-        peraturan_diketahui:
-          'Apabila dikemudian hari nanti di kelas VIII sikap anak saya masih tetap /tidak berubah sehingga mempengaruhi nilai akademis dan non akademis menjadi rendah, sehingga anak saya tidak naik kelas atau mengulang di kelas VIII, maka saya sebagai orang tua tidak akan menuntut kepada pihak sekolah.',
-        alasan_pengunduran: '',
-        tanggal_surat: '2026-08-06',
-        tempat_surat: 'Pasuruan',
-        keterangan: 'Surat Pernyataan Orang Tua / Wali Siswa terkait komitmen disiplin.',
-      },
-    ];
-    localStorage.setItem(STORAGE_KEY_SURAT_PERNYATAAN, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, INITIAL_DEMO_SURAT_PERNYATAAN);
 }
 
 export function saveLocalSuratPernyataanList(data: SuratPernyataan[]) {
-  localStorage.setItem(STORAGE_KEY_SURAT_PERNYATAAN, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, data);
 }
 
 // Unified API Functions - Surat Pernyataan Siswa
@@ -1268,68 +1205,60 @@ export async function deleteSuratPernyataanItem(id: string): Promise<{ success: 
 }
 
 // Local Storage Helpers - Konferensi Kasus Siswa
+const INITIAL_DEMO_KONFERENSI_KASUS: KonferensiKasus[] = [
+  {
+    id: 'demo-kk1',
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    updated_at: new Date(Date.now() - 86400000).toISOString(),
+    nama_konseli: 'Syahnaz (IXE)',
+    kelas_ta: '9E / 2016-2017',
+    jenis_masalah: 'Berkelahi karena salah paham',
+    hari_tgl_jam: 'Kamis, 8 September 2016 Jam 10.30 wib',
+    pemandu_konferensi: 'Konselor Sekolah',
+    pemandu_nama: 'Wiwik Ismiati, S.Pd',
+    pemandu_jabatan: 'Konselor',
+    data_ingin_diperoleh: 'Identifikasi permasalahan siswa',
+    uraian_kegiatan_inti: 'Untuk mengetahui tentang kejadian yang sebenarnya dari siswa yang terlibat permasalahan tersebut di sekolah, baik dari pihak sekolah dengan siswa yang berseteru. Dan mencari solusi yang terbaik diantara siswa dengan teman-temannya.',
+    data_diperoleh_simpulan: 'Dari informasi yang terkumpul bahwa Syahnaz terlibat perseteruan karena membela sahabatnya yaitu Aminah. Karena membela sahabatnya maka Syahnaz yang di bully oleh anak-anak kelas 7C. Karena merasa tersinggung dengan perlakuan siswa kelas 7C maka Syahnaz tidak terima dan terjadi perkelahian sampai akan melempar batu. Ketika mereka berseteru dan ditemukan penyelesaiannya maka persoalan bisa dengan mudah terselesaikan.',
+    keterpenuhan_kebutuhan_data: 'terpenuhi',
+    rujukan_pelayanan: 'Guru Mata Pelajaran, Wali Kelas, Konselor Sekolah',
+    rapat_nama_sekolah: 'UPT SMPN 7 PASURUAN',
+    rapat_alamat: 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo',
+    rapat_tempat: 'UPT SMPN 7 PASURUAN',
+    rapat_ketua: 'Konselor',
+    rapat_jumlah_hadir: '9 orang',
+    rapat_dimulai_pukul: '10.30 WIB',
+    rapat_diakhiri_pukul: '11.00 WIB',
+    rapat_hasil_pertemuan: 'A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena anak kelas 7C yang bermasalah sering mengolok-olok Aminah.\nB. Dari peristiwa tersebut temannya Aminah tidak terima dan terjadi pertengkaran/adu mulut dengan Syahnaz.\nC. Syahnaz yang membela Aminah akhirnya kena tampar oleh M. Badru dan tidak terima sehingga membawa batu bata mau dilemparkan.\nD. Setelah terjadi konferensi kasus, maka masing-masing pihak mau menerima keputusan bersama dan saling memaafkan. Akhirnya permasalahan selesai dengan saling memaafkan dan untuk kelas 7C semua panggilan orang tua untuk selanjutnya diberi pengarahan.',
+    daftar_hadir_peserta_singkat: '1. Konselor, 2. M. Badru T (VIIC), 3. M. Usman (VIIC), 4. M. Amyak (VIIC), 5. M. Nabil (VIIC), 6. Aminah Husain (VIIIB), 7. Syahnaz (IXE)',
+    daftar_hadir_rows: JSON.stringify([
+      { no: 1, nama: 'Ibu Citra Dwi W', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+      { no: 2, nama: 'Ibu Wiwik Ismiati', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+      { no: 3, nama: 'Ibu Eki', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
+      { no: 4, nama: 'M. Badru', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 5, nama: 'M. Usman', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 6, nama: 'M. Amyak', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 7, nama: 'M. Nabil', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 8, nama: 'Syahnaz', jabatan: 'Siswa', kelas: '9E', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 9, nama: 'Aminah', jabatan: 'Siswa', kelas: '8B', asal_sekolah: '-', ttd: 'Ada' },
+      { no: 10, nama: 'Naval R.', jabatan: 'Siswa', kelas: '7C', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' }
+    ]),
+    tanggal_surat: '2026-08-06',
+    tempat_surat: 'Pasuruan',
+    nama_guru_bk: getActiveGuruBK().nama,
+    nip_guru_bk: getActiveGuruBK().nip,
+    nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: '19860410 201001 2 030',
+    keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
+  }
+];
+
 export function getLocalKonferensiKasusList(): KonferensiKasus[] {
-  const str = localStorage.getItem(STORAGE_KEY_KONFERENSI_KASUS);
-  if (!str) {
-    const demoData: KonferensiKasus[] = [
-      {
-        id: 'demo-kk1',
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        nama_konseli: 'Syahnaz (IXE)',
-        kelas_ta: '9E / 2016-2017',
-        jenis_masalah: 'Berkelahi karena salah paham',
-        hari_tgl_jam: 'Kamis, 8 September 2016 Jam 10.30 wib',
-        pemandu_konferensi: 'Konselor Sekolah',
-        pemandu_nama: 'Wiwik Ismiati, S.Pd',
-        pemandu_jabatan: 'Konselor',
-        data_ingin_diperoleh: 'Identifikasi permasalahan siswa',
-        uraian_kegiatan_inti: 'Untuk mengetahui tentang kejadian yang sebenarnya dari siswa yang terlibat permasalahan tersebut di sekolah, baik dari pihak sekolah dengan siswa yang berseteru. Dan mencari solusi yang terbaik diantara siswa dengan teman-temannya.',
-        data_diperoleh_simpulan: 'Dari informasi yang terkumpul bahwa Syahnaz terlibat perseteruan karena membela sahabatnya yaitu Aminah. Karena membela sahabatnya maka Syahnaz yang di bully oleh anak-anak kelas 7C. Karena merasa tersinggung dengan perlakuan siswa kelas 7C maka Syahnaz tidak terima dan terjadi perkelahian sampai akan melempar batu. Ketika mereka berseteru dan ditemukan penyelesaiannya maka persoalan bisa dengan mudah terselesaikan.',
-        keterpenuhan_kebutuhan_data: 'terpenuhi',
-        rujukan_pelayanan: 'Guru Mata Pelajaran, Wali Kelas, Konselor Sekolah',
-        rapat_nama_sekolah: 'UPT SMPN 7 PASURUAN',
-        rapat_alamat: 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo',
-        rapat_tempat: 'UPT SMPN 7 PASURUAN',
-        rapat_ketua: 'Konselor',
-        rapat_jumlah_hadir: '9 orang',
-        rapat_dimulai_pukul: '10.30 WIB',
-        rapat_diakhiri_pukul: '11.00 WIB',
-        rapat_hasil_pertemuan: 'A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena anak kelas 7C yang bermasalah sering mengolok-olok Aminah.\nB. Dari peristiwa tersebut temannya Aminah tidak terima dan terjadi pertengkaran/adu mulut dengan Syahnaz.\nC. Syahnaz yang membela Aminah akhirnya kena tampar oleh M. Badru dan tidak terima sehingga membawa batu bata mau dilemparkan.\nD. Setelah terjadi konferensi kasus, maka masing-masing pihak mau menerima keputusan bersama dan saling memaafkan. Akhirnya permasalahan selesai dengan saling memaafkan dan untuk kelas 7C semua panggilan orang tua untuk selanjutnya diberi pengarahan.',
-        daftar_hadir_peserta_singkat: '1. Konselor, 2. M. Badru T (VIIC), 3. M. Usman (VIIC), 4. M. Amyak (VIIC), 5. M. Nabil (VIIC), 6. Aminah Husain (VIIIB), 7. Syahnaz (IXE)',
-        daftar_hadir_rows: JSON.stringify([
-          { no: 1, nama: 'Ibu Citra Dwi W', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-          { no: 2, nama: 'Ibu Wiwik Ismiati', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-          { no: 3, nama: 'Ibu Eki', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-          { no: 4, nama: 'M. Badru', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 5, nama: 'M. Usman', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 6, nama: 'M. Amyak', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 7, nama: 'M. Nabil', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 8, nama: 'Syahnaz', jabatan: 'Siswa', kelas: '9E', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 9, nama: 'Aminah', jabatan: 'Siswa', kelas: '8B', asal_sekolah: '-', ttd: 'Ada' },
-          { no: 10, nama: 'Naval R.', jabatan: 'Siswa', kelas: '7C', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' }
-        ]),
-        tanggal_surat: '2026-08-06',
-        tempat_surat: 'Pasuruan',
-        nama_guru_bk: getActiveGuruBK().nama,
-        nip_guru_bk: getActiveGuruBK().nip,
-        nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
-        nip_kepala_sekolah: '19860410 201001 2 030',
-        keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_KONFERENSI_KASUS, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, INITIAL_DEMO_KONFERENSI_KASUS);
 }
 
 export function saveLocalKonferensiKasusList(data: KonferensiKasus[]) {
-  localStorage.setItem(STORAGE_KEY_KONFERENSI_KASUS, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, data);
 }
 
 // Unified API Functions - Konferensi Kasus Siswa
@@ -1459,53 +1388,45 @@ export async function deleteKonferensiKasusItem(id: string): Promise<{ success: 
 }
 
 // Local Storage Helpers - Siswa
+const INITIAL_DEMO_SISWA: Siswa[] = [
+  {
+    id: 'demo-s1',
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    nama_siswa: 'Ahmad Rizky Pratama',
+    kelas: 'VIII A',
+    nis: '12345',
+    jenis_kelamin: 'Laki-laki',
+    keterangan: 'Siswa aktif'
+  },
+  {
+    id: 'demo-s2',
+    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    nama_siswa: 'Siti Aminah',
+    kelas: 'VIII A',
+    nis: '12346',
+    jenis_kelamin: 'Perempuan',
+    keterangan: 'Siswa aktif'
+  },
+  {
+    id: 'demo-s3',
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    nama_siswa: 'Rian Adiputra',
+    kelas: 'IX C',
+    nis: '12347',
+    jenis_kelamin: 'Laki-laki',
+    keterangan: 'Pernah bimbingan kedisiplinan'
+  }
+];
+
 export function getLocalSiswaList(): Siswa[] {
-  const str = localStorage.getItem(STORAGE_KEY_SISWA);
-  if (!str) {
-    const demoData: Siswa[] = [
-      {
-        id: 'demo-s1',
-        created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-        nama_siswa: 'Ahmad Rizky Pratama',
-        kelas: 'VIII A',
-        nis: '12345',
-        jenis_kelamin: 'Laki-laki',
-        keterangan: 'Siswa aktif'
-      },
-      {
-        id: 'demo-s2',
-        created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-        nama_siswa: 'Siti Aminah',
-        kelas: 'VIII A',
-        nis: '12346',
-        jenis_kelamin: 'Perempuan',
-        keterangan: 'Siswa aktif'
-      },
-      {
-        id: 'demo-s3',
-        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        nama_siswa: 'Rian Adiputra',
-        kelas: 'IX C',
-        nis: '12347',
-        jenis_kelamin: 'Laki-laki',
-        keterangan: 'Pernah bimbingan kedisiplinan'
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_SISWA, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    return JSON.parse(str);
-  } catch {
-    return [];
-  }
+  return safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, INITIAL_DEMO_SISWA);
 }
 
 export function saveLocalSiswaList(data: Siswa[]) {
-  localStorage.setItem(STORAGE_KEY_SISWA, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_SISWA, data);
 }
 
 export async function fetchSiswaList(): Promise<{ data: Siswa[]; isFromSupabase: boolean; error?: string }> {
@@ -1772,52 +1693,43 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
 }
 
 // Local Storage Helpers - Jurnal BK
+const INITIAL_DEMO_JURNAL_BK: JurnalBK[] = [
+  {
+    id: 'demo-jurnal-1',
+    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    hari: 'Senin',
+    tanggal: '2026-08-03',
+    bulan: 'Agustus',
+    tahun: '2026',
+    jam_ke: '1 - 2',
+    kelas: 'VIII A',
+    sasaran_peserta: 'Siswa Kelas VIII A',
+    materi_layanan: 'Pengelolaan Emosi dan Kedisiplinan Belajar Mandiri',
+    bidang_layanan: 'Pribadi',
+    jenis_layanan: 'Bimbingan Klasikal / Lintas Kelas',
+    fungsi_layanan: 'Pemahaman: Membantu konseli memahami diri dan lingkungannya.',
+    hasil_layanan_bmb3: 'B: Siswa memahami dampak emosi negatif. M: Siswa merasa termotivasi mengontrol emosi. B: Siswa bersikap sopan. T: Siswa membuat jurnal refleksi harian. B: Siswa bertanggung jawab menjalankan komitmen kelas.',
+    siswa_tidak_mengikuti: [
+      { nama_siswa: 'Ahmad Rizky', alasan: 'Sakit (Izin Orang Tua)', tindak_lanjut: 'Layanan susulan modul ringkasan & bimbingan individual' }
+    ],
+    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
+    keterangan: 'Layanan berjalan lancar dan interaktif.',
+    nama_guru_bk: getActiveGuruBK().nama,
+    nip_guru_bk: getActiveGuruBK().nip,
+    nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: '19860410 201001 2 030',
+    tanggal_surat: '2026-08-03',
+    tempat_surat: 'Pasuruan'
+  }
+];
+
 export function getLocalJurnalBKList(): JurnalBK[] {
-  const str = localStorage.getItem(STORAGE_KEY_JURNAL_BK);
-  if (!str) {
-    const demoData: JurnalBK[] = [
-      {
-        id: 'demo-jurnal-1',
-        created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-        hari: 'Senin',
-        tanggal: '2026-08-03',
-        bulan: 'Agustus',
-        tahun: '2026',
-        jam_ke: '1 - 2',
-        kelas: 'VIII A',
-        sasaran_peserta: 'Siswa Kelas VIII A',
-        materi_layanan: 'Pengelolaan Emosi dan Kedisiplinan Belajar Mandiri',
-        bidang_layanan: 'Pribadi',
-        jenis_layanan: 'Bimbingan Klasikal / Lintas Kelas',
-        fungsi_layanan: 'Pemahaman: Membantu konseli memahami diri dan lingkungannya.',
-        hasil_layanan_bmb3: 'B: Siswa memahami dampak emosi negatif. M: Siswa merasa termotivasi mengontrol emosi. B: Siswa bersikap sopan. T: Siswa membuat jurnal refleksi harian. B: Siswa bertanggung jawab menjalankan komitmen kelas.',
-        siswa_tidak_mengikuti: [
-          { nama_siswa: 'Ahmad Rizky', alasan: 'Sakit (Izin Orang Tua)', tindak_lanjut: 'Layanan susulan modul ringkasan & bimbingan individual' }
-        ],
-        link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-        keterangan: 'Layanan berjalan lancar dan interaktif.',
-        nama_guru_bk: getActiveGuruBK().nama,
-        nip_guru_bk: getActiveGuruBK().nip,
-        nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
-        nip_kepala_sekolah: '19860410 201001 2 030',
-        tanggal_surat: '2026-08-03',
-        tempat_surat: 'Pasuruan'
-      }
-    ];
-    localStorage.setItem(STORAGE_KEY_JURNAL_BK, JSON.stringify(demoData));
-    return demoData;
-  }
-  try {
-    const parsed = JSON.parse(str);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+  return safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, INITIAL_DEMO_JURNAL_BK);
 }
 
 export function saveLocalJurnalBKList(data: JurnalBK[]) {
-  localStorage.setItem(STORAGE_KEY_JURNAL_BK, JSON.stringify(data));
+  safeSetStorage(STORAGE_KEY_JURNAL_BK, data);
 }
 
 export async function fetchAllJurnalBK(): Promise<{ data: JurnalBK[]; isFromSupabase: boolean; error?: string }> {

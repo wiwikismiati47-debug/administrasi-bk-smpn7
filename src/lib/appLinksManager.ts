@@ -1,6 +1,7 @@
 import { AppLink } from '../types';
+import { safeGetStorage, safeSetStorage } from './storageManager';
 
-const STORAGE_KEY_APP_LINKS = 'bk_smpn7_dashboard_app_links';
+export const STORAGE_KEY_APP_LINKS = 'bk_smpn7_dashboard_app_links';
 
 export const INITIAL_DEFAULT_LINKS: AppLink[] = [
   {
@@ -116,54 +117,52 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
 ];
 
 export function getSavedAppLinks(): AppLink[] {
-  const dataStr = localStorage.getItem(STORAGE_KEY_APP_LINKS);
-  if (!dataStr) {
+  const parsed = safeGetStorage<AppLink[] | null>(STORAGE_KEY_APP_LINKS, null);
+  if (!parsed || !Array.isArray(parsed) || parsed.length === 0) {
     saveAppLinksToStorage(INITIAL_DEFAULT_LINKS);
     return INITIAL_DEFAULT_LINKS;
   }
   try {
-    let parsed = JSON.parse(dataStr);
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      // Exclude removed default links
-      const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk', 'link-supabase-console']);
-      parsed = parsed.filter((item: AppLink) => !removedIds.has(item.id));
+    let cleanList = parsed;
+    // Exclude removed default links
+    const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk', 'link-supabase-console']);
+    cleanList = cleanList.filter((item: AppLink) => !removedIds.has(item.id));
 
-      const existingMap = new Map<string, AppLink>(parsed.map((item: AppLink) => [item.id, item]));
-      let updated = false;
+    const existingMap = new Map<string, AppLink>(cleanList.map((item: AppLink) => [item.id, item]));
+    let updated = false;
 
-      // Ensure all INITIAL_DEFAULT_LINKS are present and up to date
-      const mergedDefaults = INITIAL_DEFAULT_LINKS.map((defaultLink) => {
-        const existing = existingMap.get(defaultLink.id);
-        if (!existing) {
-          updated = true;
-          return defaultLink;
-        }
-        if (defaultLink.isInternal) {
-          if (
-            existing.title !== defaultLink.title ||
-            existing.url !== defaultLink.url ||
-            existing.badge !== defaultLink.badge ||
-            existing.iconName !== defaultLink.iconName ||
-            existing.category !== defaultLink.category
-          ) {
-            updated = true;
-            return { ...existing, ...defaultLink };
-          }
-        }
-        return existing;
-      });
-
-      // Retain custom user-added non-default links
-      const defaultIds = new Set(INITIAL_DEFAULT_LINKS.map((d) => d.id));
-      const customLinks = parsed.filter((item: AppLink) => !defaultIds.has(item.id));
-
-      const result = [...mergedDefaults, ...customLinks];
-
-      if (updated || result.length !== parsed.length) {
-        saveAppLinksToStorage(result);
+    // Ensure all INITIAL_DEFAULT_LINKS are present and up to date
+    const mergedDefaults = INITIAL_DEFAULT_LINKS.map((defaultLink) => {
+      const existing = existingMap.get(defaultLink.id);
+      if (!existing) {
+        updated = true;
+        return defaultLink;
       }
-      return result;
+      if (defaultLink.isInternal) {
+        if (
+          existing.title !== defaultLink.title ||
+          existing.url !== defaultLink.url ||
+          existing.badge !== defaultLink.badge ||
+          existing.iconName !== defaultLink.iconName ||
+          existing.category !== defaultLink.category
+        ) {
+          updated = true;
+          return { ...existing, ...defaultLink };
+        }
+      }
+      return existing;
+    });
+
+    // Retain custom user-added non-default links
+    const defaultIds = new Set(INITIAL_DEFAULT_LINKS.map((d) => d.id));
+    const customLinks = cleanList.filter((item: AppLink) => !defaultIds.has(item.id));
+
+    const result = [...mergedDefaults, ...customLinks];
+
+    if (updated || result.length !== cleanList.length) {
+      saveAppLinksToStorage(result);
     }
+    return result;
   } catch {
     // fallback
   }
@@ -176,7 +175,7 @@ export function resetDefaultAppLinks(): AppLink[] {
 }
 
 export function saveAppLinksToStorage(links: AppLink[]): void {
-  localStorage.setItem(STORAGE_KEY_APP_LINKS, JSON.stringify(links));
+  safeSetStorage(STORAGE_KEY_APP_LINKS, links);
 }
 
 export function exportLinksBackupJSON(links: AppLink[]): void {

@@ -55,7 +55,18 @@ import {
   saveOrUpdateJurnalBK,
   deleteJurnalBKItem,
   getSavedSupabaseConfig,
-  getSupabaseClient
+  getSupabaseClient,
+  STORAGE_KEY_CONFIG,
+  STORAGE_KEY_DATA,
+  STORAGE_KEY_UNDANGAN,
+  STORAGE_KEY_HOME_VISIT,
+  STORAGE_KEY_REKAM_PERMASALAHAN,
+  STORAGE_KEY_KONSELING_INDIVIDU,
+  STORAGE_KEY_KONSELING_KELOMPOK,
+  STORAGE_KEY_SURAT_PERNYATAAN,
+  STORAGE_KEY_KONFERENSI_KASUS,
+  STORAGE_KEY_SISWA,
+  STORAGE_KEY_JURNAL_BK
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -63,7 +74,10 @@ import {
   saveAppLinksToStorage,
   exportLinksBackupJSON,
   parseLinksBackupJSON,
+  STORAGE_KEY_APP_LINKS
 } from './lib/appLinksManager';
+import { STORAGE_KEY_SIGNATURES } from './lib/signatures';
+import { initStorageKeys } from './lib/storageManager';
 import { DashboardHeader } from './components/DashboardHeader';
 import { SidebarMenu } from './components/SidebarMenu';
 import { MainAppViewer } from './components/MainAppViewer';
@@ -148,16 +162,7 @@ export default function App() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // 1. Initial Load App Links
-  useEffect(() => {
-    const saved = getSavedAppLinks();
-    setLinks(saved);
-    if (saved.length > 0) {
-      setSelectedLink(saved[0]);
-    }
-  }, []);
-
-  // 2. Load Agenda & Undangan Data
+  // 1. Load Agenda & Undangan Data
   const loadAgendaData = useCallback(async () => {
     setIsLoadingAgenda(true);
     try {
@@ -340,7 +345,30 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    refreshAllData();
+    async function initApp() {
+      await initStorageKeys([
+        STORAGE_KEY_CONFIG,
+        STORAGE_KEY_DATA,
+        STORAGE_KEY_UNDANGAN,
+        STORAGE_KEY_HOME_VISIT,
+        STORAGE_KEY_REKAM_PERMASALAHAN,
+        STORAGE_KEY_KONSELING_INDIVIDU,
+        STORAGE_KEY_KONSELING_KELOMPOK,
+        STORAGE_KEY_SURAT_PERNYATAAN,
+        STORAGE_KEY_KONFERENSI_KASUS,
+        STORAGE_KEY_SISWA,
+        STORAGE_KEY_JURNAL_BK,
+        STORAGE_KEY_APP_LINKS,
+        STORAGE_KEY_SIGNATURES
+      ]);
+      const saved = getSavedAppLinks();
+      setLinks(saved);
+      if (saved.length > 0) {
+        setSelectedLink((prev) => prev || saved[0]);
+      }
+      refreshAllData();
+    }
+    initApp();
 
     // Set up realtime subscription
     const config = getSavedSupabaseConfig();
