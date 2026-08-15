@@ -316,13 +316,13 @@ export default function App() {
       loadJurnalBKData()
     ]);
     
-    // Check if any load was successful but some failed
-    const connectedCount = results.filter(r => r).length;
-    if (connectedCount > 0 && connectedCount < results.length) {
-      setIsSupabaseConnected(false); // Force to false to show warning
-      showToast('PERINGATAN: Beberapa tabel gagal dimuat dari Supabase. Harap jalankan ulang Script SQL di menu Pengaturan.', 'error');
-    } else if (connectedCount === results.length && results.length > 0) {
+    // Check if any load was successful from Supabase
+    const connectedCount = results.filter(r => Boolean(r)).length;
+    if (connectedCount > 0) {
       setIsSupabaseConnected(true);
+      if (connectedCount < results.length) {
+        console.warn(`Supabase terhubung (${connectedCount}/${results.length} tabel). Tabel yang belum tersedia di Supabase otomatis menggunakan penyimpanan data lokal.`);
+      }
     } else {
       setIsSupabaseConnected(false);
     }

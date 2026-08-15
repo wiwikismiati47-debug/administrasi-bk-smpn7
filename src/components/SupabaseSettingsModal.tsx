@@ -3,8 +3,9 @@ import { SupabaseConfig } from '../types';
 import {
   getSavedSupabaseConfig,
   saveSupabaseConfigToStorage,
-  getSupabaseClient,
   getSupabaseSqlSetup,
+  testAllSupabaseTables,
+  SupabaseTableTestResult,
   DEFAULT_TABLE_NAME
 } from '../lib/supabase';
 import {
@@ -15,9 +16,9 @@ import {
   Copy,
   Check,
   ShieldCheck,
-  ExternalLink,
-  Sparkles,
-  Terminal
+  Terminal,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 
 interface SupabaseSettingsModalProps {
@@ -41,6 +42,7 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
     tested: boolean;
     success: boolean;
     message: string;
+    details?: SupabaseTableTestResult[];
   }>({ tested: false, success: false, message: '' });
 
   const [copiedSql, setCopiedSql] = useState(false);
@@ -70,36 +72,28 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
     setTestStatus({ tested: false, success: false, message: '' });
 
     try {
-      const client = getSupabaseClient(config);
-      if (!client) {
-        throw new Error('Gagal inisialisasi client Supabase.');
-      }
+      const testRes = await testAllSupabaseTables(config);
 
-      // Test simple select on table
-      const { data, error } = await client
-        .from(config.tableName)
-        .select('id')
-        .limit(1);
-
-      if (error) {
-        if (error.code === '42P01') {
-          setTestStatus({
-            tested: true,
-            success: false,
-            message: `Koneksi berhasil! Namun tabel "${config.tableName}" belum dibuat di Supabase. Silakan jalankan script SQL di bawah ini pada SQL Editor Supabase Anda.`,
-          });
-        } else {
-          setTestStatus({
-            tested: true,
-            success: false,
-            message: `Error Supabase: ${error.message}`,
-          });
-        }
-      } else {
+      if (!testRes.connected && testRes.error) {
+        setTestStatus({
+          tested: true,
+          success: false,
+          message: `Gagal terhubung ke Supabase: ${testRes.error}`,
+          details: testRes.tables
+        });
+      } else if (testRes.missingCount === 0) {
         setTestStatus({
           tested: true,
           success: true,
-          message: `Koneksi ke Supabase & Tabel "${config.tableName}" berhasil terhubung!`,
+          message: `Sukses! Semua ${testRes.totalTables} tabel database BK terhubung sempurna dan siap digunakan di Supabase.`,
+          details: testRes.tables
+        });
+      } else {
+        setTestStatus({
+          tested: true,
+          success: false,
+          message: `Terhubung (${testRes.existingCount}/${testRes.totalTables} tabel), namun ${testRes.missingCount} tabel belum dibuat di Supabase (${testRes.missingTableNames.join(', ')}). Silakan salin & jalankan Script SQL di bawah ini pada SQL Editor Supabase Anda.`,
+          details: testRes.tables
         });
       }
     } catch (err: unknown) {
@@ -172,10 +166,10 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="font-bold text-emerald-950">
-              Akses Publik Tanpa Login (Sesuai Permintaan)
+              Akses Publik & Real-Time Aktif
             </p>
             <p className="leading-relaxed">
-              Aplikasi ini dikonfigurasi agar siapapun dapat membuka form, menyimpan, dan memperbarui data tanpa harus registrasi/login terlebih dahulu.
+              Aplikasi ini dikonfigurasi agar data tersinkronisasi secara real-time ke Supabase tanpa memerlukan login rumit.
             </p>
           </div>
         </div>
@@ -210,7 +204,7 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 mb-1">
-              NAMA TABEL DATABASE
+              NAMA TABEL UTAMA AGENDA
             </label>
             <input
               type="text"
@@ -224,19 +218,63 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
 
         {/* Test Result Message */}
         {testStatus.tested && (
-          <div
-            className={`p-3.5 rounded-xl text-xs font-medium flex items-start gap-2.5 border ${
-              testStatus.success
-                ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-                : 'bg-amber-50 text-amber-900 border-amber-300'
-            }`}
-          >
-            {testStatus.success ? (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-3">
+            <div
+              className={`p-3.5 rounded-xl text-xs font-medium flex items-start gap-2.5 border ${
+                testStatus.success
+                  ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
+                  : 'bg-amber-50 text-amber-900 border-amber-300'
+              }`}
+            >
+              {testStatus.success ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              )}
+              <div className="leading-relaxed font-medium">{testStatus.message}</div>
+            </div>
+
+            {/* Detailed Table Status Matrix */}
+            {testStatus.details && testStatus.details.length > 0 && (
+              <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 text-xs">
+                <div className="font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                  <Server className="w-4 h-4 text-blue-600" />
+                  Status 11 Tabel Database di Supabase:
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {testStatus.details.map((t) => (
+                    <div
+                      key={t.tableName}
+                      className={`flex items-center justify-between p-2 rounded-lg border text-[11px] ${
+                        t.exists
+                          ? 'bg-emerald-50/70 border-emerald-200 text-emerald-900'
+                          : 'bg-red-50 border-red-200 text-red-800'
+                      }`}
+                    >
+                      <div className="truncate pr-2">
+                        <span className="font-semibold">{t.title}</span>
+                        <span className="block text-[10px] text-slate-500 font-mono">({t.tableName})</span>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                          t.exists ? 'bg-emerald-200 text-emerald-800' : 'bg-red-200 text-red-800'
+                        }`}
+                      >
+                        {t.exists ? (
+                          <>
+                            <Check className="w-3 h-3" /> Ada
+                          </>
+                        ) : (
+                          <>
+                            <X className="w-3 h-3" /> Belum
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
-            <div className="leading-relaxed">{testStatus.message}</div>
           </div>
         )}
 
@@ -245,7 +283,7 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 uppercase">
               <Terminal className="w-4 h-4" />
-              Script SQL Pembuatan Tabel Supabase
+              Script SQL Pembuatan Seluruh Tabel Supabase
             </span>
 
             <button
@@ -257,8 +295,8 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
             </button>
           </div>
 
-          <p className="text-[11px] text-slate-400">
-            Salin script SQL ini lalu jalankan di Supabase Studio menu <strong>SQL Editor</strong> untuk membuat tabel dan membuka akses publik.
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Jika ada tabel yang berstatus <strong>&quot;Belum&quot;</strong>, klik <strong>Salin SQL Script</strong> di atas, lalu buka <strong>Supabase Dashboard &rarr; SQL Editor &rarr; New Query &rarr; Paste &rarr; Run</strong>.
           </p>
 
           <pre className="text-[11px] bg-slate-950 p-3 rounded-lg overflow-x-auto text-emerald-400 font-mono border border-slate-800 max-h-40">
@@ -281,7 +319,14 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
               disabled={isTesting}
               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-1.5"
             >
-              {isTesting ? 'Menguji...' : 'Uji Koneksi'}
+              {isTesting ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-600" />
+                  Menguji 11 Tabel...
+                </>
+              ) : (
+                'Uji Koneksi 11 Tabel'
+              )}
             </button>
 
             <button
@@ -298,3 +343,4 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
     </div>
   );
 };
+

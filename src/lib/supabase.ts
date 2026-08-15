@@ -2003,8 +2003,7 @@ export function getSupabaseSqlSetup(
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
--- 10. TABEL TANDA TANGAN (signatures_bk)
+-- 1. TABEL TANDA TANGAN (signatures_bk)
 --------------------------------------------------------------------------------
 create table if not exists public.signatures_bk (
   id text primary key default gen_random_uuid()::text,
@@ -2016,7 +2015,18 @@ create table if not exists public.signatures_bk (
   unique(record_id, role)
 );
 
--- 1. TABEL A: AGENDA KERJA BK (${tableName})
+alter table public.signatures_bk enable row level security;
+drop policy if exists "Akses Baca Publik Signatures" on public.signatures_bk;
+drop policy if exists "Akses Tambah Publik Signatures" on public.signatures_bk;
+drop policy if exists "Akses Update Publik Signatures" on public.signatures_bk;
+drop policy if exists "Akses Hapus Publik Signatures" on public.signatures_bk;
+
+create policy "Akses Baca Publik Signatures" on public.signatures_bk for select using (true);
+create policy "Akses Tambah Publik Signatures" on public.signatures_bk for insert with check (true);
+create policy "Akses Update Publik Signatures" on public.signatures_bk for update using (true);
+create policy "Akses Hapus Publik Signatures" on public.signatures_bk for delete using (true);
+
+-- 2. TABEL A: AGENDA KERJA BK (${tableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${tableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2047,7 +2057,7 @@ create policy "Akses Update Publik Agenda BK" on public.${tableName} for update 
 create policy "Akses Hapus Publik Agenda BK" on public.${tableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 2. TABEL B: UNDANGAN ORANG TUA SISWA (${undanganTableName})
+-- 3. TABEL B: UNDANGAN ORANG TUA SISWA (${undanganTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${undanganTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2093,7 +2103,7 @@ create policy "Akses Update Publik Undangan Ortu" on public.${undanganTableName}
 create policy "Akses Hapus Publik Undangan Ortu" on public.${undanganTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 3. TABEL C: HOME VISIT / KUNJUNGAN RUMAH (${homeVisitTableName})
+-- 4. TABEL C: HOME VISIT / KUNJUNGAN RUMAH (${homeVisitTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${homeVisitTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2157,7 +2167,7 @@ create policy "Akses Update Publik Home Visit" on public.${homeVisitTableName} f
 create policy "Akses Hapus Publik Home Visit" on public.${homeVisitTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 4. TABEL D: REKAM PERMASALAHAN SISWA (${rekamPermasalahanTableName})
+-- 5. TABEL D: REKAM PERMASALAHAN SISWA (${rekamPermasalahanTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${rekamPermasalahanTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2200,7 +2210,7 @@ create policy "Akses Update Publik Rekam Permasalahan" on public.${rekamPermasal
 create policy "Akses Hapus Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 5. TABEL E: RENCANA KONSELING INDIVIDU (${konselingIndividuTableName})
+-- 6. TABEL E: RENCANA KONSELING INDIVIDU (${konselingIndividuTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${konselingIndividuTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2240,7 +2250,7 @@ create policy "Akses Update Publik Konseling Individu" on public.${konselingIndi
 create policy "Akses Hapus Publik Konseling Individu" on public.${konselingIndividuTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 6. TABEL F: RENCANA KONSELING KELOMPOK (${konselingKelompokTableName})
+-- 7. TABEL F: RENCANA KONSELING KELOMPOK (${konselingKelompokTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${konselingKelompokTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2280,7 +2290,7 @@ create policy "Akses Update Publik Konseling Kelompok" on public.${konselingKelo
 create policy "Akses Hapus Publik Konseling Kelompok" on public.${konselingKelompokTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 7. TABEL G: SURAT PERNYATAAN SISWA / ORANG TUA (${suratPernyataanTableName})
+-- 8. TABEL G: SURAT PERNYATAAN SISWA / ORANG TUA (${suratPernyataanTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${suratPernyataanTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2318,7 +2328,7 @@ create policy "Akses Update Publik Surat Pernyataan" on public.${suratPernyataan
 create policy "Akses Hapus Publik Surat Pernyataan" on public.${suratPernyataanTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 8. TABEL H: KONFERENSI KASUS SISWA (${konferensiKasusTableName})
+-- 9. TABEL H: KONFERENSI KASUS SISWA (${konferensiKasusTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${konferensiKasusTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2369,7 +2379,7 @@ create policy "Akses Update Publik Konferensi Kasus" on public.${konferensiKasus
 create policy "Akses Hapus Publik Konferensi Kasus" on public.${konferensiKasusTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
--- 9. TABEL I: DATA MANAGEMENT SISWA (${siswaTableName})
+-- 10. TABEL I: DATA MANAGEMENT SISWA (${siswaTableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${siswaTableName} (
   id text primary key default gen_random_uuid()::text,
@@ -2438,6 +2448,76 @@ create policy "Akses Tambah Publik Jurnal BK" on public.${jurnalBKTableName} for
 create policy "Akses Update Publik Jurnal BK" on public.${jurnalBKTableName} for update using (true);
 create policy "Akses Hapus Publik Jurnal BK" on public.${jurnalBKTableName} for delete using (true);
 
+--------------------------------------------------------------------------------
+-- MIGRATION SAFE: Tambahkan kolom baru jika tabel sudah pernah dibuat sebelumnya
+--------------------------------------------------------------------------------
+alter table public.${tableName} add column if not exists link_foto_kegiatan text default '';
+
+alter table public.${undanganTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${undanganTableName} add column if not exists nomor_surat text default '';
+alter table public.${undanganTableName} add column if not exists tanggal_surat text default '';
+alter table public.${undanganTableName} add column if not exists tempat_surat text default 'Pasuruan';
+alter table public.${undanganTableName} add column if not exists semester text default '';
+alter table public.${undanganTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${undanganTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${undanganTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${undanganTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${homeVisitTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${homeVisitTableName} add column if not exists nomor_surat_tugas text default '';
+alter table public.${homeVisitTableName} add column if not exists petugas_1 text default '';
+alter table public.${homeVisitTableName} add column if not exists petugas_2 text default '';
+alter table public.${homeVisitTableName} add column if not exists jabatan_petugas_1 text default '';
+alter table public.${homeVisitTableName} add column if not exists jabatan_petugas_2 text default '';
+alter table public.${homeVisitTableName} add column if not exists nis_siswa text default '';
+alter table public.${homeVisitTableName} add column if not exists tanggal_surat_tugas text default '';
+alter table public.${homeVisitTableName} add column if not exists petugas_penerima_kunjungan text default '';
+alter table public.${homeVisitTableName} add column if not exists tanggal_pernyataan_ortu text default '';
+alter table public.${homeVisitTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${homeVisitTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${homeVisitTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${homeVisitTableName} add column if not exists nip_kepala_sekolah text default '';
+alter table public.${homeVisitTableName} add column if not exists tanggal_surat text default '';
+alter table public.${homeVisitTableName} add column if not exists tempat_surat text default 'Pasuruan';
+
+alter table public.${rekamPermasalahanTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists nip_kepala_sekolah text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists tanggal_surat text default '';
+alter table public.${rekamPermasalahanTableName} add column if not exists tempat_surat text default 'Pasuruan';
+
+alter table public.${konselingIndividuTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${konselingIndividuTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${konselingIndividuTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${konselingIndividuTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${konselingIndividuTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${konselingKelompokTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${konselingKelompokTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${konselingKelompokTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${konselingKelompokTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${konselingKelompokTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${suratPernyataanTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${suratPernyataanTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${suratPernyataanTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${suratPernyataanTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${konferensiKasusTableName} add column if not exists daftar_hadir_rows text default '[]';
+alter table public.${konferensiKasusTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${konferensiKasusTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${konferensiKasusTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${konferensiKasusTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${jurnalBKTableName} add column if not exists siswa_tidak_mengikuti_json text default '[]';
+alter table public.${jurnalBKTableName} add column if not exists link_foto_kegiatan text default '';
+alter table public.${jurnalBKTableName} add column if not exists nama_guru_bk text default '';
+alter table public.${jurnalBKTableName} add column if not exists nip_guru_bk text default '';
+alter table public.${jurnalBKTableName} add column if not exists nama_kepala_sekolah text default '';
+alter table public.${jurnalBKTableName} add column if not exists nip_kepala_sekolah text default '';
+
 -- Indexes for performance
 create index if not exists idx_${tableName}_tanggal on public.${tableName}(tanggal);
 create index if not exists idx_${undanganTableName}_siswa on public.${undanganTableName}(nama_siswa);
@@ -2449,6 +2529,99 @@ create index if not exists idx_${suratPernyataanTableName}_siswa on public.${sur
 create index if not exists idx_${konferensiKasusTableName}_konseli on public.${konferensiKasusTableName}(nama_konseli);
 create index if not exists idx_${siswaTableName}_kelas on public.${siswaTableName}(kelas);
 create index if not exists idx_${jurnalBKTableName}_tanggal on public.${jurnalBKTableName}(tanggal);
+create index if not exists idx_signatures_bk_record on public.signatures_bk(record_id);
 `;
+}
+
+export interface SupabaseTableTestResult {
+  title: string;
+  tableName: string;
+  exists: boolean;
+  error?: string;
+}
+
+export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Promise<{
+  connected: boolean;
+  totalTables: number;
+  existingCount: number;
+  missingCount: number;
+  missingTableNames: string[];
+  tables: SupabaseTableTestResult[];
+  error?: string;
+}> {
+  const config = customConfig || getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (!client) {
+    return {
+      connected: false,
+      totalTables: 0,
+      existingCount: 0,
+      missingCount: 0,
+      missingTableNames: [],
+      tables: [],
+      error: 'Supabase URL atau Anon Key belum dikonfigurasi.'
+    };
+  }
+
+  const tableList = [
+    { title: 'Agenda Kerja BK', tableName: config.tableName || DEFAULT_TABLE_NAME },
+    { title: 'Undangan Orang Tua Siswa', tableName: DEFAULT_UNDANGAN_TABLE_NAME },
+    { title: 'Home Visit / Kunjungan Rumah', tableName: DEFAULT_HOME_VISIT_TABLE_NAME },
+    { title: 'Rekam Permasalahan Siswa', tableName: DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME },
+    { title: 'Rencana Konseling Individu', tableName: DEFAULT_KONSELING_INDIVIDU_TABLE_NAME },
+    { title: 'Rencana Konseling Kelompok', tableName: DEFAULT_KONSELING_KELOMPOK_TABLE_NAME },
+    { title: 'Surat Pernyataan Siswa', tableName: DEFAULT_SURAT_PERNYATAAN_TABLE_NAME },
+    { title: 'Konferensi Kasus Siswa', tableName: DEFAULT_KONFERENSI_KASUS_TABLE_NAME },
+    { title: 'Data Manajemen Siswa', tableName: DEFAULT_SISWA_TABLE_NAME },
+    { title: 'Jurnal Layanan BK', tableName: DEFAULT_JURNAL_BK_TABLE_NAME },
+    { title: 'Tanda Tangan Digital (Signatures)', tableName: DEFAULT_SIGNATURES_TABLE_NAME },
+  ];
+
+  const results: SupabaseTableTestResult[] = [];
+
+  for (const item of tableList) {
+    try {
+      const { error } = await client
+        .from(item.tableName)
+        .select('id')
+        .limit(1);
+
+      if (error) {
+        results.push({
+          title: item.title,
+          tableName: item.tableName,
+          exists: false,
+          error: error.message
+        });
+      } else {
+        results.push({
+          title: item.title,
+          tableName: item.tableName,
+          exists: true
+        });
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung';
+      results.push({
+        title: item.title,
+        tableName: item.tableName,
+        exists: false,
+        error: msg
+      });
+    }
+  }
+
+  const existingCount = results.filter(t => t.exists).length;
+  const missing = results.filter(t => !t.exists);
+
+  return {
+    connected: existingCount > 0,
+    totalTables: results.length,
+    existingCount,
+    missingCount: missing.length,
+    missingTableNames: missing.map(m => m.title),
+    tables: results
+  };
 }
 
