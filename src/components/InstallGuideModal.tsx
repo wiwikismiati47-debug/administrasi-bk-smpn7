@@ -115,7 +115,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
             }`}
           >
             <Smartphone className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span className="text-[11px] sm:text-xs">Android HP</span>
+            <span className="text-[11px] sm:text-xs">Android</span>
           </button>
 
           <button
