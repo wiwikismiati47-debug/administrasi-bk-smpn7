@@ -55,11 +55,11 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-2xl p-1 shadow-lg flex items-center justify-center shrink-0 border-2 border-amber-400">
               <img
-                src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png"
-                alt="Logo BK Peduli"
+                src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                alt="Logo BK"
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://iili.io/KDFk4fI.png";
+                  (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
                 }}
               />
             </div>
@@ -71,7 +71,7 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                 SABDA BK SPANJU
               </h3>
               <p className="text-[11px] sm:text-xs text-blue-100 font-medium">
-                Ikon Logo BK Peduli di HP Anda
+                Ikon Logo BK di HP / Laptop Anda
               </p>
             </div>
           </div>
@@ -293,16 +293,16 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-xl p-1 shadow border border-slate-200 shrink-0 flex items-center justify-center">
               <img
-                src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png"
-                alt="BK Peduli Icon"
+                src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                alt="BK Icon"
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://iili.io/KDFk4fI.png";
+                  (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
                 }}
               />
             </div>
             <div className="text-xs text-slate-700">
-              <p className="font-bold text-blue-900">Logo Resmi BK Peduli</p>
+              <p className="font-bold text-blue-900">Logo Resmi SABDA BK</p>
               <p className="text-slate-600 text-[11px]">
                 Akses instan tanpa browser, bekerja offline dengan penyimpanan aman.
               </p>
