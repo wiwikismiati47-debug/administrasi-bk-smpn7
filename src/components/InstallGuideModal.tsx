@@ -247,10 +247,16 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
 
           {/* Laptop / PC Guide */}
           {activeTab === 'laptop' && (
-            <div className="space-y-3">
-              <div className="bg-blue-50 border border-blue-200 p-3 rounded-xl text-blue-900 text-xs font-bold flex items-center gap-2">
-                <Laptop className="w-4 h-4 text-blue-600 shrink-0" />
-                <span>Pasang aplikasi di komputer/laptop untuk akses mandiri seperti aplikasi desktop</span>
+            <div className="space-y-3.5">
+              {/* Alert about the letter 'S' issue */}
+              <div className="bg-amber-50 border border-amber-300 p-3 rounded-xl text-amber-900 text-xs">
+                <p className="font-bold flex items-center gap-1.5 text-amber-950">
+                  <span className="w-5 h-5 rounded-md bg-slate-800 text-white flex items-center justify-center text-[11px] font-black shrink-0">S</span>
+                  <span>Kenapa di Desktop Muncul Kotak Huruf "S"?</span>
+                </p>
+                <p className="mt-1 text-slate-700 leading-relaxed text-[11px]">
+                  Jika membuat pintasan biasa tanpa mencentang <em>"Buka sebagai jendela"</em>, Windows/Chrome hanya membuat tautan teks berinisial <strong>"S"</strong>. Ikuti langkah di bawah agar muncul <strong>Logo Asli BK Konselor</strong>:
+                </p>
               </div>
 
               <div className="flex items-start gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
@@ -258,9 +264,9 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                   1
                 </span>
                 <div>
-                  <p className="font-bold text-slate-900">Buka Google Chrome atau Microsoft Edge</p>
+                  <p className="font-bold text-slate-900">Cara 1 (Paling Mudah): Klik Ikon Instal di Bilah URL</p>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Gunakan browser Chrome atau Edge di Laptop/Komputer Anda.
+                    Di ujung kanan kolom alamat web (URL bar atas), klik ikon <strong>Komputer / Panah ke bawah (Instal SABDA BK SPANJU)</strong> $\rightarrow$ lalu klik <strong>Instal</strong>. Logo resmi otomatis terpasang di Desktop!
                   </p>
                 </div>
               </div>
@@ -270,9 +276,9 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                   2
                 </span>
                 <div>
-                  <p className="font-bold text-slate-900">Klik Ikon Instal (Address Bar) atau Menu Titik Tiga ( ⋮ )</p>
+                  <p className="font-bold text-slate-900">Cara 2 (Lewat Menu Chrome): Wajib Centang "Buka sebagai jendela"</p>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Klik ikon komputer/panah ke bawah di ujung kanan kolom alamat URL, atau klik menu titik tiga di kanan atas lalu pilih <strong>"Instal SABDA BK SPANJU..."</strong>.
+                    Klik menu titik tiga $(\vdots) \rightarrow$ <strong>Simpan dan bagikan (Save and share)</strong> $\rightarrow$ <strong>Buat pintasan (Create shortcut)</strong> $\rightarrow$ <strong className="text-blue-700">CENTANG kotak "Buka sebagai jendela" (Open as window)</strong> $\rightarrow$ klik <strong>Buat</strong>.
                   </p>
                 </div>
               </div>
@@ -281,11 +287,31 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
                 <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0">
                   3
                 </span>
-                <div>
-                  <p className="font-bold text-slate-900">Klik "Instal"</p>
+                <div className="w-full">
+                  <p className="font-bold text-slate-900">Cara 3: Ganti Ikon Shortcut Windows Secara Manual</p>
                   <p className="text-xs text-slate-600 mt-0.5">
-                    Aplikasi akan terpasang di Desktop & Taskbar laptop dengan <strong>Logo BK Peduli</strong> dan terbuka di jendela mandiri yang luas tanpa tab browser!
+                    Unduh berkas ikon di bawah, lalu klik kanan ikon shortcut di Desktop $\rightarrow$ <strong>Properties</strong> $\rightarrow$ <strong>Change Icon</strong> $\rightarrow$ <strong>Browse</strong> $\rightarrow$ pilih berkas ikon yang telah diunduh.
                   </p>
+                  
+                  {/* Download Buttons for Windows Icon */}
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <a
+                      href="/favicon.ico"
+                      download="SABDA_BK_Icon.ico"
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-bold rounded-lg shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <DownloadCloud className="w-3.5 h-3.5" />
+                      <span>Unduh Ikon Windows (.ico)</span>
+                    </a>
+                    <a
+                      href="/icon-512.png"
+                      download="Logo_BK_Konselor.png"
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold rounded-lg border border-slate-300 flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <DownloadCloud className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Unduh Logo HD (.png)</span>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
