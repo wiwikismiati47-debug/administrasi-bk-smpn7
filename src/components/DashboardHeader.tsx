@@ -1,6 +1,7 @@
 import React from 'react';
 import { GuruBkSelector } from './GuruBkSelector';
 import { InstallGuideModal } from './InstallGuideModal';
+import { LOGO_BK_BASE64 } from '../lib/logo';
 import {
   Download,
   Upload,
@@ -87,11 +88,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
               <div className="relative bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-lg flex items-center justify-center">
                 <img
-                  src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                  src={LOGO_BK_BASE64}
                   alt="Logo SABDA BK SPANJU SMPN 7 Pasuruan"
                   className="w-12 h-12 sm:w-14 sm:h-14 object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-300"
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
+                    (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
                   }}
                 />
               </div>
@@ -127,11 +129,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             >
               <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/install:translate-y-0 transition-transform duration-300" />
               <img
-                src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                src={LOGO_BK_BASE64}
                 alt="Maskot BK"
                 className="w-4 h-4 object-contain rounded-full bg-white p-0.5 shadow-sm transform group-hover/install:rotate-12 transition-transform"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
+                  (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
                 }}
               />
               <span>Instal Aplikasi</span>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { LOGO_BK_BASE64 } from '../lib/logo';
 import {
   X,
   Smartphone,
@@ -55,11 +56,12 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white rounded-2xl p-1 shadow-lg flex items-center justify-center shrink-0 border-2 border-amber-400">
               <img
-                src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                src={LOGO_BK_BASE64}
                 alt="Logo BK"
                 className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
+                  (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
                 }}
               />
             </div>
@@ -293,11 +295,12 @@ export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({
           <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200 flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-xl p-1 shadow border border-slate-200 shrink-0 flex items-center justify-center">
               <img
-                src="https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg"
+                src={LOGO_BK_BASE64}
                 alt="BK Icon"
                 className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/logo-bk-peduli.png";
+                  (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
                 }}
               />
             </div>
