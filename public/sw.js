@@ -1,14 +1,20 @@
-const CACHE_NAME = 'sabda-bk-spanju-cache-v3';
+const CACHE_NAME = 'sabda-bk-spanju-cache-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
   '/manifest.json',
+  '/favicon.ico',
+  '/favicon-16x16.png',
+  '/favicon-32x32.png',
+  '/favicon-48x48.png',
+  '/favicon.png',
+  '/icon-128.png',
   '/icon-192.png',
+  '/icon-256.png',
   '/icon-512.png',
   '/icon-maskable-192.png',
   '/icon-maskable-512.png',
   '/apple-touch-icon.png',
-  '/favicon.png',
   '/logo-bk-peduli.png'
 ];
 
