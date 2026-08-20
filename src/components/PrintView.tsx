@@ -710,17 +710,18 @@ export const PrintView: React.FC<PrintViewProps> = ({
               <thead>
                 <tr className="bg-slate-200 text-slate-950 font-bold border-b border-slate-900 text-[11px] uppercase text-center">
                   <th className="p-2 border border-slate-900 w-8">NO</th>
-                  <th className="p-2 border border-slate-900 w-32">HARI / TANGGAL</th>
-                  <th className="p-2 border border-slate-900 w-24">WAKTU</th>
+                  <th className="p-2 border border-slate-900 w-28">HARI / TANGGAL</th>
+                  <th className="p-2 border border-slate-900 w-20">WAKTU</th>
                   <th className="p-2 border border-slate-900">URAIAN KEGIATAN</th>
-                  <th className="p-2 border border-slate-900 w-32">SASARAN</th>
-                  <th className="p-2 border border-slate-900 w-28">KETERANGAN</th>
+                  <th className="p-2 border border-slate-900 w-28">SASARAN</th>
+                  <th className="p-2 border border-slate-900 w-24 text-center">FOTO KEGIATAN</th>
+                  <th className="p-2 border border-slate-900 w-24">KETERANGAN</th>
                 </tr>
               </thead>
               <tbody>
                 {agendaItems.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="p-6 text-center text-slate-500 italic border border-slate-900">
+                    <td colSpan={7} className="p-6 text-center text-slate-500 italic border border-slate-900">
                       Belum ada data agenda kerja.
                     </td>
                   </tr>
@@ -748,6 +749,24 @@ export const PrintView: React.FC<PrintViewProps> = ({
                         <td className="p-2 border border-slate-900 text-center font-mono">{item.waktu || '-'}</td>
                         <td className="p-2 border border-slate-900 font-medium">{item.uraian_kegiatan}</td>
                         <td className="p-2 border border-slate-900 font-semibold">{item.sasaran}</td>
+                        <td className="p-1.5 border border-slate-900 text-center align-middle">
+                          {item.link_foto_kegiatan ? (
+                            <div className="flex flex-col items-center justify-center">
+                              <img
+                                src={item.link_foto_kegiatan}
+                                alt="Foto Kegiatan"
+                                referrerPolicy="no-referrer"
+                                className="w-16 h-14 object-cover rounded border border-slate-400 mx-auto"
+                                onError={(e) => {
+                                  const target = e.target as HTMLElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 text-[10px]">-</span>
+                          )}
+                        </td>
                         <td className="p-2 border border-slate-900">{item.keterangan || 'Terlaksana'}</td>
                       </tr>
                     );
