@@ -151,21 +151,29 @@ export const PrintView: React.FC<PrintViewProps> = ({
     const frameDoc = iframe.contentWindow?.document || iframe.contentDocument;
     if (!frameDoc) return;
 
+    const printStyles = `
+      @page { size: A4 portrait; margin: 8mm 10mm; }
+      body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
+      table { width: 100%; border-collapse: collapse; break-inside: auto !important; page-break-inside: auto !important; }
+      thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      tbody { break-inside: auto !important; page-break-inside: auto !important; }
+      tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+      th, td { border: 1px solid #000; padding: 6px; }
+      h1, h2, h3, h4, h5, h6 { break-after: avoid !important; page-break-after: avoid !important; }
+      .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
+      .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
+    `;
+
     frameDoc.open();
     frameDoc.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <title>Dokumen Cetak SMPN 7 Pasuruan</title>
-          <style>
-            @page { size: A4 portrait; margin: 12mm; }
-            body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #000; padding: 6px; }
-          </style>
+          <style>${printStyles}</style>
           <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body class="p-8 bg-white text-black">
+        <body class="p-4 bg-white text-black">
           ${el.innerHTML}
           <script>
             setTimeout(() => {
@@ -195,20 +203,28 @@ export const PrintView: React.FC<PrintViewProps> = ({
       return;
     }
 
+    const printStyles = `
+      @page { size: A4 portrait; margin: 8mm 10mm; }
+      body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
+      table { width: 100%; border-collapse: collapse; break-inside: auto !important; page-break-inside: auto !important; }
+      thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+      tbody { break-inside: auto !important; page-break-inside: auto !important; }
+      tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+      th, td { border: 1px solid #000; padding: 6px; }
+      h1, h2, h3, h4, h5, h6 { break-after: avoid !important; page-break-after: avoid !important; }
+      .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
+      .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
+    `;
+
     printWin.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
           <title>Dokumen Cetak SMPN 7 Pasuruan</title>
-          <style>
-            @page { size: A4 portrait; margin: 12mm; }
-            body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #000; padding: 6px; }
-          </style>
+          <style>${printStyles}</style>
           <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body class="p-8 bg-white text-black">
+        <body class="p-6 bg-white text-black">
           ${el.innerHTML}
           <script>
             setTimeout(() => {
@@ -351,7 +367,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
       >
         
         {/* KOP SURAT RESMI UPT SMP NEGERI 7 PASURAN */}
-        <div className="relative flex items-center justify-between border-b-4 border-double border-slate-900 pb-3 mb-6 min-h-[100px] font-serif">
+        <div className="relative flex items-center justify-between border-b-4 border-double border-slate-900 pb-3 mb-6 min-h-[100px] font-serif print:pb-2 print:mb-3 print:min-h-0">
           {/* Logo Kota Pasuruan (Kiri Atas) */}
           <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
             <img 
@@ -613,8 +629,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 3. UNDANGAN ORANG TUA (TABEL REKAP) */}
         {docType === 'undangan_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               DAFTAR REKAPITULASI UNDANGAN ORANG TUA SISWA
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -686,8 +702,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 4. AGENDA KERJA (TABEL REKAP) */}
         {docType === 'agenda' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               AGENDA KERJA BIMBINGAN KONSELING (BK)
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -1012,8 +1028,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 7. TABEL REKAP HOME VISIT */}
         {docType === 'home_visit_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI PELAKSANAAN HOME VISIT / KUNJUNGAN RUMAH
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -1290,8 +1306,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 10. REKAM PERMASALAHAN SISWA (TABEL REKAP) */}
         {docType === 'rekam_permasalahan_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI REKAM PERMASALAHAN SISWA
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -1488,8 +1504,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 12. RENCANA KONSELING INDIVIDU (TABEL REKAP) */}
         {docType === 'konseling_individu_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI RENCANA KONSELING INDIVIDU
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -1685,8 +1701,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 14. RENCANA KONSELING KELOMPOK (TABEL REKAP) */}
         {docType === 'konseling_kelompok_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI RENCANA KONSELING KELOMPOK
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -2048,8 +2064,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 14. TABEL REKAP SURAT PERNYATAAN */}
         {docType === 'surat_pernyataan_tabel' && (
-          <div className="overflow-x-auto my-4">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI SURAT PERNYATAAN SISWA / ORANG TUA
             </h3>
             <table className="w-full text-left text-xs border-collapse border border-slate-900">
@@ -2125,8 +2141,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 15. TABEL REKAP KONFERENSI KASUS */}
         {docType === 'konferensi_kasus_tabel' && (
-          <div className="overflow-x-auto my-4 font-serif">
-            <h3 className="text-center text-base font-bold uppercase mb-4 underline">
+          <div className="overflow-x-auto my-4 font-serif print:my-0 print:overflow-visible">
+            <h3 className="text-center text-base font-bold uppercase mb-4 underline print:mb-2 print:break-after-avoid">
               REKAPITULASI DOKUMEN KONFERENSI KASUS SISWA
             </h3>
             <table className="w-full text-left text-[11px] border-collapse border border-slate-900">
