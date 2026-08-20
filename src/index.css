@@ -7,7 +7,7 @@
   }
 
   /* Hide header, sidebar, footer, top action bar, and non-printable elements */
-  header, footer, nav, aside, .print\:hidden, [role="dialog"], button {
+  header, footer, nav, aside, [class*="print:hidden"], [role="dialog"], button {
     display: none !important;
   }
 
@@ -81,8 +81,9 @@
     page-break-after: avoid !important;
   }
 
-  .keep-together, .signature-block, .print\:break-inside-avoid {
+  .keep-together, .signature-block, [class*="print:break-inside-avoid"] {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
 }
+
