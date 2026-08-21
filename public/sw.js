@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sabda-bk-spanju-cache-v6';
+const CACHE_NAME = 'sabda-bk-spanju-cache-v10';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

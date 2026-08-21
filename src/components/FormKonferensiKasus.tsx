@@ -2,7 +2,278 @@ import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
-import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle } from 'lucide-react';
+import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle, X, CheckCircle2, ChevronRight, Search, Target } from 'lucide-react';
+
+export interface TujuanKonferensiPreset {
+  id: string;
+  judul: string;
+  kategori: string;
+  badgeColor: string;
+  deskripsi: string;
+}
+
+export const PRESET_TUJUAN_KONFERENSI: TujuanKonferensiPreset[] = [
+  {
+    id: 'perselisihan',
+    judul: 'Perselisihan Antar Siswa',
+    kategori: 'Hubungan Sosial / Interpersonal',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    deskripsi: 'Bertujuan untuk menggali pemicu dan sudut pandang dari kedua belah pihak secara objektif, meredakan ketegangan demi menciptakan suasana kelas yang kondusif, serta melatih siswa agar mampu menyelesaikan perbedaan pendapat secara damai.'
+  },
+  {
+    id: 'perkelahian',
+    judul: 'Perkelahian Antar Siswa',
+    kategori: 'Perilaku Agresif / Fisik',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+    deskripsi: 'Diarahkan untuk menghentikan tindakan kekerasan secara tegas namun tetap edukatif, menyelidiki akar pemicu masalah, serta memberikan sanksi pembinaan mental agar siswa dapat mengelola emosi dengan lebih baik ke depannya.'
+  },
+  {
+    id: 'bullying',
+    judul: 'Tindakan Perundungan (Bullying)',
+    kategori: 'Perlindungan & Disiplin',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    deskripsi: 'Difokuskan untuk memberikan perlindungan serta pemulihan psikologis bagi korban, menyadarkan pelaku mengenai dampak buruk tindakannya, sekaligus membangun kembali budaya sekolah yang aman dan bebas dari intimidasi.'
+  },
+  {
+    id: 'miras',
+    judul: 'Membawa Minuman Keras (Miras) ke Sekolah',
+    kategori: 'Zat Adiktif & Tata Tertib',
+    badgeColor: 'bg-red-100 text-red-800 border-red-300',
+    deskripsi: 'Bertujuan untuk menyelidiki sumber perolehan dan motif siswa, memberikan edukasi mendalam mengenai bahaya zat adiktif bagi kesehatan remaja, serta memperkuat intervensi dan pengawasan ketat dari pihak keluarga.'
+  },
+  {
+    id: 'merokok',
+    judul: 'Merokok di Lingkungan Sekolah',
+    kategori: 'Kesehatan & Kebiasaan',
+    badgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
+    deskripsi: 'Dilaksanakan untuk menegakkan tata tertib sekolah, memberikan penyuluhan kesehatan terkait dampak buruk rokok, serta melakukan konseling perilaku untuk menghentikan kebiasaan tersebut.'
+  },
+  {
+    id: 'pencurian',
+    judul: 'Mengambil Barang Milik Teman (Pencurian)',
+    kategori: 'Integritas & Moralitas',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    deskripsi: 'Bertujuan untuk mengembalikan hak milik korban, menggali motif di balik tindakan siswa (faktor ekonomi, lingkungan, atau psikologis), serta menanamkan kembali nilai-nilai kejujuran dan rasa tanggung jawab moral.'
+  }
+];
+
+export interface UraianKegiatanPreset {
+  id: string;
+  judul: string;
+  kategori: string;
+  badgeColor: string;
+  items: string[];
+  fullText: string;
+}
+
+export const PRESET_URAIAN_KEGIATAN: UraianKegiatanPreset[] = [
+  {
+    id: 'perselisihan',
+    judul: 'Perselisihan Antar Siswa',
+    kategori: 'Hubungan Sosial / Interpersonal',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    items: [
+      'Memanggil dan mempertemukan siswa yang berselisih secara terpisah terlebih dahulu, kemudian bersama-sama dalam sesi mediasi.',
+      'Mendengarkan keterangan dari masing-masing pihak secara adil tanpa menghakimi.',
+      'Memberikan pemahaman tentang pentingnya menghargai perbedaan pendapat dan memfasilitasi proses perdamaian serta penandatanganan kesepakatan damai.'
+    ],
+    fullText: 'a. Memanggil dan mempertemukan siswa yang berselisih secara terpisah terlebih dahulu, kemudian bersama-sama dalam sesi mediasi.\n\nb. Mendengarkan keterangan dari masing-masing pihak secara adil tanpa menghakimi.\n\nc. Memberikan pemahaman tentang pentingnya menghargai perbedaan pendapat dan memfasilitasi proses perdamaian serta penandatanganan kesepakatan damai.'
+  },
+  {
+    id: 'perkelahian',
+    judul: 'Perkelahian Antar Siswa',
+    kategori: 'Perilaku Agresif / Fisik',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+    items: [
+      'Mengamankan situasi dan memisahkan siswa yang terlibat perkelahian guna mencegah perluasan konflik.',
+      'Melakukan investigasi singkat bersama guru piket/wali kelas untuk mengetahui kronologi kejadian.',
+      'Memberikan sanksi mendidik sesuai tata tertib sekolah serta memberikan konseling manajemen amarah (anger management) kepada siswa.'
+    ],
+    fullText: 'a. Mengamankan situasi dan memisahkan siswa yang terlibat perkelahian guna mencegah perluasan konflik.\n\nb. Melakukan investigasi singkat bersama guru piket/wali kelas untuk mengetahui kronologi kejadian.\n\nc. Memberikan sanksi mendidik sesuai tata tertib sekolah serta memberikan konseling manajemen amarah (anger management) kepada siswa.'
+  },
+  {
+    id: 'bullying',
+    judul: 'Bullying (Perundungan)',
+    kategori: 'Perlindungan & Disiplin',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    items: [
+      'Memberikan perlindungan dan ruang aman bagi korban, serta penanganan psikologis awal untuk memulihkan rasa percaya diri.',
+      'Memanggil pelaku untuk mengonfirmasi tindakan, menyadarkan tentang dampak emosional korban, dan memberikan sanksi pembinaan.',
+      'Melibatkan pihak keluarga pelaku dan korban serta memperketat pengawasan di area rawan sekolah.'
+    ],
+    fullText: 'a. Memberikan perlindungan dan ruang aman bagi korban, serta penanganan psikologis awal untuk memulihkan rasa percaya diri.\n\nb. Memanggil pelaku untuk mengonfirmasi tindakan, menyadarkan tentang dampak emosional korban, dan memberikan sanksi pembinaan.\n\nc. Melibatkan pihak keluarga pelaku dan korban serta memperketat pengawasan di area rawan sekolah.'
+  },
+  {
+    id: 'miras',
+    judul: 'Membawa Minuman Keras (Miras) ke Sekolah',
+    kategori: 'Zat Adiktif & Tata Tertib',
+    badgeColor: 'bg-red-100 text-red-800 border-red-300',
+    items: [
+      'Mengamankan barang bukti berupa miras dan mencatat temuan secara administratif.',
+      'Memanggil orang tua/wali murid ke sekolah untuk menyampaikan temuan secara transparan.',
+      'Melakukan asesmen mendalam terkait alasan siswa membawa miras (pengaruh pergaulan atau coba-coba) serta memberikan pembinaan khusus dan surat perjanjian bermaterai.'
+    ],
+    fullText: 'a. Mengamankan barang bukti berupa miras dan mencatat temuan secara administratif.\n\nb. Memanggil orang tua/wali murid ke sekolah untuk menyampaikan temuan secara transparan.\n\nc. Melakukan asesmen mendalam terkait alasan siswa membawa miras (pengaruh pergaulan atau coba-coba) serta memberikan pembinaan khusus dan surat perjanjian bermaterai.'
+  },
+  {
+    id: 'merokok',
+    judul: 'Merokok di Lingkungan Sekolah',
+    kategori: 'Kesehatan & Kebiasaan',
+    badgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
+    items: [
+      'Mengamankan siswa yang kedapatan merokok beserta barang bukti (rokok/korek) di area sekolah.',
+      'Memberikan teguran lisan maupun tertulis sesuai tingkat pelanggaran tata tertib sekolah.',
+      'Memberikan edukasi kesehatan tentang bahaya merokok bagi remaja dan mewajibkan siswa membuat surat pernyataan tidak mengulangi.'
+    ],
+    fullText: 'a. Mengamankan siswa yang kedapatan merokok beserta barang bukti (rokok/korek) di area sekolah.\n\nb. Memberikan teguran lisan maupun tertulis sesuai tingkat pelanggaran tata tertib sekolah.\n\nc. Memberikan edukasi kesehatan tentang bahaya merokok bagi remaja dan mewajibkan siswa membuat surat pernyataan tidak mengulangi.'
+  },
+  {
+    id: 'pencurian',
+    judul: 'Mengambil Barang Milik Temannya (Pencurian)',
+    kategori: 'Integritas & Moralitas',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    items: [
+      'Mengklarifikasi temuan laporan kehilangan secara bijak dan privat untuk menjaga kerahasiaan serta mental siswa.',
+      'Mengembalikan barang yang diambil kepada pemiliknya secara sah.',
+      'Menggali motif di balik tindakan siswa, memberikan teguran keras yang edukatif, serta menanamkan nilai moral kejujuran melalui bimbingan konseling intensif.'
+    ],
+    fullText: 'a. Mengklarifikasi temuan laporan kehilangan secara bijak dan privat untuk menjaga kerahasiaan serta mental siswa.\n\nb. Mengembalikan barang yang diambil kepada pemiliknya secara sah.\n\nc. Menggali motif di balik tindakan siswa, memberikan teguran keras yang edukatif, serta menanamkan nilai moral kejujuran melalui bimbingan konseling intensif.'
+  }
+];
+
+export interface KesimpulanDataPreset {
+  id: string;
+  judul: string;
+  kategori: string;
+  badgeColor: string;
+  kesimpulan: string;
+  data: string;
+  fullText: string;
+}
+
+export const PRESET_KESIMPULAN_DATA: KesimpulanDataPreset[] = [
+  {
+    id: 'perselisihan',
+    judul: 'Perselisihan Antar Siswa',
+    kategori: 'Hubungan Sosial / Interpersonal',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    kesimpulan: 'Masalah terjadi karena salah paham dan emosi remaja.',
+    data: 'Kedua siswa sepakat berdamai dan berjanji tidak bertengkar lagi.',
+    fullText: 'Kesimpulan: Masalah terjadi karena salah paham dan emosi remaja.\n\nData: Kedua siswa sepakat berdamai dan berjanji tidak bertengkar lagi.'
+  },
+  {
+    id: 'perkelahian',
+    judul: 'Perkelahian Antar Siswa',
+    kategori: 'Perilaku Agresif / Fisik',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+    kesimpulan: 'Perkelahian disebabkan oleh emosi sesaat dan provokasi teman.',
+    data: 'Diketahui kronologi kejadian, siswa diberi sanksi pembinaan, dan wajib mengikuti konseling amarah.',
+    fullText: 'Kesimpulan: Perkelahian disebabkan oleh emosi sesaat dan provokasi teman.\n\nData: Diketahui kronologi kejadian, siswa diberi sanksi pembinaan, dan wajib mengikuti konseling amarah.'
+  },
+  {
+    id: 'bullying',
+    judul: 'Bullying (Perundungan)',
+    kategori: 'Perlindungan & Disiplin',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    kesimpulan: 'Pelaku ingin mendominasi, sedangkan korban butuh pemulihan mental.',
+    data: 'Korban mendapat pendampingan, pelaku diberi sanksi pembinaan, dan pengawasan sekolah diperketat.',
+    fullText: 'Kesimpulan: Pelaku ingin mendominasi, sedangkan korban butuh pemulihan mental.\n\nData: Korban mendapat pendampingan, pelaku diberi sanksi pembinaan, dan pengawasan sekolah diperketat.'
+  },
+  {
+    id: 'miras',
+    judul: 'Membawa Minuman Keras (Miras) ke Sekolah',
+    kategori: 'Zat Adiktif & Tata Tertib',
+    badgeColor: 'bg-red-100 text-red-800 border-red-300',
+    kesimpulan: 'Siswa terpengaruh pergaulan luar dan kurang pengawasan.',
+    data: 'Asal miras diketahui, siswa diberi pembinaan keras, dan orang tua berjanji lebih ketat mengawasi di rumah.',
+    fullText: 'Kesimpulan: Siswa terpengaruh pergaulan luar dan kurang pengawasan.\n\nData: Asal miras diketahui, siswa diberi pembinaan keras, dan orang tua berjanji lebih ketat mengawasi di rumah.'
+  },
+  {
+    id: 'merokok',
+    judul: 'Merokok di Lingkungan Sekolah',
+    kategori: 'Kesehatan & Kebiasaan',
+    badgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
+    kesimpulan: 'Siswa melanggar aturan karena ikut-ikutan teman atau coba-coba.',
+    data: 'Titik merokok terdeteksi, siswa diberi sanksi teguran, dan membuat surat pernyataan.',
+    fullText: 'Kesimpulan: Siswa melanggar aturan karena ikut-ikutan teman atau coba-coba.\n\nData: Titik merokok terdeteksi, siswa diberi sanksi teguran, dan membuat surat pernyataan.'
+  },
+  {
+    id: 'pencurian',
+    judul: 'Mengambil Barang Milik Teman (Pencurian)',
+    kategori: 'Integritas & Moralitas',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    kesimpulan: 'Tindakan dilakukan karena dorongan sesaat dan kurangnya pemahaman kejujuran.',
+    data: 'Barang berhasil dikembalikan ke pemiliknya, dan siswa diberi pembinaan moral agar tidak mengulanginya.',
+    fullText: 'Kesimpulan: Tindakan dilakukan karena dorongan sesaat dan kurangnya pemahaman kejujuran.\n\nData: Barang berhasil dikembalikan ke pemiliknya, dan siswa diberi pembinaan moral agar tidak mengulanginya.'
+  }
+];
+
+export interface KeputusanRapatPreset {
+  id: string;
+  judul: string;
+  kategori: string;
+  badgeColor: string;
+  jalannyaRapat: string;
+  hasilKeputusan: string;
+  fullText: string;
+}
+
+export const PRESET_KEPUTUSAN_RAPAT: KeputusanRapatPreset[] = [
+  {
+    id: 'perselisihan',
+    judul: 'Perselisihan Antar Siswa',
+    kategori: 'Hubungan Sosial / Interpersonal',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    jalannyaRapat: 'Mempertemukan kedua siswa yang berselisih didampingi guru BK dan wali kelas untuk membahas akar kesalahpahaman.',
+    hasilKeputusan: 'Kedua siswa sepakat untuk berdamai, saling memaafkan, dan menandatangani surat perdamaian agar hubungan kembali kondusif.',
+    fullText: 'a. Jalannya Rapat: Mempertemukan kedua siswa yang berselisih didampingi guru BK dan wali kelas untuk membahas akar kesalahpahaman.\n\nb. Hasil Keputusan: Kedua siswa sepakat untuk berdamai, saling memaafkan, dan menandatangani surat perdamaian agar hubungan kembali kondusif.'
+  },
+  {
+    id: 'perkelahian',
+    judul: 'Perkelahian Antar Siswa',
+    kategori: 'Perilaku Agresif / Fisik',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+    jalannyaRapat: 'Membahas kronologi perkelahian bersama pihak sekolah, orang tua, dan siswa yang terlibat untuk mengevaluasi tindakan kekerasan yang terjadi.',
+    hasilKeputusan: 'Siswa diberikan sanksi pembinaan tata tertib sekolah, wajib mengikuti konseling manajemen emosi, dan orang tua sepakat meningkatkan pengawasan di rumah.',
+    fullText: 'a. Jalannya Rapat: Membahas kronologi perkelahian bersama pihak sekolah, orang tua, dan siswa yang terlibat untuk mengevaluasi tindakan kekerasan yang terjadi.\n\nb. Hasil Keputusan: Siswa diberikan sanksi pembinaan tata tertib sekolah, wajib mengikuti konseling manajemen emosi, dan orang tua sepakat meningkatkan pengawasan di rumah.'
+  },
+  {
+    id: 'bullying',
+    judul: 'Bullying (Perundungan)',
+    kategori: 'Perlindungan & Disiplin',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    jalannyaRapat: 'Mengevaluasi laporan perundungan, mendengarkan keterangan korban dan pelaku, serta melibatkan orang tua masing-masing pihak.',
+    hasilKeputusan: 'Pelaku diberikan sanksi tegas yang mendidik, korban mendapat pendampingan psikologis untuk pemulihan, dan pihak sekolah memperketat pengawasan di area rawan.',
+    fullText: 'a. Jalannya Rapat: Mengevaluasi laporan perundungan, mendengarkan keterangan korban dan pelaku, serta melibatkan orang tua masing-masing pihak.\n\nb. Hasil Keputusan: Pelaku diberikan sanksi tegas yang mendidik, korban mendapat pendampingan psikologis untuk pemulihan, dan pihak sekolah memperketat pengawasan di area rawan.'
+  },
+  {
+    id: 'miras',
+    judul: 'Membawa Minuman Keras (Miras) ke Sekolah',
+    kategori: 'Zat Adiktif & Tata Tertib',
+    badgeColor: 'bg-red-100 text-red-800 border-red-300',
+    jalannyaRapat: 'Rapat khusus antara pihak sekolah (Kepala Sekolah, Guru BK, Wali Kelas) dan orang tua siswa untuk membahas temuan pelanggaran berat tersebut.',
+    hasilKeputusan: 'Siswa diberi pembinaan keras dan peringatan terakhir, membuat surat perjanjian bermaterai, serta orang tua menyatakan kesanggupannya untuk mengawasi pergaulan anak di luar sekolah.',
+    fullText: 'a. Jalannya Rapat: Rapat khusus antara pihak sekolah (Kepala Sekolah, Guru BK, Wali Kelas) dan orang tua siswa untuk membahas temuan pelanggaran berat tersebut.\n\nb. Hasil Keputusan: Siswa diberi pembinaan keras dan peringatan terakhir, membuat surat perjanjian bermaterai, serta orang tua menyatakan kesanggupannya untuk mengawasi pergaulan anak di luar sekolah.'
+  },
+  {
+    id: 'merokok',
+    judul: 'Merokok di Lingkungan Sekolah',
+    kategori: 'Kesehatan & Kebiasaan',
+    badgeColor: 'bg-orange-100 text-orange-800 border-orange-300',
+    jalannyaRapat: 'Membahas temuan pelanggaran aturan larangan merokok di area sekolah berdasarkan laporan guru piket.',
+    hasilKeputusan: 'Siswa diberikan teguran resmi, diminta membuat surat pernyataan untuk tidak mengulangi perbuatannya, serta diberikan edukasi bahaya merokok oleh Guru BK.',
+    fullText: 'a. Jalannya Rapat: Membahas temuan pelanggaran aturan larangan merokok di area sekolah berdasarkan laporan guru piket.\n\nb. Hasil Keputusan: Siswa diberikan teguran resmi, diminta membuat surat pernyataan untuk tidak mengulangi perbuatannya, serta diberikan edukasi bahaya merokok oleh Guru BK.'
+  },
+  {
+    id: 'pencurian',
+    judul: 'Mengambil Barang Milik Teman (Pencurian)',
+    kategori: 'Integritas & Moralitas',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    jalannyaRapat: 'Membahas kasus kehilangan barang milik siswa dengan mengklarifikasi pihak terkait secara tertutup untuk menjaga kerahasiaan dan mental anak.',
+    hasilKeputusan: 'Barang bukti dikembalikan kepada pemilik sahnya, siswa yang mengambil diberi pembinaan moral intensif tentang kejujuran, dan orang tua diinformasikan untuk mendampingi di rumah.',
+    fullText: 'a. Jalannya Rapat: Membahas kasus kehilangan barang milik siswa dengan mengklarifikasi pihak terkait secara tertutup untuk menjaga kerahasiaan dan mental anak.\n\nb. Hasil Keputusan: Barang bukti dikembalikan kepada pemilik sahnya, siswa yang mengambil diberi pembinaan moral intensif tentang kejujuran, dan orang tua diinformasikan untuk mendampingi di rumah.'
+  }
+];
 
 interface FormKonferensiKasusProps {
   initialData?: KonferensiKasus | null;
@@ -91,6 +362,101 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   const [keterangan, setKeterangan] = useState('');
 
   const [autoUpdatedNotice, setAutoUpdatedNotice] = useState(false);
+  const [showTujuanModal, setShowTujuanModal] = useState(false);
+  const [searchTujuanPreset, setSearchTujuanPreset] = useState('');
+  const [selectedTujuanId, setSelectedTujuanId] = useState<string | null>(null);
+
+  const [showUraianModal, setShowUraianModal] = useState(false);
+  const [searchUraianPreset, setSearchUraianPreset] = useState('');
+  const [selectedUraianId, setSelectedUraianId] = useState<string | null>(null);
+
+  const [showKesimpulanModal, setShowKesimpulanModal] = useState(false);
+  const [searchKesimpulanPreset, setSearchKesimpulanPreset] = useState('');
+  const [selectedKesimpulanId, setSelectedKesimpulanId] = useState<string | null>(null);
+
+  const [showKeputusanModal, setShowKeputusanModal] = useState(false);
+  const [searchKeputusanPreset, setSearchKeputusanPreset] = useState('');
+  const [selectedKeputusanId, setSelectedKeputusanId] = useState<string | null>(null);
+
+  const handleSelectTujuanPreset = (preset: TujuanKonferensiPreset) => {
+    setDataInginDiperoleh(preset.deskripsi);
+    setSelectedTujuanId(preset.id);
+    if (!jenisMasalah || jenisMasalah.trim() === '') {
+      setJenisMasalah(preset.judul);
+    }
+    setShowTujuanModal(false);
+  };
+
+  const handleSelectUraianPreset = (preset: UraianKegiatanPreset) => {
+    setUraianKegiatanInti(preset.fullText);
+    setSelectedUraianId(preset.id);
+    if (!jenisMasalah || jenisMasalah.trim() === '') {
+      setJenisMasalah(preset.judul.replace(' (Perundungan)', '').replace(' (Pencurian)', ''));
+    }
+    setShowUraianModal(false);
+  };
+
+  const handleSelectKesimpulanPreset = (preset: KesimpulanDataPreset) => {
+    setDataDiperolehSimpulan(preset.fullText);
+    setSelectedKesimpulanId(preset.id);
+    if (!jenisMasalah || jenisMasalah.trim() === '') {
+      setJenisMasalah(preset.judul.replace(' (Perundungan)', '').replace(' (Pencurian)', ''));
+    }
+    setShowKesimpulanModal(false);
+  };
+
+  const handleSelectKeputusanPreset = (preset: KeputusanRapatPreset) => {
+    setRapatHasilPertemuan(preset.fullText);
+    setSelectedKeputusanId(preset.id);
+    if (!jenisMasalah || jenisMasalah.trim() === '') {
+      setJenisMasalah(preset.judul.replace(' (Bullying)', '').replace(' (Perundungan)', '').replace(' (Pencurian)', ''));
+    }
+    setShowKeputusanModal(false);
+  };
+
+  const filteredTujuanPresets = PRESET_TUJUAN_KONFERENSI.filter((p) => {
+    if (!searchTujuanPreset.trim()) return true;
+    const query = searchTujuanPreset.toLowerCase();
+    return (
+      p.judul.toLowerCase().includes(query) ||
+      p.kategori.toLowerCase().includes(query) ||
+      p.deskripsi.toLowerCase().includes(query)
+    );
+  });
+
+  const filteredUraianPresets = PRESET_URAIAN_KEGIATAN.filter((p) => {
+    if (!searchUraianPreset.trim()) return true;
+    const query = searchUraianPreset.toLowerCase();
+    return (
+      p.judul.toLowerCase().includes(query) ||
+      p.kategori.toLowerCase().includes(query) ||
+      p.fullText.toLowerCase().includes(query)
+    );
+  });
+
+  const filteredKesimpulanPresets = PRESET_KESIMPULAN_DATA.filter((p) => {
+    if (!searchKesimpulanPreset.trim()) return true;
+    const query = searchKesimpulanPreset.toLowerCase();
+    return (
+      p.judul.toLowerCase().includes(query) ||
+      p.kategori.toLowerCase().includes(query) ||
+      p.kesimpulan.toLowerCase().includes(query) ||
+      p.data.toLowerCase().includes(query) ||
+      p.fullText.toLowerCase().includes(query)
+    );
+  });
+
+  const filteredKeputusanPresets = PRESET_KEPUTUSAN_RAPAT.filter((p) => {
+    if (!searchKeputusanPreset.trim()) return true;
+    const query = searchKeputusanPreset.toLowerCase();
+    return (
+      p.judul.toLowerCase().includes(query) ||
+      p.kategori.toLowerCase().includes(query) ||
+      p.jalannyaRapat.toLowerCase().includes(query) ||
+      p.hasilKeputusan.toLowerCase().includes(query) ||
+      p.fullText.toLowerCase().includes(query)
+    );
+  });
 
   // Load Initial Data
   useEffect(() => {
@@ -517,42 +883,255 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </h3>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Data yang Ingin Diperoleh (Tujuan Konferensi)
-                </label>
-                <textarea
-                  rows={2}
-                  value={dataInginDiperoleh}
-                  onChange={(e) => setDataInginDiperoleh(e.target.value)}
-                  placeholder="e.g. Identifikasi permasalahan siswa dan mencari solusi terbaik..."
-                  className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Target className="w-4 h-4 text-rose-600" />
+                    <span>Data yang Ingin Diperoleh (Tujuan Konferensi)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTujuanPreset('');
+                      setShowTujuanModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all cursor-pointer active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                    <span>Buka Popup Pilihan Tujuan (6 Kasus)</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Menu Langsung */}
+                <div className="mb-2.5">
+                  <select
+                    value={PRESET_TUJUAN_KONFERENSI.find((p) => p.deskripsi === dataInginDiperoleh)?.id || ''}
+                    onChange={(e) => {
+                      const selected = PRESET_TUJUAN_KONFERENSI.find((p) => p.id === e.target.value);
+                      if (selected) {
+                        handleSelectTujuanPreset(selected);
+                      }
+                    }}
+                    className="w-full text-xs font-medium bg-rose-50/60 hover:bg-rose-50 text-slate-800 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 px-3 py-2.5 outline-none cursor-pointer"
+                  >
+                    <option value="" className="text-slate-400">
+                      🔽 Klik untuk Pilih Jenis Kasus / Tujuan Konferensi Otomatis...
+                    </option>
+                    {PRESET_TUJUAN_KONFERENSI.map((preset, idx) => (
+                      <option key={preset.id} value={preset.id} className="text-slate-800 py-1">
+                        {idx + 1}. {preset.judul} ({preset.kategori})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quick Chip Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tombol Cepat:</span>
+                  {PRESET_TUJUAN_KONFERENSI.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectTujuanPreset(preset)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        selectedTujuanId === preset.id || dataInginDiperoleh === preset.deskripsi
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : 'bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 border-slate-300 hover:border-rose-300'
+                      }`}
+                    >
+                      {preset.judul.replace(' (Bullying)', '').replace(' (Miras)', '').replace(' (Pencurian)', '')}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <textarea
+                    rows={4}
+                    value={dataInginDiperoleh}
+                    onChange={(e) => setDataInginDiperoleh(e.target.value)}
+                    placeholder="Contoh: Bertujuan untuk menggali pemicu dan sudut pandang dari kedua belah pihak secara objektif..."
+                    className="w-full text-xs rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2.5 border outline-none leading-relaxed shadow-2xs"
+                  />
+                  {dataInginDiperoleh && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDataInginDiperoleh('');
+                        setSelectedTujuanId(null);
+                      }}
+                      className="absolute right-2.5 bottom-2.5 px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors cursor-pointer"
+                    >
+                      Kosongkan Teks
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Uraian Singkat Kegiatan Inti
-                </label>
-                <textarea
-                  rows={4}
-                  value={uraianKegiatanInti}
-                  onChange={(e) => setUraianKegiatanInti(e.target.value)}
-                  placeholder="e.g. Untuk mengetahui kronologi sebenarnya dari perselisihan siswa..."
-                  className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <ClipboardList className="w-4 h-4 text-indigo-600" />
+                    <span>Uraian Singkat Kegiatan Inti</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchUraianPreset('');
+                      setShowUraianModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all cursor-pointer active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                    <span>Buka Popup Uraian Kegiatan (6 Kasus)</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Menu Langsung */}
+                <div className="mb-2.5">
+                  <select
+                    value={PRESET_URAIAN_KEGIATAN.find((p) => p.fullText === uraianKegiatanInti)?.id || ''}
+                    onChange={(e) => {
+                      const selected = PRESET_URAIAN_KEGIATAN.find((p) => p.id === e.target.value);
+                      if (selected) {
+                        handleSelectUraianPreset(selected);
+                      }
+                    }}
+                    className="w-full text-xs font-medium bg-indigo-50/60 hover:bg-indigo-50 text-slate-800 rounded-xl border border-indigo-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 px-3 py-2.5 outline-none cursor-pointer"
+                  >
+                    <option value="" className="text-slate-400">
+                      🔽 Klik untuk Pilih Jenis Kasus / Uraian Kegiatan Inti Otomatis...
+                    </option>
+                    {PRESET_URAIAN_KEGIATAN.map((preset, idx) => (
+                      <option key={preset.id} value={preset.id} className="text-slate-800 py-1">
+                        {idx + 1}. {preset.judul} ({preset.kategori})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quick Chip Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tombol Cepat:</span>
+                  {PRESET_URAIAN_KEGIATAN.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectUraianPreset(preset)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        selectedUraianId === preset.id || uraianKegiatanInti === preset.fullText
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                          : 'bg-white hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border-slate-300 hover:border-indigo-300'
+                      }`}
+                    >
+                      {preset.judul.replace(' (Perundungan)', '').replace(' (Miras)', '').replace(' (Pencurian)', '')}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <textarea
+                    rows={6}
+                    value={uraianKegiatanInti}
+                    onChange={(e) => setUraianKegiatanInti(e.target.value)}
+                    placeholder="Contoh: a. Memanggil dan mempertemukan siswa yang berselisih secara terpisah terlebih dahulu..."
+                    className="w-full text-xs rounded-xl border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 px-3.5 py-2.5 border outline-none leading-relaxed shadow-2xs font-mono"
+                  />
+                  {uraianKegiatanInti && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUraianKegiatanInti('');
+                        setSelectedUraianId(null);
+                      }}
+                      className="absolute right-2.5 bottom-2.5 px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors cursor-pointer"
+                    >
+                      Kosongkan Teks
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Kesimpulan / Data yang Diperoleh
-                </label>
-                <textarea
-                  rows={4}
-                  value={dataDiperolehSimpulan}
-                  onChange={(e) => setDataDiperolehSimpulan(e.target.value)}
-                  placeholder="e.g. Siswa bersedia saling memaafkan dan menyelesaikan masalah secara kekeluargaan..."
-                  className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Kesimpulan / Data yang Diperoleh</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchKesimpulanPreset('');
+                      setShowKesimpulanModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                    <span>Buka Popup Kesimpulan (6 Kasus)</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Menu Langsung */}
+                <div className="mb-2.5">
+                  <select
+                    value={PRESET_KESIMPULAN_DATA.find((p) => p.fullText === dataDiperolehSimpulan)?.id || ''}
+                    onChange={(e) => {
+                      const selected = PRESET_KESIMPULAN_DATA.find((p) => p.id === e.target.value);
+                      if (selected) {
+                        handleSelectKesimpulanPreset(selected);
+                      }
+                    }}
+                    className="w-full text-xs font-medium bg-emerald-50/60 hover:bg-emerald-50 text-slate-800 rounded-xl border border-emerald-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 px-3 py-2.5 outline-none cursor-pointer"
+                  >
+                    <option value="" className="text-slate-400">
+                      🔽 Klik untuk Pilih Jenis Kasus / Kesimpulan & Data Otomatis...
+                    </option>
+                    {PRESET_KESIMPULAN_DATA.map((preset, idx) => (
+                      <option key={preset.id} value={preset.id} className="text-slate-800 py-1">
+                        {idx + 1}. {preset.judul} ({preset.kategori})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quick Chip Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tombol Cepat:</span>
+                  {PRESET_KESIMPULAN_DATA.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectKesimpulanPreset(preset)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        selectedKesimpulanId === preset.id || dataDiperolehSimpulan === preset.fullText
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                          : 'bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 border-slate-300 hover:border-emerald-300'
+                      }`}
+                    >
+                      {preset.judul.replace(' (Bullying)', '').replace(' (Miras)', '').replace(' (Pencurian)', '')}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <textarea
+                    rows={5}
+                    value={dataDiperolehSimpulan}
+                    onChange={(e) => setDataDiperolehSimpulan(e.target.value)}
+                    placeholder="Contoh: Kesimpulan: Masalah terjadi karena salah paham dan emosi remaja.&#10;&#10;Data: Kedua siswa sepakat berdamai dan berjanji tidak bertengkar lagi."
+                    className="w-full text-xs rounded-xl border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 px-3.5 py-2.5 border outline-none leading-relaxed shadow-2xs font-mono"
+                  />
+                  {dataDiperolehSimpulan && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDataDiperolehSimpulan('');
+                        setSelectedKesimpulanId(null);
+                      }}
+                      className="absolute right-2.5 bottom-2.5 px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors cursor-pointer"
+                    >
+                      Kosongkan Teks
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -716,16 +1295,87 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </h3>
 
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Uraian Hasil Pertemuan Rapat
-                </label>
-                <textarea
-                  rows={8}
-                  value={rapatHasilPertemuan}
-                  onChange={(e) => setRapatHasilPertemuan(e.target.value)}
-                  placeholder="A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena...&#10;B. Setelah dilakukan konseling dan konferensi kasus, dicapai kesepakatan...&#10;C. Hasil penyelesaian..."
-                  className="w-full text-xs font-mono rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                />
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-rose-600" />
+                    <span>Uraian Hasil Pertemuan Rapat</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchKeputusanPreset('');
+                      setShowKeputusanModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white text-xs font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all cursor-pointer active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                    <span>Buka Popup Keputusan Rapat (6 Kasus)</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Menu Langsung */}
+                <div className="mb-2.5">
+                  <select
+                    value={PRESET_KEPUTUSAN_RAPAT.find((p) => p.fullText === rapatHasilPertemuan)?.id || ''}
+                    onChange={(e) => {
+                      const selected = PRESET_KEPUTUSAN_RAPAT.find((p) => p.id === e.target.value);
+                      if (selected) {
+                        handleSelectKeputusanPreset(selected);
+                      }
+                    }}
+                    className="w-full text-xs font-medium bg-rose-50/60 hover:bg-rose-50 text-slate-800 rounded-xl border border-rose-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 px-3 py-2.5 outline-none cursor-pointer"
+                  >
+                    <option value="" className="text-slate-400">
+                      🔽 Klik untuk Pilih Jenis Kasus / Jalannya Rapat & Keputusan Otomatis...
+                    </option>
+                    {PRESET_KEPUTUSAN_RAPAT.map((preset, idx) => (
+                      <option key={preset.id} value={preset.id} className="text-slate-800 py-1">
+                        {idx + 1}. {preset.judul} ({preset.kategori})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Quick Chip Buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tombol Cepat:</span>
+                  {PRESET_KEPUTUSAN_RAPAT.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => handleSelectKeputusanPreset(preset)}
+                      className={`text-[11px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        selectedKeputusanId === preset.id || rapatHasilPertemuan === preset.fullText
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : 'bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 border-slate-300 hover:border-rose-300'
+                      }`}
+                    >
+                      {preset.judul.replace(' (Bullying)', '').replace(' (Miras)', '').replace(' (Pencurian)', '')}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative">
+                  <textarea
+                    rows={8}
+                    value={rapatHasilPertemuan}
+                    onChange={(e) => setRapatHasilPertemuan(e.target.value)}
+                    placeholder="a. Jalannya Rapat: Mempertemukan kedua siswa...&#10;&#10;b. Hasil Keputusan: Kedua siswa sepakat berdamai..."
+                    className="w-full text-xs font-mono rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2.5 border outline-none leading-relaxed shadow-2xs"
+                  />
+                  {rapatHasilPertemuan && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRapatHasilPertemuan('');
+                        setSelectedKeputusanId(null);
+                      }}
+                      className="absolute right-2.5 bottom-2.5 px-2 py-1 text-[10px] bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-md font-medium transition-colors cursor-pointer"
+                    >
+                      Kosongkan Teks
+                    </button>
+                  )}
+                </div>
                 <p className="text-[10px] text-slate-400 mt-1">
                   Gunakan baris baru (Enter) untuk membedakan butir-butir keputusan agar tercetak rapi.
                 </p>
@@ -1063,6 +1713,479 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
         )}
 
       </form>
+
+      {/* MODAL POPUP: PILIHAN TUJUAN KONFERENSI KASUS */}
+      {showTujuanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
+                  <Target className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Pilihan Tujuan Konferensi Kasus
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Pilih salah satu kasus di bawah untuk otomatis mengisi <em>Data yang Ingin Diperoleh</em>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTujuanModal(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search / Filter */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-slate-200">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchTujuanPreset}
+                  onChange={(e) => setSearchTujuanPreset(e.target.value)}
+                  placeholder="Cari jenis kasus (misal: perselisihan, perkelahian, bullying, miras, merokok, pencurian)..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* List of 6 Presets */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50/30">
+              {filteredTujuanPresets.map((preset) => {
+                const isSelected = dataInginDiperoleh === preset.deskripsi;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => handleSelectTujuanPreset(preset)}
+                    className={`group p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      isSelected
+                        ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-300 shadow-sm'
+                        : 'bg-white hover:bg-rose-50/30 border-slate-200 hover:border-rose-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-rose-700 transition-colors">
+                            {preset.judul}
+                          </h4>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${preset.badgeColor}`}>
+                            {preset.kategori}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed">
+                          {preset.deskripsi}
+                        </p>
+                      </div>
+
+                      <div className="shrink-0 flex items-center justify-center pt-1">
+                        {isSelected ? (
+                          <span className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        ) : (
+                          <span className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-rose-100 text-slate-400 group-hover:text-rose-600 flex items-center justify-center transition-colors">
+                            <ChevronRight className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredTujuanPresets.length === 0 && (
+                <div className="text-center py-10 text-slate-400 text-xs">
+                  Tidak ditemukan pilihan tujuan yang cocok dengan "{searchTujuanPreset}".
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Total {PRESET_TUJUAN_KONFERENSI.length} template resmi tersedia
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowTujuanModal(false)}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP: PILIHAN URAIAN SINGKAT KEGIATAN INTI */}
+      {showUraianModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-indigo-500/10 via-blue-500/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20 shrink-0">
+                  <ClipboardList className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Pilihan Uraian Singkat Kegiatan Inti
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Pilih salah satu kasus untuk otomatis mengisi langkah-langkah kegiatan inti (a, b, c)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUraianModal(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search / Filter */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-slate-200">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchUraianPreset}
+                  onChange={(e) => setSearchUraianPreset(e.target.value)}
+                  placeholder="Cari jenis kasus (misal: perselisihan, perkelahian, bullying, miras, merokok, pencurian)..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* List of 6 Presets */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50/30">
+              {filteredUraianPresets.map((preset) => {
+                const isSelected = uraianKegiatanInti === preset.fullText;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => handleSelectUraianPreset(preset)}
+                    className={`group p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      isSelected
+                        ? 'bg-indigo-50/80 border-indigo-400 ring-2 ring-indigo-300 shadow-sm'
+                        : 'bg-white hover:bg-indigo-50/30 border-slate-200 hover:border-indigo-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2.5 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-indigo-700 transition-colors">
+                            {preset.judul}
+                          </h4>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${preset.badgeColor}`}>
+                            {preset.kategori}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 pl-1">
+                          {preset.items.map((item, idx) => {
+                            const letter = String.fromCharCode(97 + idx); // a, b, c
+                            return (
+                              <div key={idx} className="flex items-start gap-2 text-xs text-slate-700">
+                                <span className="font-bold text-indigo-600 shrink-0">{letter}.</span>
+                                <span className="leading-relaxed">{item}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center justify-center pt-1">
+                        {isSelected ? (
+                          <span className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        ) : (
+                          <span className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-indigo-100 text-slate-400 group-hover:text-indigo-600 flex items-center justify-center transition-colors">
+                            <ChevronRight className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredUraianPresets.length === 0 && (
+                <div className="text-center py-10 text-slate-400 text-xs">
+                  Tidak ditemukan pilihan uraian kegiatan yang cocok dengan "{searchUraianPreset}".
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Total {PRESET_URAIAN_KEGIATAN.length} template resmi tersedia
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowUraianModal(false)}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP: PILIHAN KESIMPULAN / DATA YANG DIPEROLEH */}
+      {showKesimpulanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Pilihan Kesimpulan / Data yang Diperoleh
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Pilih salah satu kasus untuk mengisi teks Kesimpulan & Data hasil konferensi secara otomatis
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKesimpulanModal(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search / Filter */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-slate-200">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchKesimpulanPreset}
+                  onChange={(e) => setSearchKesimpulanPreset(e.target.value)}
+                  placeholder="Cari jenis kasus (misal: perselisihan, perkelahian, bullying, miras, merokok, pencurian)..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* List of 6 Presets */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50/30">
+              {filteredKesimpulanPresets.map((preset) => {
+                const isSelected = dataDiperolehSimpulan === preset.fullText;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => handleSelectKesimpulanPreset(preset)}
+                    className={`group p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      isSelected
+                        ? 'bg-emerald-50/80 border-emerald-400 ring-2 ring-emerald-300 shadow-sm'
+                        : 'bg-white hover:bg-emerald-50/30 border-slate-200 hover:border-emerald-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">
+                            {preset.judul}
+                          </h4>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${preset.badgeColor}`}>
+                            {preset.kategori}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 pl-1 text-xs">
+                          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5">
+                            <div className="flex items-start gap-1.5">
+                              <span className="font-bold text-emerald-700 shrink-0">Kesimpulan:</span>
+                              <span className="text-slate-700 leading-relaxed">{preset.kesimpulan}</span>
+                            </div>
+                            <div className="flex items-start gap-1.5">
+                              <span className="font-bold text-teal-700 shrink-0">Data:</span>
+                              <span className="text-slate-700 leading-relaxed">{preset.data}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center justify-center pt-1">
+                        {isSelected ? (
+                          <span className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        ) : (
+                          <span className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-emerald-100 text-slate-400 group-hover:text-emerald-600 flex items-center justify-center transition-colors">
+                            <ChevronRight className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredKesimpulanPresets.length === 0 && (
+                <div className="text-center py-10 text-slate-400 text-xs">
+                  Tidak ditemukan pilihan kesimpulan yang cocok dengan "{searchKesimpulanPreset}".
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Total {PRESET_KESIMPULAN_DATA.length} template resmi tersedia
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowKesimpulanModal(false)}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP: PILIHAN HASIL KEPUTUSAN / JALANNYA RAPAT */}
+      {showKeputusanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-rose-500/10 via-pink-500/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Pilihan Hasil Keputusan / Jalannya Rapat
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Pilih salah satu kasus untuk mengisi Jalannya Rapat (a) &amp; Hasil Keputusan (b) secara otomatis
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowKeputusanModal(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search / Filter */}
+            <div className="p-3.5 bg-slate-50/80 border-b border-slate-200">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchKeputusanPreset}
+                  onChange={(e) => setSearchKeputusanPreset(e.target.value)}
+                  placeholder="Cari jenis kasus (misal: perselisihan, perkelahian, bullying, miras, merokok, pencurian)..."
+                  className="w-full pl-9 pr-3 py-2 text-xs bg-white rounded-xl border border-slate-200 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none"
+                />
+              </div>
+            </div>
+
+            {/* List of 6 Presets */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-3 flex-1 bg-slate-50/30">
+              {filteredKeputusanPresets.map((preset) => {
+                const isSelected = rapatHasilPertemuan === preset.fullText;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => handleSelectKeputusanPreset(preset)}
+                    className={`group p-4 rounded-2xl border transition-all cursor-pointer relative ${
+                      isSelected
+                        ? 'bg-rose-50/80 border-rose-400 ring-2 ring-rose-300 shadow-sm'
+                        : 'bg-white hover:bg-rose-50/30 border-slate-200 hover:border-rose-300 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-rose-700 transition-colors">
+                            {preset.judul}
+                          </h4>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${preset.badgeColor}`}>
+                            {preset.kategori}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 pl-1 text-xs">
+                          <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+                            <div className="flex items-start gap-1.5">
+                              <span className="font-bold text-rose-700 shrink-0">a. Jalannya Rapat:</span>
+                              <span className="text-slate-700 leading-relaxed">{preset.jalannyaRapat}</span>
+                            </div>
+                            <div className="flex items-start gap-1.5">
+                              <span className="font-bold text-pink-700 shrink-0">b. Hasil Keputusan:</span>
+                              <span className="text-slate-700 leading-relaxed">{preset.hasilKeputusan}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center justify-center pt-1">
+                        {isSelected ? (
+                          <span className="w-8 h-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-xs">
+                            <Check className="w-4 h-4" />
+                          </span>
+                        ) : (
+                          <span className="w-8 h-8 rounded-xl bg-slate-100 group-hover:bg-rose-100 text-slate-400 group-hover:text-rose-600 flex items-center justify-center transition-colors">
+                            <ChevronRight className="w-4 h-4" />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredKeputusanPresets.length === 0 && (
+                <div className="text-center py-10 text-slate-400 text-xs">
+                  Tidak ditemukan pilihan keputusan rapat yang cocok dengan "{searchKeputusanPreset}".
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <span className="text-[11px] text-slate-400">
+                Total {PRESET_KEPUTUSAN_RAPAT.length} template resmi tersedia
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowKeputusanModal(false)}
+                className="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-colors cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
