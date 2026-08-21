@@ -2,7 +2,81 @@ import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
 import React, { useState, useEffect } from 'react';
 import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
-import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle, X, CheckCircle2, ChevronRight, Search, Target } from 'lucide-react';
+import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, Clock, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle, X, CheckCircle2, ChevronRight, Search, Target } from 'lucide-react';
+
+const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const NAMA_BULAN = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+export const formatHariTanggalJam = (tglIso: string, jamStr: string): string => {
+  if (!tglIso) return '';
+  const parts = tglIso.split('-');
+  if (parts.length === 3) {
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+    if (!isNaN(d.getTime())) {
+      const hari = NAMA_HARI[d.getDay()];
+      const bulan = NAMA_BULAN[month];
+      let jamClean = (jamStr || '').trim();
+      if (jamClean) {
+        if (!jamClean.toLowerCase().startsWith('jam')) {
+          jamClean = `Jam ${jamClean}`;
+        }
+      }
+      return `${hari}, ${day} ${bulan} ${year}${jamClean ? ' ' + jamClean : ''}`;
+    }
+  }
+  return tglIso;
+};
+
+export const parseHariTglJam = (text: string): { date: string; time: string } => {
+  if (!text) return { date: new Date().toISOString().slice(0, 10), time: '10.30 WIB' };
+
+  // Check if text has YYYY-MM-DD
+  const isoMatch = text.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const timeMatch = text.match(/(\d{1,2}[:.]\d{2})/);
+    return {
+      date: isoMatch[0],
+      time: timeMatch ? `${timeMatch[0].replace(':', '.')} WIB` : '10.30 WIB'
+    };
+  }
+
+  // Indonesian date text: "8 September 2016" or "08 September 2026"
+  const monthMap: Record<string, string> = {
+    januari: '01', februari: '02', maret: '03', april: '04', mei: '05', juni: '06',
+    juli: '07', agustus: '08', september: '09', oktober: '10', november: '11', desember: '12'
+  };
+
+  const idMatch = text.match(/(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/);
+  let foundDate = new Date().toISOString().slice(0, 10);
+  if (idMatch) {
+    const day = idMatch[1].padStart(2, '0');
+    const monthName = idMatch[2].toLowerCase();
+    const year = idMatch[3];
+    const monthNum = monthMap[monthName];
+    if (monthNum) {
+      foundDate = `${year}-${monthNum}-${day}`;
+    }
+  }
+
+  // Extract time from text
+  const timeMatch = text.match(/(?:jam\s*)?(\d{1,2}[:.]\d{2}(?:\s*wib)?)/i);
+  let foundTime = '10.30 WIB';
+  if (timeMatch) {
+    let t = timeMatch[1].trim();
+    if (!t.toUpperCase().includes('WIB')) {
+      t = `${t.replace(':', '.')} WIB`;
+    }
+    foundTime = t;
+  }
+
+  return { date: foundDate, time: foundTime };
+};
 
 export interface TujuanKonferensiPreset {
   id: string;
@@ -328,7 +402,18 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     }
   };
   const [jenisMasalah, setJenisMasalah] = useState('');
-  const [hariTglJam, setHariTglJam] = useState('');
+  const [tanggalKejadian, setTanggalKejadian] = useState(new Date().toISOString().slice(0, 10));
+  const [jamKejadian, setJamKejadian] = useState('10.30 WIB');
+  const [hariTglJam, setHariTglJam] = useState(formatHariTanggalJam(new Date().toISOString().slice(0, 10), '10.30 WIB'));
+
+  const updateHariTglJam = (tgl: string, jam: string) => {
+    const formatted = formatHariTanggalJam(tgl, jam);
+    setHariTglJam(formatted);
+    // Keep rapatDimulaiPukul aligned if appropriate
+    if (jam.trim()) {
+      setRapatDimulaiPukul(jam.trim());
+    }
+  };
   const [pemanduKonferensi, setPemanduKonferensi] = useState('Konselor Sekolah');
   const [pemanduNama, setPemanduNama] = useState('Wiwik Ismiati, S.Pd');
   const [pemanduJabatan, setPemanduJabatan] = useState('Konselor');
@@ -464,7 +549,12 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       setNamaKonseli(initialData.nama_konseli || '');
       setKelasTa(initialData.kelas_ta || '');
       setJenisMasalah(initialData.jenis_masalah || '');
-      setHariTglJam(initialData.hari_tgl_jam || '');
+
+      const parsedTgl = parseHariTglJam(initialData.hari_tgl_jam || '');
+      setTanggalKejadian(parsedTgl.date);
+      setJamKejadian(parsedTgl.time);
+      setHariTglJam(initialData.hari_tgl_jam || formatHariTanggalJam(parsedTgl.date, parsedTgl.time));
+
       setPemanduKonferensi(initialData.pemandu_konferensi || 'Konselor Sekolah');
       setPemanduNama(initialData.pemandu_nama || '');
       setPemanduJabatan(initialData.pemandu_jabatan || '');
@@ -479,8 +569,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       setRapatTempat(initialData.rapat_tempat || 'UPT SMPN 7 PASURUAN');
       setRapatKetua(initialData.rapat_ketua || 'Konselor');
       setRapatJumlahHadir(initialData.rapat_jumlah_hadir || '');
-      setRapatDimulaiPukul(initialData.rapat_dimulai_pukul || '');
-      setRapatDiakhiriPukul(initialData.rapat_diakhiri_pukul || '');
+      setRapatDimulaiPukul(initialData.rapat_dimulai_pukul || parsedTgl.time || '10.30 WIB');
+      setRapatDiakhiriPukul(initialData.rapat_diakhiri_pukul || '11.00 WIB');
       setRapatHasilPertemuan(initialData.rapat_hasil_pertemuan || '');
 
       setDaftarHadirPesertaSingkat(initialData.daftar_hadir_peserta_singkat || '');
@@ -515,7 +605,14 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     if (match) {
       setKelasTa(match.kelas_ta || kelasTa);
       setJenisMasalah(match.jenis_masalah || jenisMasalah);
-      setHariTglJam(match.hari_tgl_jam || hariTglJam);
+      
+      if (match.hari_tgl_jam) {
+        const parsedTgl = parseHariTglJam(match.hari_tgl_jam);
+        setTanggalKejadian(parsedTgl.date);
+        setJamKejadian(parsedTgl.time);
+        setHariTglJam(match.hari_tgl_jam);
+      }
+
       setPemanduKonferensi(match.pemandu_konferensi || pemanduKonferensi);
       setPemanduNama(match.pemandu_nama || pemanduNama);
       setPemanduJabatan(match.pemandu_jabatan || pemanduJabatan);
@@ -604,7 +701,12 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     setNamaKonseli('');
     setKelasTa('');
     setJenisMasalah('');
-    setHariTglJam('');
+    
+    const today = new Date().toISOString().slice(0, 10);
+    setTanggalKejadian(today);
+    setJamKejadian('10.30 WIB');
+    setHariTglJam(formatHariTanggalJam(today, '10.30 WIB'));
+
     setPemanduKonferensi('Konselor Sekolah');
     setPemanduNama('Wiwik Ismiati, S.Pd');
     setPemanduJabatan('Konselor');
@@ -820,20 +922,118 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">
-                    Hari, Tanggal & Waktu Pelaksanaan
+              {/* Kalender & Jam Kejadian / Pelaksanaan Konferensi */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50/80 via-amber-50/40 to-slate-50 border border-rose-200/90 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-rose-600" />
+                    <span>Hari, Tanggal &amp; Jam Kejadian / Pelaksanaan Konferensi</span>
+                    <span className="text-rose-600 font-bold">*</span>
                   </label>
-                  <input
-                    type="text"
-                    value={hariTglJam}
-                    onChange={(e) => setHariTglJam(e.target.value)}
-                    placeholder="e.g. Kamis, 8 September 2016 Jam 10.30 WIB"
-                    className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
-                  />
+                  <span className="text-[10px] font-bold text-rose-700 bg-rose-100/90 px-2.5 py-0.5 rounded-full border border-rose-200 shadow-2xs">
+                    📅 Kalender &amp; Jam Otomatis
+                  </span>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {/* 1. Pemilih Tanggal (Kalender) */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5 text-rose-600" />
+                        PILIH TANGGAL (KALENDER) <span className="text-rose-600 font-bold">*</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const today = new Date().toISOString().slice(0, 10);
+                          setTanggalKejadian(today);
+                          updateHariTglJam(today, jamKejadian);
+                        }}
+                        className="text-[10px] text-rose-600 hover:text-rose-800 font-bold hover:underline cursor-pointer bg-white px-2 py-0.5 rounded-md border border-rose-200"
+                      >
+                        Hari Ini
+                      </button>
+                    </label>
+                    <input
+                      type="date"
+                      value={tanggalKejadian}
+                      onChange={(e) => {
+                        setTanggalKejadian(e.target.value);
+                        updateHariTglJam(e.target.value, jamKejadian);
+                      }}
+                      required
+                      className="w-full text-xs font-medium rounded-xl border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 px-3.5 py-2.5 bg-white border outline-none shadow-2xs cursor-pointer"
+                    />
+                  </div>
+
+                  {/* 2. Pemilih Jam Kejadian */}
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5 text-amber-600" />
+                      <span>JAM KEJADIAN / WAKTU</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={jamKejadian}
+                      onChange={(e) => {
+                        setJamKejadian(e.target.value);
+                        updateHariTglJam(tanggalKejadian, e.target.value);
+                      }}
+                      placeholder="Contoh: 10.30 WIB atau 09.00 WIB"
+                      className="w-full text-xs font-medium rounded-xl border-slate-300 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 px-3.5 py-2.5 bg-white border outline-none shadow-2xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Chip Presets for Jam */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tombol Jam Cepat:</span>
+                  {['08.00 WIB', '09.00 WIB', '09.30 WIB', '10.30 WIB', '11.00 WIB', '12.30 WIB', '13.00 WIB'].map((presetTime) => (
+                    <button
+                      key={presetTime}
+                      type="button"
+                      onClick={() => {
+                        setJamKejadian(presetTime);
+                        updateHariTglJam(tanggalKejadian, presetTime);
+                      }}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border font-semibold transition-all cursor-pointer ${
+                        jamKejadian === presetTime
+                          ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                          : 'bg-white hover:bg-rose-50 text-slate-700 border-slate-200 hover:border-rose-300'
+                      }`}
+                    >
+                      {presetTime}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Live Hasil Format Output */}
+                <div className="p-2.5 bg-white rounded-xl border border-rose-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs">
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <span className="font-bold text-slate-500 shrink-0">Hasil Hari, Tanggal &amp; Jam:</span>
+                    <span className="font-bold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
+                      {hariTglJam || '-'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const custom = prompt('Ubah teks format hari, tanggal & jam secara manual:', hariTglJam);
+                        if (custom !== null) {
+                          setHariTglJam(custom);
+                        }
+                      }}
+                      className="text-[10px] text-slate-500 hover:text-slate-800 underline font-medium cursor-pointer"
+                    >
+                      Edit Manual Teks
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">
                     Pemandu Konferensi
