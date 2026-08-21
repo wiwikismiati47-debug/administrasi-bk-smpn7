@@ -2916,6 +2916,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                         handleSelectSingleStudentForDaftarHadir({
                           id: `custom-${Date.now()}`,
                           nama_siswa: modalSiswaSearchQuery.trim(),
+                          nis: '',
+                          jenis_kelamin: 'L',
                           kelas: modalSiswaFilterKelas !== 'Semua Kelas' ? modalSiswaFilterKelas : (selectedKelas || '9E')
                         });
                       }}
