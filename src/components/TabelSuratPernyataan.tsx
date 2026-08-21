@@ -41,6 +41,7 @@ const JENIS_LABEL_MAP: Record<JenisSuratPernyataan, { label: string; badge: stri
   SP_ORTU_1: { label: '4. SP Orang Tua 1', badge: 'ORTU 1', color: 'bg-purple-100 text-purple-800 border-purple-300' },
   SP_ORTU_2: { label: '5. SP Orang Tua 2', badge: 'ORTU 2', color: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
   SP_PENGUNDURAN_DIRI: { label: '6. SP Pengunduran Diri', badge: 'PINDAH', color: 'bg-rose-100 text-rose-800 border-rose-300' },
+  SP_DAMAI: { label: '7. SP Damai Siswa', badge: 'DAMAI', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
 };
 
 export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
@@ -57,11 +58,27 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const filteredItems = items.filter((item) => {
+    const s = (search || '').toLowerCase();
+    const namaSiswa = (item.nama_siswa || '').toLowerCase();
+    const kelas = (item.kelas || '').toLowerCase();
+    const namaSiswa2 = (item.nama_siswa_2 || '').toLowerCase();
+    const kelas2 = (item.kelas_2 || '').toLowerCase();
+    const namaOrtu = (item.nama_orang_tua || '').toLowerCase();
+    const ket = (item.keterangan || '').toLowerCase();
+    const perRules = (item.peraturan_diketahui || '').toLowerCase();
+    const hariKejadian = (item.hari_tanggal_kejadian || '').toLowerCase();
+
     const matchesSearch =
-      item.nama_siswa.toLowerCase().includes(search.toLowerCase()) ||
-      item.kelas.toLowerCase().includes(search.toLowerCase()) ||
-      item.nama_orang_tua.toLowerCase().includes(search.toLowerCase()) ||
-      item.keterangan.toLowerCase().includes(search.toLowerCase());
+      !s ||
+      namaSiswa.includes(s) ||
+      kelas.includes(s) ||
+      namaSiswa2.includes(s) ||
+      kelas2.includes(s) ||
+      namaOrtu.includes(s) ||
+      ket.includes(s) ||
+      perRules.includes(s) ||
+      hariKejadian.includes(s) ||
+      (item.jenis_sp && item.jenis_sp.toLowerCase().includes(s));
 
     const matchesJenis = filterJenis === 'ALL' || item.jenis_sp === filterJenis;
 
@@ -99,7 +116,7 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
               </h2>
             </div>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Daftar SP 1, SP 2, SP 3, SP Orang Tua, & Pengunduran Diri (Total {items.length} Berkas)
+              Daftar SP 1, SP 2, SP 3, SP Orang Tua, Pengunduran Diri, & Pernyataan Damai Siswa (Total {items.length} Berkas)
             </p>
           </div>
         </div>
@@ -159,6 +176,7 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
             <option value="SP_ORTU_1">4. SP Orang Tua 1</option>
             <option value="SP_ORTU_2">5. SP Orang Tua 2</option>
             <option value="SP_PENGUNDURAN_DIRI">6. SP Pengunduran Diri</option>
+            <option value="SP_DAMAI">7. SP Damai Siswa</option>
           </select>
         </div>
       </div>
@@ -170,10 +188,10 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
             <tr className="bg-slate-100 text-slate-700 font-extrabold uppercase tracking-wider border-b border-slate-200">
               <th className="py-3 px-3.5 text-center w-12">No</th>
               <th className="py-3 px-3.5">Jenis SP</th>
-              <th className="py-3 px-3.5">Nama Siswa & Kelas</th>
-              <th className="py-3 px-3.5">Orang Tua / Wali</th>
+              <th className="py-3 px-3.5">Pihak / Siswa</th>
+              <th className="py-3 px-3.5">Pihak 2 / Orang Tua</th>
               <th className="py-3 px-3.5">Tanggal Surat</th>
-              <th className="py-3 px-3.5">Keterangan</th>
+              <th className="py-3 px-3.5">Keterangan / Peristiwa</th>
               <th className="py-3 px-3.5 text-center w-36">Aksi</th>
             </tr>
           </thead>
@@ -204,19 +222,32 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
                       </span>
                     </td>
                     <td className="py-3 px-3.5">
-                      <div className="font-extrabold text-slate-900">{item.nama_siswa}</div>
+                      <div className="font-extrabold text-slate-900">
+                        {item.jenis_sp === 'SP_DAMAI' ? `1. ${item.nama_siswa}` : item.nama_siswa}
+                      </div>
                       <div className="text-[11px] text-amber-800 font-bold">Kelas {item.kelas || '-'}</div>
                     </td>
                     <td className="py-3 px-3.5">
-                      <div className="font-bold text-slate-800">{item.nama_orang_tua || '-'}</div>
-                      <div className="text-[11px] text-slate-500">{item.pekerjaan_orang_tua || item.alamat_orang_tua || '-'}</div>
+                      {item.jenis_sp === 'SP_DAMAI' ? (
+                        <>
+                          <div className="font-extrabold text-emerald-900">2. {item.nama_siswa_2 || '-'}</div>
+                          <div className="text-[11px] text-emerald-700 font-bold">Kelas {item.kelas_2 || '-'}</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-bold text-slate-800">{item.nama_orang_tua || '-'}</div>
+                          <div className="text-[11px] text-slate-500">{item.pekerjaan_orang_tua || item.alamat_orang_tua || '-'}</div>
+                        </>
+                      )}
                     </td>
                     <td className="py-3 px-3.5 whitespace-nowrap text-slate-600 font-medium">
                       {item.tanggal_surat || '-'}
                     </td>
                     <td className="py-3 px-3.5 max-w-xs">
                       <p className="line-clamp-2 text-slate-600 font-normal">
-                        {item.keterangan || item.peraturan_diketahui || '-'}
+                        {item.jenis_sp === 'SP_DAMAI' && item.hari_tanggal_kejadian
+                          ? `Kejadian: ${item.hari_tanggal_kejadian}`
+                          : item.keterangan || item.peraturan_diketahui || '-'}
                       </p>
                     </td>
                     <td className="py-3 px-3.5 text-center">
@@ -287,7 +318,9 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
                     {selectedItem.jenis_sp}
                   </span>
                   <h3 className="text-base font-black text-slate-900 mt-0.5">
-                    Surat Pernyataan: {selectedItem.nama_siswa}
+                    {selectedItem.jenis_sp === 'SP_DAMAI'
+                      ? `Surat Pernyataan Damai: ${selectedItem.nama_siswa} & ${selectedItem.nama_siswa_2 || '-'}`
+                      : `Surat Pernyataan: ${selectedItem.nama_siswa}`}
                   </h3>
                 </div>
               </div>
@@ -302,28 +335,46 @@ export const TabelSuratPernyataan: React.FC<TabelSuratPernyataanProps> = ({
 
             {/* Modal Body Detail */}
             <div className="space-y-4 text-xs text-slate-800">
-              <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-                <div>
-                  <span className="text-slate-500 font-bold block">Nama Siswa:</span>
-                  <span className="font-extrabold text-slate-900 text-sm">{selectedItem.nama_siswa}</span>
+              {selectedItem.jenis_sp === 'SP_DAMAI' ? (
+                <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200">
+                    <span className="text-amber-800 font-bold block text-[10px] uppercase">Siswa Pertama (Pihak 1):</span>
+                    <span className="font-extrabold text-slate-900 text-sm block">{selectedItem.nama_siswa}</span>
+                    <span className="text-slate-600 font-medium">Kelas: {selectedItem.kelas}</span>
+                  </div>
+                  <div className="p-2.5 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <span className="text-emerald-800 font-bold block text-[10px] uppercase">Siswa Kedua (Pihak 2):</span>
+                    <span className="font-extrabold text-slate-900 text-sm block">{selectedItem.nama_siswa_2 || '-'}</span>
+                    <span className="text-slate-600 font-medium">Kelas: {selectedItem.kelas_2 || '-'}</span>
+                  </div>
+                  <div className="col-span-2 text-slate-700 font-medium">
+                    Hari, Tanggal Kejadian: <b>{selectedItem.hari_tanggal_kejadian || '-'}</b> | Tahun Ajaran: <b>{selectedItem.tahun_ajaran || '2026-2027'}</b>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-500 font-bold block">Kelas:</span>
-                  <span className="font-extrabold text-amber-700 text-sm">Kelas {selectedItem.kelas}</span>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
+                  <div>
+                    <span className="text-slate-500 font-bold block">Nama Siswa:</span>
+                    <span className="font-extrabold text-slate-900 text-sm">{selectedItem.nama_siswa}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-bold block">Kelas:</span>
+                    <span className="font-extrabold text-amber-700 text-sm">Kelas {selectedItem.kelas}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-bold block">Orang Tua / Wali:</span>
+                    <span className="font-bold">{selectedItem.nama_orang_tua || '-'} ({selectedItem.pekerjaan_orang_tua || '-'})</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-bold block">Alamat / Hubungan:</span>
+                    <span className="font-medium">{selectedItem.alamat_orang_tua || '-'} ({selectedItem.hubungan_keluarga || '-'})</span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-slate-500 font-bold block">Orang Tua / Wali:</span>
-                  <span className="font-bold">{selectedItem.nama_orang_tua || '-'} ({selectedItem.pekerjaan_orang_tua || '-'})</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 font-bold block">Alamat / Hubungan:</span>
-                  <span className="font-medium">{selectedItem.alamat_orang_tua || '-'} ({selectedItem.hubungan_keluarga || '-'})</span>
-                </div>
-              </div>
+              )}
 
               <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 space-y-2">
                 <span className="text-amber-900 font-black block uppercase text-[11px] tracking-wider">
-                  Poin-poin Pernyataan / Komitmen:
+                  {selectedItem.jenis_sp === 'SP_DAMAI' ? 'Poin Ikrar Damai & Komitmen:' : 'Poin-poin Pernyataan / Komitmen:'}
                 </span>
                 <div className="whitespace-pre-wrap leading-relaxed font-sans text-slate-900 bg-white p-3.5 rounded-xl border border-amber-200">
                   {selectedItem.peraturan_diketahui}

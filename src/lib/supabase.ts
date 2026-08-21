@@ -1,6 +1,6 @@
 import { getActiveGuruBK } from './guruBk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa, JurnalBK, FormJurnalBKData } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JenisSuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa, JurnalBK, FormJurnalBKData } from '../types';
 import { safeGetStorage, safeSetStorage } from './storageManager';
 
 export const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
@@ -1068,6 +1068,29 @@ const INITIAL_DEMO_SURAT_PERNYATAAN: SuratPernyataan[] = [
     tempat_surat: 'Pasuruan',
     keterangan: 'Surat Pernyataan Orang Tua / Wali Siswa terkait komitmen disiplin.',
   },
+  {
+    id: 'demo-sp-damai',
+    created_at: new Date(Date.now() - 43200000).toISOString(),
+    updated_at: new Date(Date.now() - 43200000).toISOString(),
+    jenis_sp: 'SP_DAMAI',
+    nama_siswa: 'M. Dimas Pratama',
+    kelas: 'VIII B',
+    nama_siswa_2: 'Rian Hidayatullah',
+    kelas_2: 'VIII B',
+    hari_tanggal_kejadian: 'Senin, 17 Agustus 2026',
+    tahun_ajaran: '2026-2027',
+    jabatan_pengetahu: 'Guru BK / Wali Kelas',
+    nama_orang_tua: '',
+    pekerjaan_orang_tua: '',
+    alamat_orang_tua: '',
+    hubungan_keluarga: '',
+    peraturan_diketahui:
+      '1. Saling memaafkan dengan tulus dan tidak akan mengungkit atau memperpanjang masalah ini lagi.\n2. Kembali berteman dengan baik serta tidak akan saling mengejek, mengancam, memprovokasi, atau melakukan kekerasan dalam bentuk apa pun.\n3. Siap menerima sanksi tegas dari pihak sekolah sesuai dengan aturan yang berlaku apabila melanggar janji ini.',
+    alasan_pengunduran: '',
+    tanggal_surat: '2026-08-18',
+    tempat_surat: 'Pasuruan',
+    keterangan: 'Surat Pernyataan Damai Siswa menyelesaikan perselisihan secara kekeluargaan.',
+  },
 ];
 
 export function getLocalSuratPernyataanList(): SuratPernyataan[] {
@@ -1091,14 +1114,75 @@ export async function fetchAllSuratPernyataan(): Promise<{ data: SuratPernyataan
         .order('tanggal_surat', { ascending: false });
 
       if (!error && data) {
-        saveLocalSuratPernyataanList(data as SuratPernyataan[]);
-        return { data: data as SuratPernyataan[], isFromSupabase: true };
+        // Merge Supabase items with local items safely so newly added local items/fields are never lost
+        const localList = getLocalSuratPernyataanList();
+        const mergedMap = new Map<string, SuratPernyataan>();
+
+        // 1. Put Supabase items first
+        (data as Record<string, unknown>[]).forEach((item) => {
+          const spItem: SuratPernyataan = {
+            id: String(item.id || ''),
+            created_at: String(item.created_at || new Date().toISOString()),
+            updated_at: String(item.updated_at || new Date().toISOString()),
+            jenis_sp: (item.jenis_sp as JenisSuratPernyataan) || 'SP_1',
+            nama_siswa: String(item.nama_siswa || ''),
+            kelas: String(item.kelas || ''),
+            nama_siswa_2: item.nama_siswa_2 ? String(item.nama_siswa_2) : '',
+            kelas_2: item.kelas_2 ? String(item.kelas_2) : '',
+            hari_tanggal_kejadian: item.hari_tanggal_kejadian ? String(item.hari_tanggal_kejadian) : '',
+            tahun_ajaran: item.tahun_ajaran ? String(item.tahun_ajaran) : '2026-2027',
+            jabatan_pengetahu: item.jabatan_pengetahu ? String(item.jabatan_pengetahu) : 'Guru BK / Wali Kelas',
+            nama_orang_tua: String(item.nama_orang_tua || ''),
+            pekerjaan_orang_tua: String(item.pekerjaan_orang_tua || ''),
+            alamat_orang_tua: String(item.alamat_orang_tua || ''),
+            hubungan_keluarga: String(item.hubungan_keluarga || 'Orang Tua / Wali'),
+            peraturan_diketahui: String(item.peraturan_diketahui || ''),
+            alasan_pengunduran: String(item.alasan_pengunduran || ''),
+            tanggal_surat: String(item.tanggal_surat || new Date().toISOString().slice(0, 10)),
+            tempat_surat: String(item.tempat_surat || 'Pasuruan'),
+            keterangan: String(item.keterangan || ''),
+            nama_guru_bk: String(item.nama_guru_bk || ''),
+            nip_guru_bk: String(item.nip_guru_bk || ''),
+            nama_kepala_sekolah: String(item.nama_kepala_sekolah || ''),
+            nip_kepala_sekolah: String(item.nip_kepala_sekolah || ''),
+          };
+          mergedMap.set(spItem.id, spItem);
+        });
+
+        // 2. Merge local items that are not in Supabase or have extra fields
+        localList.forEach((localItem) => {
+          const existing = mergedMap.get(localItem.id);
+          if (!existing) {
+            mergedMap.set(localItem.id, localItem);
+          } else {
+            // Keep local enriched fields if Supabase returned blank for newly added columns
+            mergedMap.set(localItem.id, {
+              ...existing,
+              nama_siswa_2: existing.nama_siswa_2 || localItem.nama_siswa_2 || '',
+              kelas_2: existing.kelas_2 || localItem.kelas_2 || '',
+              hari_tanggal_kejadian: existing.hari_tanggal_kejadian || localItem.hari_tanggal_kejadian || '',
+              tahun_ajaran: existing.tahun_ajaran || localItem.tahun_ajaran || '2026-2027',
+              jabatan_pengetahu: existing.jabatan_pengetahu || localItem.jabatan_pengetahu || 'Guru BK / Wali Kelas',
+              keterangan: existing.keterangan || localItem.keterangan || '',
+              peraturan_diketahui: existing.peraturan_diketahui || localItem.peraturan_diketahui || '',
+            });
+          }
+        });
+
+        const mergedList = Array.from(mergedMap.values()).sort((a, b) => {
+          const dateA = new Date(a.tanggal_surat || a.created_at || 0).getTime();
+          const dateB = new Date(b.tanggal_surat || b.created_at || 0).getTime();
+          return dateB - dateA;
+        });
+
+        saveLocalSuratPernyataanList(mergedList);
+        return { data: mergedList, isFromSupabase: true };
       } else if (error) {
         console.warn('Supabase fetch surat pernyataan error:', error.message);
         return {
           data: getLocalSuratPernyataanList(),
           isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
+          error: `Supabase: ${error.message}. Menggunakan data lokal.`,
         };
       }
     } catch (err: unknown) {
@@ -1117,17 +1201,41 @@ export async function saveOrUpdateSuratPernyataan(
   const client = getSupabaseClient(config);
 
   const now = new Date().toISOString();
-  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `sp-${Date.now()}`);
+  const idToUse = item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sp-${Date.now()}`);
 
   const payload: SuratPernyataan = {
     ...item,
     id: idToUse,
+    nama_siswa: item.nama_siswa || '',
+    kelas: item.kelas || '',
+    nama_siswa_2: item.nama_siswa_2 || '',
+    kelas_2: item.kelas_2 || '',
+    hari_tanggal_kejadian: item.hari_tanggal_kejadian || '',
+    tahun_ajaran: item.tahun_ajaran || '2026-2027',
+    jabatan_pengetahu: item.jabatan_pengetahu || 'Guru BK / Wali Kelas',
+    nama_orang_tua: item.nama_orang_tua || '',
+    pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
+    alamat_orang_tua: item.alamat_orang_tua || '',
+    hubungan_keluarga: item.hubungan_keluarga || 'Orang Tua / Wali',
+    peraturan_diketahui: item.peraturan_diketahui || '',
+    alasan_pengunduran: item.alasan_pengunduran || '',
+    tanggal_surat: item.tanggal_surat || now.slice(0, 10),
+    tempat_surat: item.tempat_surat || 'Pasuruan',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || '',
+    nip_guru_bk: item.nip_guru_bk || '',
+    nama_kepala_sekolah: item.nama_kepala_sekolah || '',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '',
     created_at: item.created_at || now,
     updated_at: now,
   };
 
+  // Always save locally first so user data is immediately available and preserved
+  saveToLocalSuratPernyataanFallback(payload);
+
   if (client) {
     try {
+      // 1. Try full upsert with all modern columns
       const { data, error } = await client
         .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
         .upsert(payload, { onConflict: 'id' })
@@ -1135,29 +1243,60 @@ export async function saveOrUpdateSuratPernyataan(
         .single();
 
       if (!error && data) {
-        const currentLocal = getLocalSuratPernyataanList();
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as SuratPernyataan;
-        } else {
-          currentLocal.unshift(data as SuratPernyataan);
-        }
-        saveLocalSuratPernyataanList(currentLocal);
-
-        return { success: true, data: data as SuratPernyataan, isSupabase: true };
+        const mergedData: SuratPernyataan = {
+          ...payload,
+          ...(data as SuratPernyataan),
+        };
+        saveToLocalSuratPernyataanFallback(mergedData);
+        return { success: true, data: mergedData, isSupabase: true };
       } else if (error) {
-        console.warn('Supabase save surat pernyataan error:', error.message);
-        saveToLocalSuratPernyataanFallback(payload);
+        console.warn('Supabase full upsert error, trying legacy fallback fields:', error.message);
+
+        // 2. If table in Supabase doesn't have the new columns yet, fallback to base schema fields
+        const legacyPayload: Record<string, unknown> = {
+          id: payload.id,
+          created_at: payload.created_at,
+          updated_at: payload.updated_at,
+          jenis_sp: payload.jenis_sp,
+          nama_siswa: payload.nama_siswa,
+          kelas: payload.kelas,
+          nama_orang_tua: payload.nama_orang_tua || (payload.nama_siswa_2 ? `Siswa 2: ${payload.nama_siswa_2} (${payload.kelas_2 || ''})` : ''),
+          pekerjaan_orang_tua: payload.pekerjaan_orang_tua,
+          alamat_orang_tua: payload.alamat_orang_tua,
+          hubungan_keluarga: payload.hubungan_keluarga,
+          peraturan_diketahui: payload.peraturan_diketahui,
+          alasan_pengunduran: payload.alasan_pengunduran,
+          tanggal_surat: payload.tanggal_surat,
+          tempat_surat: payload.tempat_surat,
+          keterangan: payload.keterangan || (payload.hari_tanggal_kejadian ? `Kejadian: ${payload.hari_tanggal_kejadian}` : ''),
+          nama_guru_bk: payload.nama_guru_bk,
+          nip_guru_bk: payload.nip_guru_bk,
+          nama_kepala_sekolah: payload.nama_kepala_sekolah,
+          nip_kepala_sekolah: payload.nip_kepala_sekolah,
+        };
+
+        const fallbackRes = await client
+          .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
+          .upsert(legacyPayload, { onConflict: 'id' })
+          .select()
+          .single();
+
+        if (!fallbackRes.error) {
+          // Saved to Supabase with legacy fields; local storage holds full fields
+          saveToLocalSuratPernyataanFallback(payload);
+          return { success: true, data: payload, isSupabase: true };
+        }
+
+        console.warn('Supabase legacy upsert also failed:', fallbackRes.error.message);
         return {
           success: true,
           data: payload,
           isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
+          error: `Disimpan di penyimpanan lokal (${error.message}).`,
         };
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalSuratPernyataanFallback(payload);
+      const msg = err instanceof Error ? err.message : 'Gagal terhubung ke Supabase';
       return {
         success: true,
         data: payload,
@@ -1167,7 +1306,6 @@ export async function saveOrUpdateSuratPernyataan(
     }
   }
 
-  saveToLocalSuratPernyataanFallback(payload);
   return { success: true, data: payload, isSupabase: false };
 }
 
@@ -2262,6 +2400,11 @@ create table if not exists public.${suratPernyataanTableName} (
   jenis_sp text not null,
   nama_siswa text not null,
   kelas text default '',
+  nama_siswa_2 text default '',
+  kelas_2 text default '',
+  hari_tanggal_kejadian text default '',
+  tahun_ajaran text default '2026-2027',
+  jabatan_pengetahu text default 'Guru BK / Wali Kelas',
   nama_orang_tua text default '',
   pekerjaan_orang_tua text default '',
   alamat_orang_tua text default '',
@@ -2276,6 +2419,13 @@ create table if not exists public.${suratPernyataanTableName} (
   nama_kepala_sekolah text default '',
   nip_kepala_sekolah text default ''
 );
+
+-- Migrasi kolom otomatis jika tabel sudah ada sebelumnya
+alter table public.${suratPernyataanTableName} add column if not exists nama_siswa_2 text default '';
+alter table public.${suratPernyataanTableName} add column if not exists kelas_2 text default '';
+alter table public.${suratPernyataanTableName} add column if not exists hari_tanggal_kejadian text default '';
+alter table public.${suratPernyataanTableName} add column if not exists tahun_ajaran text default '2026-2027';
+alter table public.${suratPernyataanTableName} add column if not exists jabatan_pengetahu text default 'Guru BK / Wali Kelas';
 
 alter table public.${suratPernyataanTableName} enable row level security;
 

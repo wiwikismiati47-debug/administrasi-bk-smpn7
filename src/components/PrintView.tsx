@@ -1799,6 +1799,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 else if (sp.jenis_sp === 'SP_ORTU_1') titleDoc = 'SURAT PERNYATAAN ORANG TUA / WALI';
                 else if (sp.jenis_sp === 'SP_ORTU_2') titleDoc = 'SURAT PERNYATAAN ORANG TUA / WALI';
                 else if (sp.jenis_sp === 'SP_PENGUNDURAN_DIRI') titleDoc = 'SURAT PERNYATAAN PENGUNDURAN DIRI';
+                else if (sp.jenis_sp === 'SP_DAMAI') titleDoc = 'SURAT PERNYATAAN DAMAI SISWA';
 
                 return (
                   <>
@@ -1806,7 +1807,102 @@ export const PrintView: React.FC<PrintViewProps> = ({
                       <h2 className="text-base font-bold uppercase underline tracking-wider">
                         {titleDoc}
                       </h2>
+                      {sp.jenis_sp === 'SP_DAMAI' && (
+                        <>
+                          <p className="text-xs font-bold uppercase mt-1">UPT SMP NEGERI 7 PASURUAN</p>
+                          <p className="text-xs font-semibold mt-0.5">Tahun Ajaran {sp.tahun_ajaran || '2026-2027'}</p>
+                        </>
+                      )}
                     </div>
+
+                    {/* SP DAMAI SISWA */}
+                    {sp.jenis_sp === 'SP_DAMAI' && (
+                      <div className="space-y-3">
+                        <p>
+                          Pada hari ini, <span className="font-semibold">{tanggalIndo}</span>, kami yang bertanda tangan di bawah ini:
+                        </p>
+
+                        <table className="ml-5 border-collapse w-11/12">
+                          <tbody>
+                            <tr>
+                              <td className="w-48 py-1">Nama Siswa Pertama</td>
+                              <td className="w-5 py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_siswa}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Kelas</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.kelas}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Nama Siswa Kedua</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.nama_siswa_2 || '....................................'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Kelas</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-bold">{sp.kelas_2 || '................'}</td>
+                            </tr>
+                            <tr>
+                              <td className="py-1">Hari, Tanggal Kejadian</td>
+                              <td className="py-1">:</td>
+                              <td className="py-1 font-semibold">{sp.hari_tanggal_kejadian || '................, ....................'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+
+                        <p className="pt-2 text-justify">
+                          Menyatakan bahwa kami telah bersepakat untuk damai dan menyelesaikan perselisihan yang pernah terjadi secara kekeluargaan.
+                        </p>
+
+                        <p className="pt-1 font-semibold text-black">Dengan ini kami berjanji:</p>
+                        <div className="ml-5 py-1 text-black whitespace-pre-wrap leading-relaxed text-sm">
+                          {sp.peraturan_diketahui || (
+                            <>
+                              1. Saling memaafkan dengan tulus dan tidak akan mengungkit atau memperpanjang masalah ini lagi.<br />
+                              2. Kembali berteman dengan baik serta tidak akan saling mengejek, mengancam, memprovokasi, atau melakukan kekerasan dalam bentuk apa pun.<br />
+                              3. Siap menerima sanksi tegas dari pihak sekolah sesuai dengan aturan yang berlaku apabila melanggar janji ini.
+                            </>
+                          )}
+                        </div>
+
+                        <p className="text-justify pt-2">
+                          Demikian surat pernyataan damai ini kami buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun.
+                        </p>
+
+                        {/* Signatures for SP Damai */}
+                        <div className="pt-6 space-y-6 text-xs font-serif">
+                          <div className="text-right">
+                            <p>{sp.tempat_surat || 'Pasuruan'}, {tanggalIndo}</p>
+                          </div>
+
+                          <div className="grid grid-cols-2 text-center gap-6">
+                            <div>
+                              <p className="font-bold">Siswa Pertama</p>
+                              <SignatureBox recordId={sp.id} role="siswa" className="h-20 w-32 mx-auto" />
+                              <p className="font-bold underline">( {sp.nama_siswa} )</p>
+                            </div>
+
+                            <div>
+                              <p className="font-bold">Siswa Kedua</p>
+                              <SignatureBox recordId={`${sp.id}_siswa_2`} role="siswa" className="h-20 w-32 mx-auto" />
+                              <p className="font-bold underline">( {sp.nama_siswa_2 || '....................................'} )</p>
+                            </div>
+                          </div>
+
+                          <div className="text-center pt-2">
+                            <p>Mengetahui,</p>
+                            <p className="font-bold">{sp.jabatan_pengetahu || 'Guru BK / Wali Kelas'}</p>
+                            <SignatureBox recordId={sp.id} role="guru_bk" className="h-20 w-32 mx-auto" />
+                            <p className="font-bold underline">
+                              {( ( sp.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, 'S.Pd').replace(/S\.pd/g, 'S.Pd') )}
+                            </p>
+                            <p>NIP. {sp.nip_guru_bk || getActiveGuruBK().nip}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {isSPSiswa && (
                       <div className="space-y-3">
@@ -2111,21 +2207,35 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     <tr key={item.id} className="border-b border-slate-900">
                       <td className="p-2 text-center border border-slate-900 font-semibold">{idx + 1}</td>
                       <td className="p-2 border border-slate-900 font-bold text-center text-amber-900">
-                        {item.jenis_sp}
+                        {item.jenis_sp === 'SP_DAMAI' ? 'SP DAMAI SISWA' : item.jenis_sp}
                       </td>
                       <td className="p-2 border border-slate-900 text-center font-medium">
                         {formatIndoDate(item.tanggal_surat)}
                       </td>
                       <td className="p-2 border border-slate-900">
-                        <div className="font-bold">{item.nama_siswa}</div>
-                        <div className="text-slate-700 font-semibold text-[11px]">Kelas: {item.kelas}</div>
+                        <div className="font-bold">{item.jenis_sp === 'SP_DAMAI' ? `1. ${item.nama_siswa}` : item.nama_siswa}</div>
+                        <div className="text-slate-700 font-semibold text-[11px]">Kelas: {item.kelas || '-'}</div>
                       </td>
                       <td className="p-2 border border-slate-900">
-                        <div className="font-medium">{item.nama_orang_tua || '-'}</div>
-                        <div className="text-slate-600 text-[10px]">{item.pekerjaan_orang_tua || item.alamat_orang_tua || '-'}</div>
+                        {item.jenis_sp === 'SP_DAMAI' ? (
+                          <>
+                            <div className="font-bold text-emerald-950">2. {item.nama_siswa_2 || '-'}</div>
+                            <div className="text-emerald-800 font-semibold text-[11px]">Kelas: {item.kelas_2 || '-'}</div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="font-medium">{item.nama_orang_tua || '-'}</div>
+                            <div className="text-slate-600 text-[10px]">{item.pekerjaan_orang_tua || item.alamat_orang_tua || '-'}</div>
+                          </>
+                        )}
                       </td>
                       <td className="p-2 border border-slate-900 text-[11px]">
-                        <div className="whitespace-pre-wrap text-slate-800 font-sans">{item.peraturan_diketahui}</div>
+                        {item.jenis_sp === 'SP_DAMAI' && item.hari_tanggal_kejadian && (
+                          <div className="font-semibold text-slate-900 mb-1">
+                            Kejadian: {item.hari_tanggal_kejadian}
+                          </div>
+                        )}
+                        <div className="whitespace-pre-wrap text-slate-800 font-sans">{item.peraturan_diketahui || '-'}</div>
                         {item.alasan_pengunduran && (
                           <div className="mt-1 text-rose-800 font-semibold">Alasan: {item.alasan_pengunduran}</div>
                         )}

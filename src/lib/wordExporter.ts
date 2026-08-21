@@ -1442,7 +1442,9 @@ export function downloadBulkKonselingKelompokWord(items: KonselingKelompok[]) {
 export function generateSuratPernyataanWordHTML(item: SuratPernyataan): string {
   const tanggalIndo = formatTanggalIndo(item.tanggal_surat);
   const titleHeader =
-    item.jenis_sp === 'SP_PENGUNDURAN_DIRI'
+    item.jenis_sp === 'SP_DAMAI'
+      ? 'SURAT PERNYATAAN DAMAI SISWA'
+      : item.jenis_sp === 'SP_PENGUNDURAN_DIRI'
       ? 'SURAT PERNYATAAN PENGUNDURAN DIRI'
       : item.jenis_sp.startsWith('SP_ORTU')
       ? 'SURAT PERNYATAAN'
@@ -1450,7 +1452,87 @@ export function generateSuratPernyataanWordHTML(item: SuratPernyataan): string {
 
   let bodyContent = '';
 
-  if (item.jenis_sp.startsWith('SP_1') || item.jenis_sp.startsWith('SP_2') || item.jenis_sp.startsWith('SP_3')) {
+  if (item.jenis_sp === 'SP_DAMAI') {
+    const poinDamai =
+      item.peraturan_diketahui ||
+      `1. Saling memaafkan dengan tulus dan tidak akan mengungkit atau memperpanjang masalah ini lagi.\n2. Kembali berteman dengan baik serta tidak akan saling mengejek, mengancam, memprovokasi, atau melakukan kekerasan dalam bentuk apa pun.\n3. Siap menerima sanksi tegas dari pihak sekolah sesuai dengan aturan yang berlaku apabila melanggar janji ini.`;
+
+    bodyContent = `
+      <div style="text-align: center; margin-top: -20px; margin-bottom: 25px;">
+        <div style="font-size: 13pt; font-weight: bold;">SMP NEGERI 7 PASURUAN</div>
+        <div style="font-size: 11pt; font-weight: bold;">Tahun Ajaran ${item.tahun_ajaran || '2026-2027'}</div>
+      </div>
+
+      <p style="margin-bottom: 12px;">Pada hari ini, <b>${tanggalIndo}</b>, kami yang bertanda tangan di bawah ini:</p>
+      <table style="margin-left: 20px; border-collapse: collapse; width: 95%; margin-bottom: 15px;">
+        <tr>
+          <td style="width: 180px; padding: 3px 0;">Nama Siswa Pertama</td>
+          <td style="width: 20px; padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_siswa}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Kelas</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.kelas}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Nama Siswa Kedua</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.nama_siswa_2 || '....................................'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Kelas</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.kelas_2 || '................'}</b></td>
+        </tr>
+        <tr>
+          <td style="padding: 3px 0;">Hari, Tanggal Kejadian</td>
+          <td style="padding: 3px 0;">:</td>
+          <td style="padding: 3px 0;"><b>${item.hari_tanggal_kejadian || '................, ....................'}</b></td>
+        </tr>
+      </table>
+
+      <p style="text-align: justify; line-height: 1.5; margin-bottom: 12px;">
+        Menyatakan bahwa kami telah bersepakat untuk damai dan menyelesaikan perselisihan yang pernah terjadi secara kekeluargaan.
+      </p>
+
+      <p style="margin-bottom: 8px;"><b>Dengan ini kami berjanji:</b></p>
+      <div style="margin-left: 20px; margin-bottom: 15px; line-height: 1.5;">
+        ${poinDamai.replace(/\n/g, '<br/>')}
+      </div>
+
+      <p style="text-align: justify; line-height: 1.5; margin-bottom: 25px;">
+        Demikian surat pernyataan damai ini kami buat dengan penuh kesadaran dan tanpa paksaan dari pihak mana pun.
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; text-align: center; margin-top: 20px;">
+        <tr>
+          <td style="width: 50%; vertical-align: top;">
+            <br/>
+            <b>Siswa Pertama</b><br/><br/><br/><br/><br/>
+            ( <u>${item.nama_siswa}</u> )
+          </td>
+          <td style="width: 50%; vertical-align: top;">
+            ${item.tempat_surat || 'Pasuruan'}, ${tanggalIndo}<br/>
+            <b>Siswa Kedua</b><br/><br/><br/><br/><br/>
+            ( <u>${item.nama_siswa_2 || '....................................'}</u> )
+          </td>
+        </tr>
+      </table>
+
+      <br/><br/>
+      <table style="width: 100%; border-collapse: collapse; text-align: center;">
+        <tr>
+          <td>
+            Mengetahui,<br/>
+            <b>${item.jabatan_pengetahu || 'Guru BK / Wali Kelas'}</b><br/><br/><br/><br/><br/>
+            <b><u>${(item.nama_guru_bk || DEFAULT_GURU_BK).toUpperCase().replace(/S\.PD/g, 'S.Pd')}</u></b><br/>
+            NIP. ${item.nip_guru_bk || DEFAULT_NIP_GURU_BK}
+          </td>
+        </tr>
+      </table>
+    `;
+  } else if (item.jenis_sp.startsWith('SP_1') || item.jenis_sp.startsWith('SP_2') || item.jenis_sp.startsWith('SP_3')) {
     bodyContent = `
       <p style="margin-bottom: 12px;">Saya yang bertanda tangan dibawah ini:</p>
       <table style="margin-left: 20px; border-collapse: collapse; width: 90%; margin-bottom: 15px;">

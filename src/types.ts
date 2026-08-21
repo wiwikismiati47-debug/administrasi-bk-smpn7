@@ -187,7 +187,8 @@ export type JenisSuratPernyataan =
   | 'SP_3'
   | 'SP_ORTU_1'
   | 'SP_ORTU_2'
-  | 'SP_PENGUNDURAN_DIRI';
+  | 'SP_PENGUNDURAN_DIRI'
+  | 'SP_DAMAI';
 
 export interface SuratPernyataan {
   id: string;
@@ -196,6 +197,11 @@ export interface SuratPernyataan {
   jenis_sp: JenisSuratPernyataan;
   nama_siswa: string;
   kelas: string;
+  nama_siswa_2?: string;
+  kelas_2?: string;
+  hari_tanggal_kejadian?: string;
+  tahun_ajaran?: string;
+  jabatan_pengetahu?: string;
   nama_orang_tua: string;
   pekerjaan_orang_tua: string;
   alamat_orang_tua: string;
