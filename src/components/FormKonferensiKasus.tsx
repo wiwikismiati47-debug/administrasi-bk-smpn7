@@ -594,65 +594,6 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     }
   }, [initialData]);
 
-  // Handle Upsert / Match checking if data already exists
-  const handleNamaKonseliBlur = () => {
-    if (!namaKonseli.trim() || initialData) return;
-
-    const match = existingItems.find(
-      (item) => item.nama_konseli.toLowerCase().trim() === namaKonseli.toLowerCase().trim()
-    );
-
-    if (match) {
-      setKelasTa(match.kelas_ta || kelasTa);
-      setJenisMasalah(match.jenis_masalah || jenisMasalah);
-      
-      if (match.hari_tgl_jam) {
-        const parsedTgl = parseHariTglJam(match.hari_tgl_jam);
-        setTanggalKejadian(parsedTgl.date);
-        setJamKejadian(parsedTgl.time);
-        setHariTglJam(match.hari_tgl_jam);
-      }
-
-      setPemanduKonferensi(match.pemandu_konferensi || pemanduKonferensi);
-      setPemanduNama(match.pemandu_nama || pemanduNama);
-      setPemanduJabatan(match.pemandu_jabatan || pemanduJabatan);
-      setDataInginDiperoleh(match.data_ingin_diperoleh || dataInginDiperoleh);
-      setUraianKegiatanInti(match.uraian_kegiatan_inti || uraianKegiatanInti);
-      setDataDiperolehSimpulan(match.data_diperoleh_simpulan || dataDiperolehSimpulan);
-      setKeterpenuhanKebutuhanData(match.keterpenuhan_kebutuhan_data || keterpenuhanKebutuhanData);
-      setRujukanPelayanan(match.rujukan_pelayanan || rujukanPelayanan);
-
-      setRapatNamaSekolah(match.rapat_nama_sekolah || rapatNamaSekolah);
-      setRapatAlamat(match.rapat_alamat || rapatAlamat);
-      setRapatTempat(match.rapat_tempat || rapatTempat);
-      setRapatKetua(match.rapat_ketua || rapatKetua);
-      setRapatJumlahHadir(match.rapat_jumlah_hadir || rapatJumlahHadir);
-      setRapatDimulaiPukul(match.rapat_dimulai_pukul || rapatDimulaiPukul);
-      setRapatDiakhiriPukul(match.rapat_diakhiri_pukul || rapatDiakhiriPukul);
-      setRapatHasilPertemuan(match.rapat_hasil_pertemuan || rapatHasilPertemuan);
-
-      setDaftarHadirPesertaSingkat(match.daftar_hadir_peserta_singkat || daftarHadirPesertaSingkat);
-      if (match.daftar_hadir_rows) {
-        try {
-          setDaftarHadirRows(JSON.parse(match.daftar_hadir_rows));
-        } catch {
-          // ignore
-        }
-      }
-
-      setTanggalSurat(match.tanggal_surat || tanggalSurat);
-      setTempatSurat(match.tempat_surat || tempatSurat);
-      setNamaGuruBk(match.nama_guru_bk || namaGuruBk);
-      setNipGuruBk(match.nip_guru_bk || nipGuruBk);
-      setNamaKepalaSekolah(match.nama_kepala_sekolah || namaKepalaSekolah);
-      setNipKepalaSekolah(match.nip_kepala_sekolah || nipKepalaSekolah);
-      setKeterangan(match.keterangan || keterangan);
-
-      setAutoUpdatedNotice(true);
-      setTimeout(() => setAutoUpdatedNotice(false), 6000);
-    }
-  };
-
   // Participant inline edit helpers
   const handleAddParticipant = () => {
     const newNo = daftarHadirRows.length + 1;
@@ -745,19 +686,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       return;
     }
 
-    // Auto-match for update
-    let matchedId = initialData?.id;
-    if (!matchedId) {
-      const match = existingItems.find(
-        (item) => item.nama_konseli.toLowerCase().trim() === namaKonseli.toLowerCase().trim()
-      );
-      if (match) {
-        matchedId = match.id;
-      }
-    }
-
     const payload: Partial<KonferensiKasus> & FormKonferensiKasusData = {
-      id: matchedId,
+      ...(initialData?.id ? { id: initialData.id } : {}),
       nama_konseli: namaKonseli.trim(),
       kelas_ta: kelasTa.trim(),
       jenis_masalah: jenisMasalah.trim(),
@@ -784,8 +714,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
         daftarHadirRows.map((row, idx) => `${idx + 1}. ${row.nama || '...'}`).join(', '),
       daftar_hadir_rows: JSON.stringify(daftarHadirRows),
 
-      tanggal_surat: tanggalSurat,
-      tempat_surat: tempatSurat,
+      tanggal_surat: tanggalSurat || new Date().toISOString().slice(0, 10),
+      tempat_surat: tempatSurat.trim() || 'Pasuruan',
       nama_guru_bk: namaGuruBk.trim(),
       nip_guru_bk: nipGuruBk.trim(),
       nama_kepala_sekolah: namaKepalaSekolah.trim(),
@@ -800,32 +730,55 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   };
 
   return (
-    <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-200">
-      <div className="flex items-center gap-3 mb-6 border-b border-slate-200 pb-4">
-        <div className="p-2 bg-rose-600 text-white rounded-lg">
-          <ClipboardList className="w-6 h-6" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800">
-            {initialData ? 'Edit Data Konferensi Kasus' : 'Buat Baru Data Konferensi Kasus'}
-          </h2>
-          <p className="text-xs text-slate-500">
-            Satu Form mencakup Notula, Notulen Rapat, dan Daftar Hadir Konferensi Kasus.
-          </p>
-        </div>
-      </div>
-
-      {autoUpdatedNotice && (
-        <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5 text-amber-800 animate-fade-in shadow-sm">
-          <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+    <div className="bg-slate-50/50 p-4 sm:p-6 rounded-2xl border border-slate-200">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-rose-600 text-white rounded-lg">
+            <ClipboardList className="w-6 h-6" />
+          </div>
           <div>
-            <p className="font-bold text-xs uppercase tracking-wide">Data Terdeteksi!</p>
-            <p className="text-xs mt-0.5">
-              Siswa bernama <strong className="font-semibold underline">{namaKonseli}</strong> sudah terdata dalam basis data. Kolom form otomatis disinkronkan dengan data terbaru. Simpan untuk meng-update record yang sudah ada (upsert).
+            <h2 className="text-xl font-bold text-slate-800">
+              {initialData ? 'Edit Data Konferensi Kasus' : 'Buat Baru Data Konferensi Kasus'}
+            </h2>
+            <p className="text-xs text-slate-500">
+              Satu formulir terpadu mencakup Notula, Notulen Rapat, dan Daftar Hadir Konferensi Kasus.
             </p>
           </div>
         </div>
-      )}
+
+        {/* Quick Header Save Action Button */}
+        <div className="flex items-center gap-2">
+          {onCancelEdit && (
+            <button
+              type="button"
+              onClick={onCancelEdit}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3.5 py-2 rounded-xl border transition-all"
+            >
+              Batal
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={(e) => {
+              handleSubmit(e as unknown as React.FormEvent);
+            }}
+            disabled={isSubmitting}
+            className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md hover:shadow-rose-500/20 disabled:opacity-50 transition-all cursor-pointer"
+          >
+            {isSubmitting ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Menyimpan...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-3.5 h-3.5" />
+                <span>Simpan Sekarang</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
 
       {/* Tabs Navigation */}
       <div className="flex flex-wrap gap-1 mb-6 bg-slate-100 p-1.5 rounded-xl border border-slate-200/80">
@@ -1367,11 +1320,20 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                disabled={isSubmitting}
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition-all cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                Simpan Langsung
+              </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('rapat')}
-                className="bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all"
+                className="w-full sm:w-auto bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all cursor-pointer"
               >
                 Lanjut ke Notulen Rapat &gt;
               </button>
@@ -1582,21 +1544,32 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-between pt-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('notula')}
-                className="bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-300 transition-all"
+                className="w-full sm:w-auto bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-300 transition-all cursor-pointer"
               >
                 &lt; Kembali ke Notula
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('daftar_hadir')}
-                className="bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all"
-              >
-                Lanjut ke Daftar Hadir &gt;
-              </button>
+              <div className="flex w-full sm:w-auto gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition-all cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  Simpan Langsung
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('daftar_hadir')}
+                  className="flex-1 sm:flex-initial bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all cursor-pointer"
+                >
+                  Lanjut ke Daftar Hadir &gt;
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1722,21 +1695,32 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </div>
             </div>
 
-            <div className="flex justify-between pt-2">
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('rapat')}
-                className="bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-300 transition-all"
+                className="w-full sm:w-auto bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-300 transition-all cursor-pointer"
               >
                 &lt; Kembali ke Rapat
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('ttd')}
-                className="bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all"
-              >
-                Lanjut ke Penandatangan &gt;
-              </button>
+              <div className="flex w-full sm:w-auto gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition-all cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  Simpan Langsung
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('ttd')}
+                  className="flex-1 sm:flex-initial bg-rose-600 text-white font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-rose-700 shadow transition-all cursor-pointer"
+                >
+                  Lanjut ke Penandatangan &gt;
+                </button>
+              </div>
             </div>
           </div>
         )}

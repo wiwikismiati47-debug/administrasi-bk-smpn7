@@ -151,21 +151,8 @@ export const FormSuratPernyataan: React.FC<FormSuratPernyataanProps> = ({
       return;
     }
 
-    // Check if an existing item matches the same student & jenisSp for auto-update
-    let matchedId = initialData?.id;
-    if (!matchedId) {
-      const match = existingItems.find(
-        (item) =>
-          item.nama_siswa.toLowerCase().trim() === namaSiswa.toLowerCase().trim() &&
-          item.jenis_sp === jenisSp
-      );
-      if (match) {
-        matchedId = match.id;
-      }
-    }
-
     const payload: Partial<SuratPernyataan> & FormSuratPernyataanData = {
-      ...(matchedId ? { id: matchedId } : {}),
+      ...(initialData?.id ? { id: initialData.id } : {}),
       jenis_sp: jenisSp,
       nama_siswa: namaSiswa,
       kelas: kelas,

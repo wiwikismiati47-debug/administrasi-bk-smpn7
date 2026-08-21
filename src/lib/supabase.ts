@@ -1263,8 +1263,21 @@ export function saveLocalKonferensiKasusList(data: KonferensiKasus[]) {
 
 // Unified API Functions - Konferensi Kasus Siswa
 export async function fetchAllKonferensiKasus(): Promise<{ data: KonferensiKasus[]; isFromSupabase: boolean; error?: string }> {
+  const localList = getLocalKonferensiKasusList();
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
+
+  const getSafeTime = (item: KonferensiKasus): number => {
+    if (item.tanggal_surat) {
+      const t = new Date(item.tanggal_surat).getTime();
+      if (!isNaN(t)) return t;
+    }
+    if (item.created_at) {
+      const t = new Date(item.created_at).getTime();
+      if (!isNaN(t)) return t;
+    }
+    return 0;
+  };
 
   if (client) {
     try {
@@ -1274,23 +1287,49 @@ export async function fetchAllKonferensiKasus(): Promise<{ data: KonferensiKasus
         .order('tanggal_surat', { ascending: false });
 
       if (!error && data) {
-        saveLocalKonferensiKasusList(data as KonferensiKasus[]);
-        return { data: data as KonferensiKasus[], isFromSupabase: true };
+        // Merge Supabase remote items with local items so local items are never wiped
+        const mergedMap = new Map<string, KonferensiKasus>();
+        (data as KonferensiKasus[]).forEach((item) => {
+          if (item && item.id) mergedMap.set(item.id, item);
+        });
+        (localList || []).forEach((item) => {
+          if (item && item.id) {
+            const existingRemote = mergedMap.get(item.id);
+            if (!existingRemote) {
+              mergedMap.set(item.id, item);
+            } else {
+              // If local item is newer, preserve local version
+              const localTime = new Date(item.updated_at || item.created_at || 0).getTime();
+              const remoteTime = new Date(existingRemote.updated_at || existingRemote.created_at || 0).getTime();
+              if (localTime > remoteTime) {
+                mergedMap.set(item.id, item);
+              }
+            }
+          }
+        });
+
+        const mergedList = Array.from(mergedMap.values()).sort((a, b) => getSafeTime(b) - getSafeTime(a));
+
+        saveLocalKonferensiKasusList(mergedList);
+        return { data: mergedList, isFromSupabase: true };
       } else if (error) {
         console.warn('Supabase fetch konferensi kasus error:', error.message);
+        const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
         return {
-          data: getLocalKonferensiKasusList(),
+          data: sortedLocal,
           isFromSupabase: false,
           error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
         };
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalKonferensiKasusList(), isFromSupabase: false, error: msg };
+      const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
+      return { data: sortedLocal, isFromSupabase: false, error: msg };
     }
   }
 
-  return { data: getLocalKonferensiKasusList(), isFromSupabase: false };
+  const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
+  return { data: sortedLocal, isFromSupabase: false };
 }
 
 export async function saveOrUpdateKonferensiKasus(
@@ -1300,14 +1339,29 @@ export async function saveOrUpdateKonferensiKasus(
   const client = getSupabaseClient(config);
 
   const now = new Date().toISOString();
-  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
+  const idToUse = (item.id && item.id.trim()) || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
+  const safeDate = item.tanggal_surat && item.tanggal_surat.trim() ? item.tanggal_surat : now.slice(0, 10);
+
+  let safeDaftarHadirRows = item.daftar_hadir_rows || '[]';
+  if (typeof safeDaftarHadirRows !== 'string') {
+    try {
+      safeDaftarHadirRows = JSON.stringify(safeDaftarHadirRows);
+    } catch {
+      safeDaftarHadirRows = '[]';
+    }
+  }
 
   const payload: KonferensiKasus = {
     ...item,
     id: idToUse,
+    tanggal_surat: safeDate,
+    daftar_hadir_rows: safeDaftarHadirRows,
     created_at: item.created_at || now,
     updated_at: now,
   };
+
+  // Guarantee persistence in local storage first
+  saveToLocalKonferensiKasusFallback(payload);
 
   if (client) {
     try {
@@ -1330,7 +1384,6 @@ export async function saveOrUpdateKonferensiKasus(
         return { success: true, data: data as KonferensiKasus, isSupabase: true };
       } else if (error) {
         console.warn('Supabase save konferensi kasus error:', error.message);
-        saveToLocalKonferensiKasusFallback(payload);
         return {
           success: true,
           data: payload,
@@ -1340,7 +1393,6 @@ export async function saveOrUpdateKonferensiKasus(
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalKonferensiKasusFallback(payload);
       return {
         success: true,
         data: payload,
@@ -1350,7 +1402,6 @@ export async function saveOrUpdateKonferensiKasus(
     }
   }
 
-  saveToLocalKonferensiKasusFallback(payload);
   return { success: true, data: payload, isSupabase: false };
 }
 

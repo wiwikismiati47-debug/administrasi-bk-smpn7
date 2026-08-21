@@ -37,11 +37,29 @@ export const TabelKonferensiKasus: React.FC<TabelKonferensiKasusProps> = ({
   const [selectedItem, setSelectedItem] = useState<KonferensiKasus | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Auto-sync selectedItem if it was updated or if none selected yet
+  React.useEffect(() => {
+    if (items.length > 0) {
+      if (!selectedItem) {
+        setSelectedItem(items[0]);
+      } else {
+        const found = items.find((i) => i.id === selectedItem.id);
+        if (found && found !== selectedItem) {
+          setSelectedItem(found);
+        } else if (!found) {
+          setSelectedItem(items[0]);
+        }
+      }
+    } else {
+      setSelectedItem(null);
+    }
+  }, [items]);
+
   const filteredItems = items.filter((item) => {
     return (
-      item.nama_konseli.toLowerCase().includes(search.toLowerCase()) ||
-      item.kelas_ta.toLowerCase().includes(search.toLowerCase()) ||
-      item.jenis_masalah.toLowerCase().includes(search.toLowerCase()) ||
+      (item.nama_konseli || '').toLowerCase().includes(search.toLowerCase()) ||
+      (item.kelas_ta || '').toLowerCase().includes(search.toLowerCase()) ||
+      (item.jenis_masalah || '').toLowerCase().includes(search.toLowerCase()) ||
       (item.keterangan || '').toLowerCase().includes(search.toLowerCase())
     );
   });
@@ -169,6 +187,15 @@ export const TabelKonferensiKasus: React.FC<TabelKonferensiKasusProps> = ({
                     </td>
                     <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => onPrintItem(item, 'gabungan')}
+                          className="px-2 py-1 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 text-xs font-bold rounded-lg transition-colors flex items-center gap-1"
+                          title="Cetak Seluruh Berkas / Simpan PDF"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Cetak</span>
+                        </button>
                         <button
                           type="button"
                           onClick={() => onEdit(item)}

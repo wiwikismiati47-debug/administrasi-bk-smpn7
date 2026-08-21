@@ -442,6 +442,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateUndangan(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setUndanganItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadUndanganData();
         showToast(
           data.id
@@ -463,6 +475,7 @@ export default function App() {
   // Handle Undangan delete
   const handleDeleteUndangan = async (id: string) => {
     try {
+      setUndanganItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteUndanganItem(id);
       if (res.success) {
         await loadUndanganData();
@@ -479,6 +492,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateHomeVisit(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setHomeVisitItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadHomeVisitData();
         showToast(
           data.id
@@ -500,6 +525,7 @@ export default function App() {
   // Handle Home Visit delete
   const handleDeleteHomeVisit = async (id: string) => {
     try {
+      setHomeVisitItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteHomeVisitItem(id);
       if (res.success) {
         await loadHomeVisitData();
@@ -516,6 +542,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateRekamPermasalahan(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setRekamPermasalahanItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadRekamPermasalahanData();
         showToast(
           data.id
@@ -537,6 +575,7 @@ export default function App() {
   // Handle Rekam Permasalahan delete
   const handleDeleteRekamPermasalahan = async (id: string) => {
     try {
+      setRekamPermasalahanItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteRekamPermasalahanItem(id);
       if (res.success) {
         await loadRekamPermasalahanData();
@@ -553,6 +592,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateKonselingIndividu(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setKonselingIndividuItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadKonselingIndividuData();
         showToast(
           data.id
@@ -573,6 +624,7 @@ export default function App() {
 
   const handleDeleteKonselingIndividu = async (id: string) => {
     try {
+      setKonselingIndividuItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteKonselingIndividuItem(id);
       if (res.success) {
         await loadKonselingIndividuData();
@@ -589,6 +641,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateKonselingKelompok(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setKonselingKelompokItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadKonselingKelompokData();
         showToast(
           data.id
@@ -609,6 +673,7 @@ export default function App() {
 
   const handleDeleteKonselingKelompok = async (id: string) => {
     try {
+      setKonselingKelompokItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteKonselingKelompokItem(id);
       if (res.success) {
         await loadKonselingKelompokData();
@@ -625,6 +690,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateSuratPernyataan(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setSuratPernyataanItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadSuratPernyataanData();
         showToast(
           data.id
@@ -645,6 +722,7 @@ export default function App() {
 
   const handleDeleteSuratPernyataan = async (id: string) => {
     try {
+      setSuratPernyataanItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteSuratPernyataanItem(id);
       if (res.success) {
         await loadSuratPernyataanData();
@@ -661,6 +739,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateKonferensiKasus(data);
       if (res.success) {
+        if (res.data) {
+          const itemToSet = res.data;
+          setKonferensiKasusItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === itemToSet.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = itemToSet;
+              return next;
+            }
+            return [itemToSet, ...prev];
+          });
+        }
         await loadKonferensiKasusData();
         showToast(
           data.id
@@ -681,6 +771,7 @@ export default function App() {
 
   const handleDeleteKonferensiKasus = async (id: string) => {
     try {
+      setKonferensiKasusItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteKonferensiKasusItem(id);
       if (res.success) {
         await loadKonferensiKasusData();
@@ -697,6 +788,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateSiswa(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setSiswaItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadSiswaData();
         showToast(
           data.id
@@ -717,6 +820,7 @@ export default function App() {
 
   const handleDeleteSiswa = async (id: string) => {
     try {
+      setSiswaItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteSiswaItem(id);
       if (res.success) {
         await loadSiswaData();
@@ -755,6 +859,18 @@ export default function App() {
     try {
       const res = await saveOrUpdateJurnalBK(data);
       if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setJurnalBKItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
         await loadJurnalBKData();
         showToast(
           data.id
@@ -776,6 +892,7 @@ export default function App() {
   // Handle Jurnal BK delete
   const handleDeleteJurnalBK = async (id: string) => {
     try {
+      setJurnalBKItems((prev) => prev.filter((i) => i.id !== id));
       const res = await deleteJurnalBKItem(id);
       if (res.success) {
         await loadJurnalBKData();
