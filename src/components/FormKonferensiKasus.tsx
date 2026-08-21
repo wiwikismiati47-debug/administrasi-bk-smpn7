@@ -1,8 +1,8 @@
 import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { KonferensiKasus, FormKonferensiKasusData, DaftarHadirRow, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
-import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, Clock, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle, X, CheckCircle2, ChevronRight, Search, Target } from 'lucide-react';
+import { FileText, Save, RefreshCw, Sparkles, User, AlertCircle, Calendar, Clock, MapPin, ClipboardList, Plus, Trash2, Check, ShieldCheck, HelpCircle, X, CheckCircle2, ChevronRight, Search, Target, GraduationCap, Users, UserPlus, CheckSquare, Square, Filter, UserCheck } from 'lucide-react';
 
 const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 const NAMA_BULAN = [
@@ -463,6 +463,51 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
   const [searchKeputusanPreset, setSearchKeputusanPreset] = useState('');
   const [selectedKeputusanId, setSelectedKeputusanId] = useState<string | null>(null);
 
+  // Popup Modal Pemilihan Siswa & Kelas untuk Daftar Hadir
+  const [showSiswaModalDaftarHadir, setShowSiswaModalDaftarHadir] = useState(false);
+  const [targetRowIndexForSiswa, setTargetRowIndexForSiswa] = useState<number | null>(null);
+  const [modalSiswaFilterKelas, setModalSiswaFilterKelas] = useState<string>('Semua Kelas');
+  const [modalSiswaSearchQuery, setModalSiswaSearchQuery] = useState<string>('');
+  const [modalSelectedStudentIds, setModalSelectedStudentIds] = useState<string[]>([]);
+
+  // Daftar opsi kelas yang tersedia
+  const classOptions = useMemo(() => {
+    const DEFAULT_CLASSES = [
+      '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+      '8A', '8B', '8C', '8D', '8E', '8F', '8G', '8H',
+      '9A', '9B', '9C', '9D', '9E', '9F', '9G', '9H'
+    ];
+    const fromItems = (siswaItems || [])
+      .map((s) => (s.kelas || '').trim())
+      .filter((k) => k.length > 0);
+    const set = new Set<string>();
+    fromItems.forEach((k) => set.add(k));
+    DEFAULT_CLASSES.forEach((k) => set.add(k));
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [siswaItems]);
+
+  // Filter daftar siswa pada modal
+  const filteredStudentsInDaftarHadirModal = useMemo(() => {
+    let list = siswaItems || [];
+    if (modalSiswaFilterKelas && modalSiswaFilterKelas !== 'Semua Kelas' && modalSiswaFilterKelas !== 'ALL') {
+      const targetClean = modalSiswaFilterKelas.toLowerCase().replace(/[\s\-_]/g, '');
+      list = list.filter((s) => {
+        const kClean = (s.kelas || '').toLowerCase().replace(/[\s\-_]/g, '');
+        return kClean.includes(targetClean) || targetClean.includes(kClean);
+      });
+    }
+    if (modalSiswaSearchQuery.trim()) {
+      const q = modalSiswaSearchQuery.toLowerCase().trim();
+      list = list.filter(
+        (s) =>
+          s.nama_siswa.toLowerCase().includes(q) ||
+          (s.nis && s.nis.toLowerCase().includes(q)) ||
+          (s.kelas && s.kelas.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [siswaItems, modalSiswaFilterKelas, modalSiswaSearchQuery]);
+
   const handleSelectTujuanPreset = (preset: TujuanKonferensiPreset) => {
     setDataInginDiperoleh(preset.deskripsi);
     setSelectedTujuanId(preset.id);
@@ -594,6 +639,20 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
     }
   }, [initialData]);
 
+  const updateSummaryFromRows = (rows: DaftarHadirRow[]) => {
+    const count = rows.length;
+    setRapatJumlahHadir(`${count} orang`);
+
+    const names = rows
+      .map((row, idx) => {
+        const clsSuffix = row.kelas && row.kelas !== '-' ? ` (${row.kelas})` : '';
+        return `${idx + 1}. ${row.nama || '...'}${clsSuffix}`;
+      })
+      .filter(n => !n.includes('...'))
+      .join(', ');
+    setDaftarHadirPesertaSingkat(names);
+  };
+
   // Participant inline edit helpers
   const handleAddParticipant = () => {
     const newNo = daftarHadirRows.length + 1;
@@ -602,10 +661,32 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       nama: '',
       jabatan: '',
       kelas: '',
-      asal_sekolah: '',
+      asal_sekolah: rapatNamaSekolah || 'UPT SMPN 7 Pasuruan',
       ttd: 'Ada'
     };
-    setDaftarHadirRows([...daftarHadirRows, newRow]);
+    const updated = [...daftarHadirRows, newRow];
+    setDaftarHadirRows(updated);
+    updateSummaryFromRows(updated);
+  };
+
+  const handleAddParticipantWithData = (nama: string, jabatan: string, kelas: string = '', asal: string = '') => {
+    const newNo = daftarHadirRows.length + 1;
+    const newRow: DaftarHadirRow = {
+      no: newNo,
+      nama: nama.trim(),
+      jabatan: jabatan.trim(),
+      kelas: kelas.trim(),
+      asal_sekolah: (asal || rapatNamaSekolah || 'UPT SMPN 7 Pasuruan').trim(),
+      ttd: 'Ada'
+    };
+    const updated = [...daftarHadirRows, newRow];
+    setDaftarHadirRows(updated);
+    updateSummaryFromRows(updated);
+  };
+
+  const handleResetToDefaultParticipants = () => {
+    setDaftarHadirRows(DEFAULT_ROWS);
+    updateSummaryFromRows(DEFAULT_ROWS);
   };
 
   const handleRemoveParticipant = (index: number) => {
@@ -614,6 +695,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       no: idx + 1
     }));
     setDaftarHadirRows(updated);
+    updateSummaryFromRows(updated);
   };
 
   const handleRowChange = (index: number, field: keyof DaftarHadirRow, value: string | number) => {
@@ -623,19 +705,163 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
       [field]: value
     };
     setDaftarHadirRows(updated);
+    updateSummaryFromRows(updated);
+  };
 
-    // Auto update rapat_jumlah_hadir and daftar_hadir_peserta_singkat
-    const count = updated.length;
-    setRapatJumlahHadir(`${count} orang`);
+  // Popup Modal Handlers for Student & Class Selection in Daftar Hadir
+  const handleOpenSiswaModalForNewRow = () => {
+    setTargetRowIndexForSiswa(null);
+    setModalSelectedStudentIds([]);
+    setModalSiswaSearchQuery('');
+    if (selectedKelas && selectedKelas !== 'Semua Kelas') {
+      setModalSiswaFilterKelas(selectedKelas);
+    } else {
+      setModalSiswaFilterKelas('Semua Kelas');
+    }
+    setShowSiswaModalDaftarHadir(true);
+  };
 
-    const names = updated
-      .map((row, idx) => {
-        const clsSuffix = row.kelas && row.kelas !== '-' ? ` (${row.kelas})` : '';
-        return `${idx + 1}. ${row.nama || '...'}${clsSuffix}`;
-      })
-      .filter(n => !n.includes('...'))
-      .join(', ');
-    setDaftarHadirPesertaSingkat(names);
+  const handleOpenSiswaModalForRow = (rowIndex: number) => {
+    setTargetRowIndexForSiswa(rowIndex);
+    setModalSelectedStudentIds([]);
+    setModalSiswaSearchQuery('');
+    const row = daftarHadirRows[rowIndex];
+    if (row && row.kelas && row.kelas !== '-') {
+      setModalSiswaFilterKelas(row.kelas);
+    } else if (selectedKelas && selectedKelas !== 'Semua Kelas') {
+      setModalSiswaFilterKelas(selectedKelas);
+    } else {
+      setModalSiswaFilterKelas('Semua Kelas');
+    }
+    setShowSiswaModalDaftarHadir(true);
+  };
+
+  const handleToggleStudentInDaftarHadirModal = (student: Siswa) => {
+    if (modalSelectedStudentIds.includes(student.id)) {
+      setModalSelectedStudentIds((prev) => prev.filter((id) => id !== student.id));
+    } else {
+      setModalSelectedStudentIds((prev) => [...prev, student.id]);
+    }
+  };
+
+  const handleSelectAllVisibleStudentsInDaftarHadirModal = () => {
+    const visibleIds = filteredStudentsInDaftarHadirModal.map((s) => s.id);
+    const allSelected = visibleIds.every((id) => modalSelectedStudentIds.includes(id));
+    if (allSelected) {
+      setModalSelectedStudentIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+    } else {
+      const merged = new Set([...modalSelectedStudentIds, ...visibleIds]);
+      setModalSelectedStudentIds(Array.from(merged));
+    }
+  };
+
+  const handleSelectSingleStudentForDaftarHadir = (student: Siswa) => {
+    if (targetRowIndexForSiswa !== null && targetRowIndexForSiswa >= 0 && targetRowIndexForSiswa < daftarHadirRows.length) {
+      const updated = [...daftarHadirRows];
+      const existing = updated[targetRowIndexForSiswa];
+      updated[targetRowIndexForSiswa] = {
+        ...existing,
+        nama: student.nama_siswa,
+        kelas: student.kelas || existing.kelas || '-',
+        jabatan: existing.jabatan && existing.jabatan !== '-' ? existing.jabatan : 'Siswa / Konseli',
+        asal_sekolah: existing.asal_sekolah && existing.asal_sekolah !== '-' ? existing.asal_sekolah : (rapatNamaSekolah || 'UPT SMPN 7 Pasuruan'),
+        ttd: existing.ttd || 'Ada'
+      };
+      setDaftarHadirRows(updated);
+      updateSummaryFromRows(updated);
+    } else {
+      const newNo = daftarHadirRows.length + 1;
+      const newRow: DaftarHadirRow = {
+        no: newNo,
+        nama: student.nama_siswa,
+        jabatan: 'Siswa / Konseli',
+        kelas: student.kelas || '-',
+        asal_sekolah: rapatNamaSekolah || 'UPT SMPN 7 Pasuruan',
+        ttd: 'Ada'
+      };
+      const updated = [...daftarHadirRows, newRow];
+      setDaftarHadirRows(updated);
+      updateSummaryFromRows(updated);
+    }
+    setShowSiswaModalDaftarHadir(false);
+  };
+
+  const handleApplySelectedStudentsForDaftarHadir = () => {
+    const chosen = (siswaItems || []).filter((s) => modalSelectedStudentIds.includes(s.id));
+    if (chosen.length === 0) {
+      setShowSiswaModalDaftarHadir(false);
+      return;
+    }
+
+    if (targetRowIndexForSiswa !== null && targetRowIndexForSiswa >= 0 && targetRowIndexForSiswa < daftarHadirRows.length && chosen.length === 1) {
+      handleSelectSingleStudentForDaftarHadir(chosen[0]);
+      return;
+    }
+
+    let updated = [...daftarHadirRows];
+    chosen.forEach((student) => {
+      const newNo = updated.length + 1;
+      updated.push({
+        no: newNo,
+        nama: student.nama_siswa,
+        jabatan: 'Siswa / Konseli',
+        kelas: student.kelas || '-',
+        asal_sekolah: rapatNamaSekolah || 'UPT SMPN 7 Pasuruan',
+        ttd: 'Ada'
+      });
+    });
+
+    updated = updated.map((r, idx) => ({ ...r, no: idx + 1 }));
+    setDaftarHadirRows(updated);
+    updateSummaryFromRows(updated);
+    setShowSiswaModalDaftarHadir(false);
+  };
+
+  const handleFillFromKonseli = () => {
+    if (!namaKonseli) return;
+    const cleanKelas = selectedKelas || (kelasTa.split('/')[0] || '').trim() || '-';
+    
+    // Find if there is an existing student matching or use row 4 / target row
+    let targetIdx = targetRowIndexForSiswa;
+    if (targetIdx === null) {
+      // Find row with 'Siswa' in jabatan or generic 'Siswa Bersangkutan'
+      const foundIdx = daftarHadirRows.findIndex((r) => 
+        r.nama.toLowerCase().includes('siswa bersangkutan') ||
+        r.jabatan.toLowerCase().includes('siswa') ||
+        r.jabatan.toLowerCase().includes('konseli')
+      );
+      if (foundIdx !== -1) {
+        targetIdx = foundIdx;
+      }
+    }
+
+    if (targetIdx !== null && targetIdx >= 0 && targetIdx < daftarHadirRows.length) {
+      const updated = [...daftarHadirRows];
+      updated[targetIdx] = {
+        ...updated[targetIdx],
+        nama: namaKonseli,
+        kelas: cleanKelas,
+        jabatan: 'Siswa / Konseli',
+        asal_sekolah: rapatNamaSekolah || 'UPT SMPN 7 Pasuruan',
+        ttd: 'Ada'
+      };
+      setDaftarHadirRows(updated);
+      updateSummaryFromRows(updated);
+    } else {
+      const newNo = daftarHadirRows.length + 1;
+      const newRow: DaftarHadirRow = {
+        no: newNo,
+        nama: namaKonseli,
+        jabatan: 'Siswa / Konseli',
+        kelas: cleanKelas,
+        asal_sekolah: rapatNamaSekolah || 'UPT SMPN 7 Pasuruan',
+        ttd: 'Ada'
+      };
+      const updated = [...daftarHadirRows, newRow];
+      setDaftarHadirRows(updated);
+      updateSummaryFromRows(updated);
+    }
+    setShowSiswaModalDaftarHadir(false);
   };
 
   const resetForm = () => {
@@ -1578,54 +1804,155 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
         {activeTab === 'daftar_hadir' && (
           <div className="space-y-4 animate-fade-in">
             <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4 overflow-hidden">
-              <div className="flex items-center justify-between border-b pb-3 mb-2">
-                <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <ClipboardList className="w-4 h-4 text-rose-600" />
-                  Daftar Hadir Peserta Konferensi Kasus
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleAddParticipant}
-                  className="flex items-center gap-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Tambah Peserta
-                </button>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3 mb-2">
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="w-5 h-5 text-rose-600" />
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                      <span>Daftar Hadir Peserta Konferensi Kasus</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                        {daftarHadirRows.length} Peserta
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-slate-500">
+                      Kelola daftar peserta rapat, peran/jabatan, kelas siswa, dan status tanda tangan kehadiran.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Quick button to use Student from Tab 1 */}
+                  {namaKonseli && (
+                    <button
+                      type="button"
+                      onClick={handleFillFromKonseli}
+                      className="flex items-center gap-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                      title={`Isi otomatis baris peserta dengan data siswa konseli: ${namaKonseli}`}
+                    >
+                      <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>+ Konseli: {namaKonseli.split(' ')[0]}</span>
+                    </button>
+                  )}
+
+                  {/* POPUP PILIH SISWA & KELAS */}
+                  <button
+                    type="button"
+                    onClick={handleOpenSiswaModalForNewRow}
+                    className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white border border-rose-600 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    title="Buka popup untuk memilih nama siswa dan kelas dari basis data master"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    <span>+ Pilih Siswa (Popup)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAddParticipant}
+                    className="flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    title="Tambah 1 baris kosong untuk diisi manual"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-slate-700" />
+                    <span>+ Tambah Baris Manual</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Preset Buttons for Common Roles */}
+              <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 flex items-center justify-between gap-2 flex-wrap text-xs">
+                <span className="font-bold text-slate-600 flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5 text-slate-500" />
+                  <span>Tambah Cepat Peran Rapat:</span>
+                </span>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => handleAddParticipantWithData(namaGuruBk || getActiveGuruBK().nama, 'Konselor / Guru BK', '-', rapatNamaSekolah || 'UPT SMPN 7 Pasuruan')}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-semibold rounded-lg border border-slate-200 text-[11px] transition-all cursor-pointer shadow-2xs"
+                  >
+                    + Guru BK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddParticipantWithData('', 'Wali Kelas', selectedKelas || (kelasTa.split('/')[0] || '').trim() || '-', rapatNamaSekolah || 'UPT SMPN 7 Pasuruan')}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-semibold rounded-lg border border-slate-200 text-[11px] transition-all cursor-pointer shadow-2xs"
+                  >
+                    + Wali Kelas
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddParticipantWithData('', 'Guru Mata Pelajaran', '-', rapatNamaSekolah || 'UPT SMPN 7 Pasuruan')}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-semibold rounded-lg border border-slate-200 text-[11px] transition-all cursor-pointer shadow-2xs"
+                  >
+                    + Guru Mapel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddParticipantWithData('', 'Orang Tua / Wali Murid', selectedKelas || (kelasTa.split('/')[0] || '').trim() || '-', 'Wali Murid')}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-semibold rounded-lg border border-slate-200 text-[11px] transition-all cursor-pointer shadow-2xs"
+                  >
+                    + Orang Tua / Wali
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddParticipantWithData(namaKepalaSekolah || 'NUR FADILAH, S.Pd,. M.Pd', 'Kepala Sekolah', '-', rapatNamaSekolah || 'UPT SMPN 7 Pasuruan')}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 hover:text-rose-700 text-slate-700 font-semibold rounded-lg border border-slate-200 text-[11px] transition-all cursor-pointer shadow-2xs"
+                  >
+                    + Kepala Sekolah
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetToDefaultParticipants}
+                    className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg text-[11px] transition-all cursor-pointer ml-1"
+                    title="Kembalikan daftar peserta standar (5 baris)"
+                  >
+                    Reset Standar (5 Peserta)
+                  </button>
+                </div>
               </div>
 
               <div className="overflow-x-auto -mx-4 sm:-mx-5">
-                <table className="w-full min-w-[600px] border-collapse text-xs text-left">
+                <table className="w-full min-w-[680px] border-collapse text-xs text-left">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                       <th className="p-3 w-12 text-center">No</th>
                       <th className="p-3">Nama Lengkap</th>
                       <th className="p-3">Jabatan / Peran</th>
-                      <th className="p-3 w-20">Kelas</th>
+                      <th className="p-3 w-28 text-center">Kelas</th>
                       <th className="p-3">Instansi / Asal Sekolah</th>
                       <th className="p-3 w-28 text-center">Tanda Tangan</th>
-                      <th className="p-3 w-12 text-center">Aksi</th>
+                      <th className="p-3 w-20 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {daftarHadirRows.map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-3 text-center text-slate-500 font-semibold">{row.no}</td>
+                      <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
+                        <td className="p-3 text-center text-slate-500 font-bold">{row.no}</td>
                         <td className="p-2">
-                          <input
-                            type="text"
-                            value={row.nama}
-                            onChange={(e) => handleRowChange(idx, 'nama', e.target.value)}
-                            placeholder="e.g. Wiwik Ismiati, S.Pd"
-                            className="w-full text-xs rounded-lg border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none"
-                          />
+                          <div className="relative flex items-center">
+                            <input
+                              type="text"
+                              value={row.nama}
+                              onChange={(e) => handleRowChange(idx, 'nama', e.target.value)}
+                              placeholder="Nama lengkap peserta / nama siswa..."
+                              className="w-full text-xs rounded-lg border-slate-300 focus:border-rose-500 focus:ring-rose-500 pl-2.5 pr-8 py-1.5 border outline-none font-semibold text-slate-800 bg-white"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSiswaModalForRow(idx)}
+                              title="Pilih nama siswa dari basis data master untuk baris ini"
+                              className="absolute right-1 text-slate-400 hover:text-rose-600 p-1 hover:bg-rose-50 rounded transition-colors cursor-pointer"
+                            >
+                              <GraduationCap className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                         <td className="p-2">
                           <input
                             type="text"
                             value={row.jabatan}
                             onChange={(e) => handleRowChange(idx, 'jabatan', e.target.value)}
-                            placeholder="e.g. Konselor / Wali Kelas"
-                            className="w-full text-xs rounded-lg border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none"
+                            placeholder="e.g. Konselor / Wali Kelas / Siswa"
+                            className="w-full text-xs rounded-lg border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-2.5 py-1.5 border outline-none font-medium text-slate-700 bg-white"
                           />
                         </td>
                         <td className="p-2">
@@ -1633,8 +1960,8 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                             type="text"
                             value={row.kelas}
                             onChange={(e) => handleRowChange(idx, 'kelas', e.target.value)}
-                            placeholder="e.g. 9E"
-                            className="w-full text-xs rounded-lg border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none text-center"
+                            placeholder="e.g. 9E atau -"
+                            className="w-full text-xs rounded-lg border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none text-center font-bold text-slate-800 bg-white"
                           />
                         </td>
                         <td className="p-2">
@@ -1642,29 +1969,39 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                             type="text"
                             value={row.asal_sekolah}
                             onChange={(e) => handleRowChange(idx, 'asal_sekolah', e.target.value)}
-                            placeholder="e.g. UPT SMPN 7 Pas"
-                            className="w-full text-xs rounded-lg border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none"
+                            placeholder="e.g. UPT SMPN 7 Pasuruan"
+                            className="w-full text-xs rounded-lg border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-2.5 py-1.5 border outline-none text-slate-700 bg-white"
                           />
                         </td>
                         <td className="p-2">
                           <select
                             value={row.ttd}
                             onChange={(e) => handleRowChange(idx, 'ttd', e.target.value)}
-                            className="w-full text-xs rounded-lg border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none bg-white"
+                            className="w-full text-xs rounded-lg border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-2 py-1.5 border outline-none bg-white font-semibold text-slate-800 cursor-pointer"
                           >
                             <option value="Ada">Ada (Hadir)</option>
                             <option value="-">- (Absen)</option>
                           </select>
                         </td>
                         <td className="p-2 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveParticipant(idx)}
-                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Hapus baris"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenSiswaModalForRow(idx)}
+                              className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              title="Pilih Siswa & Kelas untuk baris ini"
+                            >
+                              <GraduationCap className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveParticipant(idx)}
+                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Hapus baris peserta ini"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -1673,24 +2010,40 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               </div>
 
               {daftarHadirRows.length === 0 && (
-                <div className="text-center py-6 text-slate-400 text-xs">
-                  Belum ada peserta. Klik tombol "+ Tambah Peserta" di kanan atas.
+                <div className="text-center py-8 text-slate-400 text-xs border border-dashed rounded-xl bg-slate-50 space-y-2">
+                  <p className="font-semibold text-slate-600">Belum ada baris peserta konferensi kasus.</p>
+                  <div className="flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddParticipant}
+                      className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold text-xs shadow-xs cursor-pointer"
+                    >
+                      + Tambah Baris Pertama
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetToDefaultParticipants}
+                      className="px-3.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-bold text-xs cursor-pointer"
+                    >
+                      Gunakan Format Standar (5 Peserta)
+                    </button>
+                  </div>
                 </div>
               )}
 
               <div className="border-t pt-4">
-                <label className="block text-xs font-bold text-slate-600 mb-1">
-                  Ringkasan Hadirin (Untuk display cepat di agenda/notula)
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Ringkasan Peserta Hadir (Otomatis untuk tampilan agenda notula)
                 </label>
                 <input
                   type="text"
                   value={daftarHadirPesertaSingkat}
                   onChange={(e) => setDaftarHadirPesertaSingkat(e.target.value)}
-                  placeholder="e.g. 1. Ibu Wiwik, 2. Ibu Citra, 3. Syahnaz (9E)..."
-                  className="w-full text-xs rounded-xl border-slate-200 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none"
+                  placeholder="e.g. 1. Wiwik Ismiati, S.Pd (Guru BK), 2. Nama Wali Kelas, 3. Nama Siswa (9E)..."
+                  className="w-full text-xs rounded-xl border-slate-300 focus:border-rose-500 focus:ring-rose-500 px-3.5 py-2 border outline-none font-medium text-slate-800 bg-white"
                 />
                 <p className="text-[10px] text-slate-400 mt-1">
-                  Secara default, kolom ini diperbarui otomatis ketika Anda mengedit tabel peserta di atas. Anda juga dapat mengetik bebas di sini.
+                  Kolom ini diperbarui otomatis setiap kali Anda menambah atau mengedit nama di tabel peserta di atas.
                 </p>
               </div>
             </div>
@@ -1701,7 +2054,7 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
                 onClick={() => setActiveTab('rapat')}
                 className="w-full sm:w-auto bg-slate-200 text-slate-700 font-semibold text-xs px-5 py-2.5 rounded-xl hover:bg-slate-300 transition-all cursor-pointer"
               >
-                &lt; Kembali ke Rapat
+                &lt; Kembali ke Notulen Rapat
               </button>
               <div className="flex w-full sm:w-auto gap-2">
                 <button
@@ -2366,6 +2719,248 @@ export const FormKonferensiKasus: React.FC<FormKonferensiKasusProps> = ({
               >
                 Tutup
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP: PILIH NAMA SISWA & KELAS (DAFTAR HADIR) */}
+      {showSiswaModalDaftarHadir && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-rose-500/10 via-amber-500/5 to-transparent">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-md shadow-rose-500/20 shrink-0">
+                  <GraduationCap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Pilih Nama Siswa &amp; Kelas (Daftar Hadir)
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    {targetRowIndexForSiswa !== null
+                      ? `Mengisi data untuk baris ke-${targetRowIndexForSiswa + 1} (${daftarHadirRows[targetRowIndexForSiswa]?.jabatan || 'Peserta'})`
+                      : 'Pilih siswa untuk ditambahkan ke daftar hadir konferensi kasus'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSiswaModalDaftarHadir(false)}
+                className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Quick Fill from Konseli Notice */}
+            {namaKonseli && (
+              <div className="px-4 py-2.5 bg-rose-50/80 border-b border-rose-100 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-rose-800">
+                  <UserCheck className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>
+                    Siswa Konseli Kasus ini: <strong className="font-bold">{namaKonseli}</strong> {selectedKelas || kelasTa ? `(${selectedKelas || kelasTa})` : ''}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFillFromKonseli}
+                  className="bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold px-3 py-1 rounded-lg transition-all shadow-2xs shrink-0 cursor-pointer"
+                >
+                  Pilih Konseli Ini
+                </button>
+              </div>
+            )}
+
+            {/* Filter and Search Bar */}
+            <div className="p-3.5 bg-slate-50/90 border-b border-slate-200 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Filter Kelas */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                    <Filter className="w-3 h-3 text-rose-600" />
+                    <span>Filter Kelas</span>
+                  </label>
+                  <select
+                    value={modalSiswaFilterKelas}
+                    onChange={(e) => setModalSiswaFilterKelas(e.target.value)}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                  >
+                    <option value="Semua Kelas">Semua Kelas ({siswaItems.length} Siswa)</option>
+                    {classOptions.map((k) => (
+                      <option key={k} value={k}>
+                        Kelas {k}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Search Box */}
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                    <Search className="w-3 h-3 text-rose-600" />
+                    <span>Cari Nama / NIS</span>
+                  </label>
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={modalSiswaSearchQuery}
+                      onChange={(e) => setModalSiswaSearchQuery(e.target.value)}
+                      placeholder="Cari nama siswa atau NIS..."
+                      className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons: Select All & Counters */}
+              <div className="flex items-center justify-between pt-1">
+                <button
+                  type="button"
+                  onClick={handleSelectAllVisibleStudentsInDaftarHadirModal}
+                  className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 bg-white hover:bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
+                >
+                  <CheckSquare className="w-3.5 h-3.5 text-slate-600" />
+                  <span>
+                    Pilih Semua ({filteredStudentsInDaftarHadirModal.length} Siswa Tampak)
+                  </span>
+                </button>
+
+                <span className="text-xs font-bold text-slate-600">
+                  Terpilih: <strong className="text-rose-600 font-extrabold">{modalSelectedStudentIds.length}</strong> Siswa
+                </span>
+              </div>
+            </div>
+
+            {/* List of Students */}
+            <div className="p-3 sm:p-4 overflow-y-auto space-y-2 flex-1 bg-slate-50/40">
+              {filteredStudentsInDaftarHadirModal.map((student) => {
+                const isSelected = modalSelectedStudentIds.includes(student.id);
+                return (
+                  <div
+                    key={student.id}
+                    className={`flex items-center justify-between p-3 rounded-2xl border transition-all ${
+                      isSelected
+                        ? 'bg-rose-50/80 border-rose-400 shadow-sm ring-1 ring-rose-300'
+                        : 'bg-white hover:bg-slate-50 border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div
+                      onClick={() => handleToggleStudentInDaftarHadirModal(student)}
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                    >
+                      <div
+                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                          isSelected
+                            ? 'bg-rose-600 border-rose-600 text-white'
+                            : 'border-slate-300 bg-white'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5" />}
+                      </div>
+
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-bold text-slate-900">{student.nama_siswa}</p>
+                          <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                            Kelas {student.kelas || '-'}
+                          </span>
+                          {student.jenis_kelamin && (
+                            <span className="text-[10px] text-slate-500 font-medium">
+                              ({student.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'})
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                          {student.nis ? `NIS: ${student.nis}` : 'NIS: -'} {student.keterangan ? `• ${student.keterangan}` : ''}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Direct Quick Pick Button */}
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => handleSelectSingleStudentForDaftarHadir(student)}
+                        className="text-[11px] font-bold px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>Pilih</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredStudentsInDaftarHadirModal.length === 0 && (
+                <div className="text-center py-10 px-4 text-slate-500 text-xs bg-white rounded-2xl border border-dashed border-slate-300 space-y-3">
+                  <GraduationCap className="w-10 h-10 text-slate-300 mx-auto" />
+                  <div>
+                    <p className="font-bold text-slate-700">
+                      {siswaItems.length === 0
+                        ? 'Data master siswa belum dimuat atau kosong.'
+                        : 'Tidak ada data siswa yang cocok dengan filter atau kata kunci.'}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      {modalSiswaSearchQuery
+                        ? `Pencarian: "${modalSiswaSearchQuery}" pada ${modalSiswaFilterKelas}`
+                        : 'Anda dapat langsung mengetik nama siswa dan kelas di tabel daftar hadir, atau tambahkan siswa langsung di bawah.'}
+                    </p>
+                  </div>
+                  {modalSiswaSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSelectSingleStudentForDaftarHadir({
+                          id: `custom-${Date.now()}`,
+                          nama_siswa: modalSiswaSearchQuery.trim(),
+                          kelas: modalSiswaFilterKelas !== 'Semua Kelas' ? modalSiswaFilterKelas : (selectedKelas || '9E')
+                        });
+                      }}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Tambahkan "{modalSiswaSearchQuery}" sebagai Siswa Baru</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-3.5 bg-white border-t border-slate-200 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setModalSelectedStudentIds([])}
+                className="text-xs font-bold text-slate-500 hover:text-slate-700 px-3 py-1.5 cursor-pointer"
+              >
+                Reset Pilihan
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowSiswaModalDaftarHadir(false)}
+                  className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApplySelectedStudentsForDaftarHadir}
+                  disabled={modalSelectedStudentIds.length === 0}
+                  className="px-5 py-2 text-xs font-bold rounded-xl shadow-md transition-all flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white cursor-pointer"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>
+                    {targetRowIndexForSiswa !== null && modalSelectedStudentIds.length === 1
+                      ? 'Terapkan pada Baris Ini'
+                      : `Tambahkan (${modalSelectedStudentIds.length} Siswa)`}
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
