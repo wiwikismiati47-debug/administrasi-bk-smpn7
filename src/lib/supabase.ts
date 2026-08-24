@@ -27,30 +27,44 @@ export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
 export const DEFAULT_JURNAL_BK_TABLE_NAME = 'jurnal_bk_siswa';
 export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
-// Get active config from localStorage or import.meta.env
+export const DEFAULT_SUPABASE_URL = 'https://kedffsrkxwlnynrnicek.supabase.co';
+export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi';
+
+// Get active config automatically from storage, env, or built-in defaults
 export function getSavedSupabaseConfig(): SupabaseConfig {
+  const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
+  const fallbackUrl = env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
+  const fallbackKey = env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
+
   const parsed = safeGetStorage<Partial<SupabaseConfig> | null>(STORAGE_KEY_CONFIG, null);
-  if (parsed && parsed.url && parsed.anonKey) {
+  if (parsed && typeof parsed.url === 'string' && parsed.url.trim() && typeof parsed.anonKey === 'string' && parsed.anonKey.trim()) {
     return {
-      url: parsed.url,
-      anonKey: parsed.anonKey,
+      url: parsed.url.trim(),
+      anonKey: parsed.anonKey.trim(),
       tableName: parsed.tableName || DEFAULT_TABLE_NAME,
     };
   }
 
-  const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
-  const envUrl = env.VITE_SUPABASE_URL || 'https://kedffsrkxwlnynrnicek.supabase.co';
-  const envKey = env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi';
-
-  return {
-    url: envUrl,
-    anonKey: envKey,
+  // Auto-connect with default cloud database
+  const defaultConfig: SupabaseConfig = {
+    url: fallbackUrl,
+    anonKey: fallbackKey,
     tableName: DEFAULT_TABLE_NAME,
   };
+
+  // Pre-save so local storage across desktop / web is immediately synced
+  safeSetStorage(STORAGE_KEY_CONFIG, defaultConfig);
+
+  return defaultConfig;
 }
 
 export function saveSupabaseConfigToStorage(config: SupabaseConfig) {
-  safeSetStorage(STORAGE_KEY_CONFIG, config);
+  const toSave: SupabaseConfig = {
+    url: config.url?.trim() || DEFAULT_SUPABASE_URL,
+    anonKey: config.anonKey?.trim() || DEFAULT_SUPABASE_ANON_KEY,
+    tableName: config.tableName || DEFAULT_TABLE_NAME,
+  };
+  safeSetStorage(STORAGE_KEY_CONFIG, toSave);
 }
 
 let cachedClient: { key: string; client: SupabaseClient } | null = null;
