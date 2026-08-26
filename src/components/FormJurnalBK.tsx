@@ -508,6 +508,7 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                 <input
                   type="text"
                   value={kelas}
+                  list="preset-kelas-jurnal"
                   onChange={(e) => {
                     const val = e.target.value;
                     setKelas(val);
@@ -515,10 +516,23 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
                       setSasaranPeserta(`Siswa Kelas ${val}`);
                     }
                   }}
-                  placeholder="Contoh: VIII A"
+                  placeholder="Contoh: 7H / VIII A / Kelas 7-H"
                   required
                   className="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-emerald-500 transition-all"
                 />
+                <datalist id="preset-kelas-jurnal">
+                  {Array.from(
+                    new Set([
+                      ...PRESET_KELAS,
+                      '7A', '7B', '7C', '7D', '7E', '7F', '7G', '7H',
+                      '8A', '8B', '8C', '8D', '8E', '8F', '8G', '8H',
+                      '9A', '9B', '9C', '9D', '9E', '9F', '9G', '9H',
+                      ...siswaItems.map((s) => s.kelas).filter(Boolean)
+                    ])
+                  ).map((k) => (
+                    <option key={k} value={k} />
+                  ))}
+                </datalist>
               </div>
 
               {/* Sasaran Peserta / Konseli */}
@@ -648,37 +662,69 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
               <UserX className="w-5 h-5 text-rose-600" />
               <h3 className="text-base font-bold text-slate-800">4. Siswa yang Tidak Mengikuti Layanan BK</h3>
             </div>
-            <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-full font-semibold">
-              Total: {siswaTidakMengikuti.length} Siswa
-            </span>
+            <div className="flex items-center gap-2">
+              {siswaTidakMengikuti.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm('Kosongkan semua daftar siswa absen?')) {
+                      setSiswaTidakMengikuti([]);
+                    }
+                  }}
+                  className="text-xs font-bold text-slate-400 hover:text-rose-600 px-2 py-1 transition-colors"
+                >
+                  Bersihkan
+                </button>
+              )}
+              <span className="text-xs bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-1 rounded-full font-semibold">
+                Total: {siswaTidakMengikuti.length} Siswa Absen
+              </span>
+            </div>
           </div>
 
-          {/* Quick Input Row for Missing Students */}
+          {/* Quick Input Row for Missing Students with Multi-Select Reason Support */}
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-            <p className="text-xs font-medium text-slate-600">Tambah Data Siswa Absen / Tidak Ikut Layanan:</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-bold text-slate-700">
+                Pilih atau Input Siswa Absen / Tidak Ikut Layanan:
+              </p>
+              <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                💡 Gunakan tombol <strong>"Multi-Pilih Siswa (&gt;10)"</strong> untuk menentukan alasan per siswa sekaligus
+              </span>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Nama Siswa</label>
                 <SiswaSelector
                   siswaItems={siswaItems}
                   selectedKelas={kelas}
                   onSelectKelas={(k) => setKelas(k)}
                   selectedNamaSiswa={newNamaSiswa}
                   onSelectNamaSiswa={(val) => setNewNamaSiswa(val)}
-                  themeColor="emerald"
+                  themeColor="rose"
+                  siswaLabel="Pilih Nama Siswa"
+                  showAbsenReason={true}
+                  initialAlasan={newAlasan || 'Sakit'}
+                  initialTindakLanjut={newTindakLanjut || 'Bimbingan Susulan'}
+                  onMultiSelectAbsen={(items) => {
+                    setSiswaTidakMengikuti((prev) => [...prev, ...items]);
+                    setNewNamaSiswa('');
+                  }}
                   required={false}
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Alasan</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Alasan Default (Single Siswa)
+                </label>
                 <input
                   type="text"
                   value={newAlasan}
                   onChange={(e) => setNewAlasan(e.target.value)}
                   placeholder="Contoh: Sakit / Izin / Alpha"
                   list="preset-alasan-list"
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-rose-500"
                 />
                 <datalist id="preset-alasan-list">
                   {PRESET_ALASAN_ABSEN.map((a) => (
@@ -688,55 +734,79 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1">Tindak Lanjut</label>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                  Tindak Lanjut BK (Single Siswa)
+                </label>
                 <input
                   type="text"
                   value={newTindakLanjut}
                   onChange={(e) => setNewTindakLanjut(e.target.value)}
                   placeholder="Contoh: Bimbingan Susulan"
-                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-rose-500"
                 />
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleAddSiswaTidakHadir}
-              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm"
-            >
-              <Plus className="w-4 h-4" /> Tambah Siswa ke Daftar Absen
-            </button>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={handleAddSiswaTidakHadir}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-lg text-xs transition-colors shadow-sm active:scale-95"
+              >
+                <Plus className="w-4 h-4" /> Tambah 1 Siswa Ini
+              </button>
+            </div>
           </div>
 
           {/* Table of Non-Attending Students */}
           {siswaTidakMengikuti.length > 0 ? (
-            <div className="overflow-x-auto border border-slate-200 rounded-xl">
+            <div className="overflow-x-auto border border-slate-200 rounded-xl shadow-sm">
               <table className="w-full text-left text-xs text-slate-700">
                 <thead className="bg-slate-100 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                   <tr>
                     <th className="p-2.5 text-center w-10">NO</th>
-                    <th className="p-2.5">NAMA SISWA</th>
-                    <th className="p-2.5">ALASAN</th>
-                    <th className="p-2.5">TINDAK LANJUT</th>
+                    <th className="p-2.5 min-w-[160px]">NAMA SISWA</th>
+                    <th className="p-2.5 min-w-[180px]">ALASAN ABSEN</th>
+                    <th className="p-2.5 min-w-[180px]">TINDAK LANJUT BK</th>
                     <th className="p-2.5 text-center w-16">AKSI</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {siswaTidakMengikuti.map((item, index) => (
-                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                    <tr key={index} className="hover:bg-slate-50/80 transition-colors">
                       <td className="p-2.5 text-center font-bold text-slate-500">{index + 1}</td>
-                      <td className="p-2.5 font-semibold text-slate-800">{item.nama_siswa}</td>
+                      <td className="p-2.5 font-bold text-slate-800">{item.nama_siswa}</td>
                       <td className="p-2.5">
-                        <span className="px-2 py-0.5 rounded-full text-[11px] bg-amber-50 text-amber-800 border border-amber-200 font-medium">
-                          {item.alasan}
-                        </span>
+                        <input
+                          type="text"
+                          value={item.alasan}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSiswaTidakMengikuti((prev) =>
+                              prev.map((s, idx) => (idx === index ? { ...s, alasan: val } : s))
+                            );
+                          }}
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-rose-400 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-semibold focus:outline-none focus:ring-1 focus:ring-rose-400"
+                        />
                       </td>
-                      <td className="p-2.5 text-slate-600">{item.tindak_lanjut}</td>
+                      <td className="p-2.5">
+                        <input
+                          type="text"
+                          value={item.tindak_lanjut}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setSiswaTidakMengikuti((prev) =>
+                              prev.map((s, idx) => (idx === index ? { ...s, tindak_lanjut: val } : s))
+                            );
+                          }}
+                          className="w-full bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 focus:border-emerald-400 rounded-lg px-2.5 py-1 text-xs text-slate-800 font-medium focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                        />
+                      </td>
                       <td className="p-2.5 text-center">
                         <button
                           type="button"
                           onClick={() => handleRemoveSiswaTidakHadir(index)}
-                          className="p-1 text-rose-600 hover:bg-rose-50 rounded transition-colors"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                           title="Hapus Siswa"
                         >
                           <Trash2 className="w-4 h-4" />

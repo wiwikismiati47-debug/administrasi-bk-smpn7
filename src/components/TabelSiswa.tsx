@@ -294,6 +294,18 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
     reader.readAsArrayBuffer(file);
   };
 
+  // Extract dynamic class list from items combined with preset classes
+  const availableClassOptions = useMemo(() => {
+    const set = new Set<string>();
+    PRESET_KELAS.forEach((k) => set.add(k));
+    items.forEach((it) => {
+      if (it.kelas && it.kelas.trim()) {
+        set.add(it.kelas.trim());
+      }
+    });
+    return Array.from(set);
+  }, [items]);
+
   // Filter items
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
@@ -304,7 +316,11 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
         item.kelas.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.keterangan || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchKelas = selectedKelas === 'SEMUA' || item.kelas === selectedKelas;
+      const matchKelas =
+        selectedKelas === 'SEMUA' ||
+        item.kelas === selectedKelas ||
+        standardizeKelas(item.kelas) === standardizeKelas(selectedKelas) ||
+        item.kelas.toLowerCase().replace(/[\s\-_]/g, '') === selectedKelas.toLowerCase().replace(/[\s\-_]/g, '');
 
       return matchSearch && matchKelas;
     });
@@ -666,11 +682,21 @@ export const TabelSiswa: React.FC<TabelSiswaProps> = ({
             onChange={(e) => setSelectedKelas(e.target.value)}
             className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 font-bold cursor-pointer"
           >
-            {PRESET_KELAS.map((kls) => (
-              <option key={kls} value={kls}>
-                {kls}
-              </option>
-            ))}
+            {availableClassOptions.map((kls) => {
+              const count = kls === 'SEMUA'
+                ? items.length
+                : items.filter(
+                    (it) =>
+                      it.kelas === kls ||
+                      standardizeKelas(it.kelas) === standardizeKelas(kls) ||
+                      it.kelas.toLowerCase().replace(/[\s\-_]/g, '') === kls.toLowerCase().replace(/[\s\-_]/g, '')
+                  ).length;
+              return (
+                <option key={kls} value={kls}>
+                  {kls === 'SEMUA' ? `SEMUA KELAS (${count} Siswa)` : `${kls} (${count} Siswa)`}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>

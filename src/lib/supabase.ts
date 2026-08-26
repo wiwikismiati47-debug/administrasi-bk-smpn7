@@ -1108,8 +1108,157 @@ export async function deleteKonferensiKasusItem(id: string): Promise<{ success: 
 }
 
 /* ==========================================================================
-   9. DATA MANAGEMENT SISWA (Direct Supabase)
+   9. DATA MANAGEMENT SISWA (Direct Supabase - Multi Table & Multi Column Resolver)
    ========================================================================== */
+
+export const SISWA_TABLE_CANDIDATES = [
+  'siswa_BK',
+  'siswa_bk',
+  'Siswa_BK',
+  'Siswa_bk',
+  'siswa',
+  'Siswa',
+  'data_siswa',
+  'Data_Siswa'
+];
+
+let cachedActiveSiswaTable: string | null = null;
+
+export function getActiveSiswaTableName(): string {
+  return cachedActiveSiswaTable || 'siswa_BK';
+}
+
+export function setActiveSiswaTableName(name: string) {
+  cachedActiveSiswaTable = name;
+}
+
+/**
+ * Robust mapper for student record from Supabase table
+ * Handles any casing, alternative column naming, or missing columns
+ */
+export function mapSupabaseRowToSiswa(row: any, index: number = 0): Siswa {
+  if (!row || typeof row !== 'object') {
+    return {
+      id: `siswa-${Date.now()}-${index}`,
+      nama_siswa: '',
+      kelas: '',
+      nis: '',
+      jenis_kelamin: 'Laki-laki',
+      keterangan: ''
+    };
+  }
+
+  // 1. Extract ID
+  const id =
+    row.id ||
+    row.ID ||
+    row.Id ||
+    row.uuid ||
+    row.UUID ||
+    `siswa-${Date.now()}-${index}`;
+
+  // 2. Extract Nama Siswa (Case-insensitive & various column aliases)
+  const nama_siswa =
+    row.nama_siswa ||
+    row.nama ||
+    row.nama_lengkap ||
+    row.nama_murid ||
+    row.nama_peserta_didik ||
+    row.Nama_Siswa ||
+    row.Nama ||
+    row.Nama_Lengkap ||
+    row.NAMA_SISWA ||
+    row.NAMA ||
+    row.name ||
+    row.Name ||
+    row.student_name ||
+    row.Student_Name ||
+    '';
+
+  // 3. Extract Kelas (Handles '8-A', 'VIII A', '8A', 'rombel', etc.)
+  const kelas =
+    row.kelas ||
+    row.Kelas ||
+    row.KELAS ||
+    row.rombel ||
+    row.Rombel ||
+    row.ROMBEL ||
+    row.kelas_rombel ||
+    row.class ||
+    row.Class ||
+    row.tingkat_kelas ||
+    '';
+
+  // 4. Extract NIS / NISN
+  const nis =
+    row.nis ||
+    row.NIS ||
+    row.nisn ||
+    row.NISN ||
+    row.no_induk ||
+    row.nomor_induk ||
+    row.No_Induk ||
+    row.nis_siswa ||
+    '';
+
+  // 5. Extract & Normalize Jenis Kelamin
+  const rawJk =
+    row.jenis_kelamin ||
+    row.Jenis_Kelamin ||
+    row.JENIS_KELAMIN ||
+    row.jk ||
+    row.JK ||
+    row.gender ||
+    row.Gender ||
+    row.l_p ||
+    row.L_P ||
+    row.sex ||
+    '';
+
+  let jenis_kelamin = 'Laki-laki';
+  const cleanJk = String(rawJk).trim().toUpperCase();
+  if (
+    cleanJk === 'P' ||
+    cleanJk.startsWith('PEREMPUAN') ||
+    cleanJk.startsWith('FEMALE') ||
+    cleanJk === 'W'
+  ) {
+    jenis_kelamin = 'Perempuan';
+  } else if (
+    cleanJk === 'L' ||
+    cleanJk.startsWith('LAKI') ||
+    cleanJk.startsWith('MALE') ||
+    cleanJk === 'PRIA'
+  ) {
+    jenis_kelamin = 'Laki-laki';
+  } else if (cleanJk) {
+    jenis_kelamin = String(rawJk).trim();
+  }
+
+  // 6. Extract Keterangan / Notes / Alamat
+  const keterangan =
+    row.keterangan ||
+    row.Keterangan ||
+    row.KETERANGAN ||
+    row.ket ||
+    row.Ket ||
+    row.catatan ||
+    row.notes ||
+    row.alamat ||
+    row.nama_orang_tua ||
+    '';
+
+  return {
+    id: String(id),
+    created_at: row.created_at || row.createdAt || new Date().toISOString(),
+    updated_at: row.updated_at || row.updatedAt || new Date().toISOString(),
+    nama_siswa: String(nama_siswa).trim(),
+    kelas: String(kelas).trim(),
+    nis: String(nis).trim(),
+    jenis_kelamin,
+    keterangan: keterangan ? String(keterangan).trim() : ''
+  };
+}
 
 export async function fetchSiswaList(): Promise<{ data: Siswa[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
@@ -1117,23 +1266,51 @@ export async function fetchSiswaList(): Promise<{ data: Siswa[]; isFromSupabase:
 
   if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_SISWA_TABLE_NAME)
-      .select('*')
-      .order('kelas', { ascending: true })
-      .order('nama_siswa', { ascending: true });
+  // Candidates in priority order
+  const candidateTables = [
+    'siswa_BK',
+    'siswa_bk',
+    'Siswa_BK',
+    'Siswa_bk',
+    'siswa',
+    'Siswa',
+    'data_siswa'
+  ];
 
-    if (error) {
-      console.error('Supabase fetchSiswaList error:', error.message);
-      return { data: [], isFromSupabase: false, error: error.message };
+  let lastErrorMessage = '';
+
+  for (const tableName of candidateTables) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .select('*');
+
+      if (!error && Array.isArray(data)) {
+        setActiveSiswaTableName(tableName);
+        
+        const mappedData = data
+          .map((row, idx) => mapSupabaseRowToSiswa(row, idx))
+          .filter((s) => s.nama_siswa.length > 0 || s.nis.length > 0)
+          .sort((a, b) => {
+            const classCompare = (a.kelas || '').localeCompare(b.kelas || '', undefined, { numeric: true });
+            if (classCompare !== 0) return classCompare;
+            return (a.nama_siswa || '').localeCompare(b.nama_siswa || '');
+          });
+
+        return { data: mappedData, isFromSupabase: true };
+      } else if (error) {
+        lastErrorMessage = error.message;
+      }
+    } catch (err) {
+      lastErrorMessage = err instanceof Error ? err.message : 'Error query table ' + tableName;
     }
-
-    return { data: (data || []) as Siswa[], isFromSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Siswa';
-    return { data: [], isFromSupabase: false, error: msg };
   }
+
+  return {
+    data: [],
+    isFromSupabase: false,
+    error: lastErrorMessage || 'Tabel data siswa (siswa_BK / siswa_bk) tidak dapat diakses di Supabase.'
+  };
 }
 
 export async function saveOrUpdateSiswa(
@@ -1160,27 +1337,38 @@ export async function saveOrUpdateSiswa(
     keterangan: item.keterangan || ''
   };
 
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_SISWA_TABLE_NAME)
-      .upsert(payload, { onConflict: 'id' })
-      .select()
-      .single();
+  const targetTables = [
+    getActiveSiswaTableName(),
+    'siswa_BK',
+    'siswa_bk',
+    'Siswa_BK',
+    'siswa'
+  ];
 
-    if (error) {
-      console.error('Supabase saveOrUpdateSiswa error:', error.message);
-      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
+  const uniqueTables = Array.from(new Set(targetTables));
+
+  for (const tableName of uniqueTables) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error) {
+        setActiveSiswaTableName(tableName);
+        return {
+          success: true,
+          data: (data ? mapSupabaseRowToSiswa(data) : { ...payload, created_at: item.created_at || now }) as Siswa,
+          isSupabase: true
+        };
+      }
+    } catch {
+      // try next candidate
     }
-
-    return {
-      success: true,
-      data: (data || { ...payload, created_at: item.created_at || now }) as Siswa,
-      isSupabase: true
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: false, isSupabase: false, error: msg };
   }
+
+  return { success: false, isSupabase: false, error: 'Gagal menyimpan data siswa ke tabel siswa_BK di Supabase' };
 }
 
 export async function bulkSaveOrUpdateSiswa(
@@ -1205,17 +1393,29 @@ export async function bulkSaveOrUpdateSiswa(
     keterangan: s.keterangan || ''
   }));
 
-  try {
-    const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).upsert(payloadRows, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase bulkSaveOrUpdateSiswa error:', error.message);
-      return { success: false, count: 0, error: `Gagal import ke Supabase: ${error.message}` };
+  const targetTables = [
+    getActiveSiswaTableName(),
+    'siswa_BK',
+    'siswa_bk',
+    'Siswa_BK',
+    'siswa'
+  ];
+
+  const uniqueTables = Array.from(new Set(targetTables));
+
+  for (const tableName of uniqueTables) {
+    try {
+      const { error } = await client.from(tableName).upsert(payloadRows, { onConflict: 'id' });
+      if (!error) {
+        setActiveSiswaTableName(tableName);
+        return { success: true, count: payloadRows.length };
+      }
+    } catch {
+      // try next
     }
-    return { success: true, count: payloadRows.length };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal import massal siswa';
-    return { success: false, count: 0, error: msg };
   }
+
+  return { success: false, count: 0, error: 'Gagal import massal siswa ke tabel siswa_BK di Supabase' };
 }
 
 export async function deleteSiswaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
@@ -1224,14 +1424,29 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
 
   if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
 
-  try {
-    const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: false, isSupabase: false, error: error.message };
-    return { success: true, isSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal menghapus data siswa';
-    return { success: false, isSupabase: false, error: msg };
+  const targetTables = [
+    getActiveSiswaTableName(),
+    'siswa_BK',
+    'siswa_bk',
+    'Siswa_BK',
+    'siswa'
+  ];
+
+  const uniqueTables = Array.from(new Set(targetTables));
+
+  for (const tableName of uniqueTables) {
+    try {
+      const { error } = await client.from(tableName).delete().eq('id', id);
+      if (!error) {
+        setActiveSiswaTableName(tableName);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // try next
+    }
   }
+
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data siswa dari Supabase' };
 }
 
 /* ==========================================================================
@@ -1956,23 +2171,55 @@ export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Prom
 
   for (const item of tableList) {
     try {
-      const { error } = await client
-        .from(item.tableName)
-        .select('id')
-        .limit(1);
+      let isFound = false;
+      let lastErrMsg = '';
+      let detectedTableName = item.tableName;
 
-      if (error) {
+      if (item.title === 'Data Manajemen Siswa') {
+        const candidateSiswaTables = [
+          item.tableName,
+          'siswa_BK',
+          'Siswa_BK',
+          'siswa',
+          'Siswa',
+          'data_siswa'
+        ];
+        const uniqueCandidates = Array.from(new Set(candidateSiswaTables));
+        for (const candidate of uniqueCandidates) {
+          const { error } = await client.from(candidate).select('*').limit(1);
+          if (!error) {
+            isFound = true;
+            detectedTableName = candidate;
+            break;
+          } else {
+            lastErrMsg = error.message;
+          }
+        }
+      } else {
+        const { error } = await client
+          .from(item.tableName)
+          .select('*')
+          .limit(1);
+
+        if (!error) {
+          isFound = true;
+        } else {
+          lastErrMsg = error.message;
+        }
+      }
+
+      if (isFound) {
         results.push({
           title: item.title,
-          tableName: item.tableName,
-          exists: false,
-          error: error.message
+          tableName: detectedTableName,
+          exists: true
         });
       } else {
         results.push({
           title: item.title,
           tableName: item.tableName,
-          exists: true
+          exists: false,
+          error: lastErrMsg
         });
       }
     } catch (err: unknown) {
