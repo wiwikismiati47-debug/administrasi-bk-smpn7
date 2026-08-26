@@ -734,32 +734,42 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
           <div className="space-y-6">
             
             {/* Supabase Status Pill Banner */}
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700 shadow-sm">
+            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-700 shadow-sm">
               <div className="flex items-center gap-2.5">
-                <Database className={`w-4 h-4 ${isSupabaseConnected ? 'text-emerald-600' : 'text-amber-600'}`} />
-                <span>
-                  Status Database Cloud:{' '}
-                  <strong className={isSupabaseConnected ? 'text-emerald-700' : 'text-amber-700'}>
-                    {isSupabaseConnected ? 'Terhubung Supabase (Realtime)' : 'Penyimpanan Lokal Browser'}
-                  </strong>
-                </span>
+                <div className="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg">
+                  <Database className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-600">Database Cloud:</span>
+                    <strong className="text-emerald-800 font-extrabold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Terhubung Supabase SMPN 7 Pasuruan (Realtime Multiuser)
+                    </strong>
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                    Data tersimpan langsung di Cloud & otomatis tersinkronisasi antar-pengguna / multi-user.
+                  </p>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={onRefreshData}
                   disabled={isLoadingAgenda || isLoadingUndangan}
-                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  title="Muat data terbaru langsung dari database Supabase"
                 >
-                  <RefreshCw className={`w-3 h-3 ${(isLoadingAgenda || isLoadingUndangan) ? 'animate-spin text-blue-600' : ''}`} />
-                  <span>Refresh</span>
+                  <RefreshCw className={`w-3.5 h-3.5 ${(isLoadingAgenda || isLoadingUndangan) ? 'animate-spin text-blue-600' : 'text-blue-600'}`} />
+                  <span>Sinkronkan Cloud</span>
                 </button>
 
                 <button
                   onClick={onOpenSupabaseConfig}
-                  className="px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg text-xs transition-colors shadow-sm"
+                  className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold rounded-xl text-xs transition-colors"
+                  title="Buka pengaturan database Supabase & Script SQL"
                 >
-                  {isSupabaseConnected ? 'Pengaturan' : 'Hubungkan Supabase'}
+                  Pengaturan Database
                 </button>
               </div>
             </div>

@@ -3,6 +3,9 @@ import { SupabaseConfig } from '../types';
 import {
   getSavedSupabaseConfig,
   saveSupabaseConfigToStorage,
+  resetToPermanentSupabaseConfig,
+  PERMANENT_SUPABASE_URL,
+  PERMANENT_SUPABASE_ANON_KEY,
   getSupabaseSqlSetup,
   testAllSupabaseTables,
   SupabaseTableTestResult,
@@ -18,7 +21,9 @@ import {
   ShieldCheck,
   Terminal,
   RefreshCw,
-  Server
+  Server,
+  RotateCcw,
+  Sparkles
 } from 'lucide-react';
 
 interface SupabaseSettingsModalProps {
@@ -33,8 +38,8 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
   onConfigSaved,
 }) => {
   const [config, setConfig] = useState<SupabaseConfig>({
-    url: '',
-    anonKey: '',
+    url: PERMANENT_SUPABASE_URL,
+    anonKey: PERMANENT_SUPABASE_ANON_KEY,
     tableName: DEFAULT_TABLE_NAME,
   });
 
@@ -111,18 +116,18 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
   const handleSave = () => {
     saveSupabaseConfigToStorage(config);
     onConfigSaved();
-    alert('Konfigurasi Supabase berhasil disimpan!');
+    alert('Konfigurasi Database Supabase berhasil disimpan permanen!');
     onClose();
   };
 
-  const handleClear = () => {
-    saveSupabaseConfigToStorage({ url: '', anonKey: '', tableName: DEFAULT_TABLE_NAME });
-    setConfig({ url: '', anonKey: '', tableName: DEFAULT_TABLE_NAME });
+  const handleRestorePermanent = () => {
+    const permanent = resetToPermanentSupabaseConfig();
+    setConfig(permanent);
     onConfigSaved();
     setTestStatus({
       tested: true,
       success: true,
-      message: 'Konfigurasi kustom dibersihkan. Kembali menggunakan Database Supabase bawaan (default).',
+      message: 'Berhasil dikembalikan ke Database Bawaan Permanen SMPN 7 Pasuruan (https://kedffsrkxwlnynrnicek.supabase.co).',
     });
   };
 
@@ -144,11 +149,16 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
               <Database className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900">
-                Konfigurasi Database Supabase
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xl font-bold text-slate-900">
+                  Konfigurasi Database Supabase
+                </h3>
+                <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  <Sparkles className="w-2.5 h-2.5" /> Permanen SMPN 7
+                </span>
+              </div>
               <p className="text-xs text-slate-500 font-semibold">
-                SABDA BK SPANJU - SMPN 7 PASURUAN
+                SABDA BK SPANJU - SMPN 7 PASURUAN (Otomatis & Siap Pakai Multiuser)
               </p>
             </div>
           </div>
@@ -166,10 +176,10 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
           <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <p className="font-bold text-emerald-950">
-              Akses Publik & Real-Time Aktif
+              Pengaturan Database Bersifat Permanen
             </p>
             <p className="leading-relaxed">
-              Aplikasi ini dikonfigurasi agar data tersinkronisasi secara real-time ke Supabase tanpa memerlukan login rumit.
+              Aplikasi telah disetel permanen ke project Supabase resmi SMPN 7 Pasuruan. Setiap pengguna baru atau perangkat baru otomatis terhubung ke database ini tanpa perlu memasukkan URL atau Project Key secara manual.
             </p>
           </div>
         </div>
@@ -177,28 +187,34 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
         {/* Inputs */}
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              SUPABASE PROJECT URL
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700">
+                SUPABASE PROJECT URL
+              </label>
+              <span className="text-[10px] text-emerald-700 font-semibold">Default Permanen</span>
+            </div>
             <input
               type="text"
               value={config.url}
               onChange={(e) => setConfig({ ...config, url: e.target.value.trim() })}
-              placeholder="https://your-project-id.supabase.co"
-              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+              placeholder="https://kedffsrkxwlnynrnicek.supabase.co"
+              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono font-medium text-slate-800"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">
-              SUPABASE ANON KEY (PUBLIC)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-slate-700">
+                SUPABASE ANON KEY (PUBLISHED KEY)
+              </label>
+              <span className="text-[10px] text-emerald-700 font-semibold">Default Permanen</span>
+            </div>
             <input
               type="password"
               value={config.anonKey}
               onChange={(e) => setConfig({ ...config, anonKey: e.target.value.trim() })}
-              placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono"
+              placeholder="sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi"
+              className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-mono text-slate-800"
             />
           </div>
 
@@ -307,10 +323,12 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
         {/* Modal Action Footer */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-200">
           <button
-            onClick={handleClear}
-            className="px-3.5 py-2 text-xs font-semibold text-slate-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+            onClick={handleRestorePermanent}
+            className="px-3.5 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 border border-blue-200 rounded-lg transition-colors inline-flex items-center gap-1.5"
+            title="Reset ke pengaturan resmi permanen SMPN 7"
           >
-            Bersihkan Konfigurasi
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset ke Default Permanen SMPN 7</span>
           </button>
 
           <div className="flex items-center gap-2">
@@ -343,4 +361,5 @@ export const SupabaseSettingsModal: React.FC<SupabaseSettingsModalProps> = ({
     </div>
   );
 };
+
 

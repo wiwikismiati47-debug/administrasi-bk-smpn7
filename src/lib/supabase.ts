@@ -25,14 +25,17 @@ import {
 import { safeGetStorage, safeSetStorage } from './storageManager';
 import { getActiveGuruBK } from './guruBk';
 
-// Default Supabase Configuration for SMPN 7 Pasuruan (ADM_BK_SMPN7)
+// Permanent Supabase Configuration for SMPN 7 Pasuruan (ADM_BK_SMPN7)
+export const PERMANENT_SUPABASE_URL = 'https://kedffsrkxwlnynrnicek.supabase.co';
+export const PERMANENT_SUPABASE_ANON_KEY = 'sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi';
+
 export const DEFAULT_SUPABASE_URL =
   import.meta.env.VITE_SUPABASE_URL ||
-  'https://exppqn5tp5jke6oqiby6.supabase.co';
+  PERMANENT_SUPABASE_URL;
 
 export const DEFAULT_SUPABASE_ANON_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4cHBxbjV0cDVqa2U2b3FpYnk2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxMjY3MzEsImV4cCI6MjA1NTcwMjczMX0.y92Qz1K1x7a79xQY01X70f5rX7n-o_8LgHnK4P-wE40';
+  PERMANENT_SUPABASE_ANON_KEY;
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -60,18 +63,28 @@ export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_local';
 export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_local';
 
 /**
- * Get Saved Supabase Config with automatic fallback to system defaults
+ * Get Saved Supabase Config - Guaranteed permanent configuration for SMPN 7 Pasuruan
  */
 export function getSavedSupabaseConfig(): SupabaseConfig {
   const saved = safeGetStorage<SupabaseConfig | null>(STORAGE_KEY_CONFIG, null);
-  if (saved && saved.url && saved.anonKey) {
+  if (
+    saved &&
+    saved.url &&
+    saved.anonKey &&
+    saved.url.trim().length > 0 &&
+    !saved.url.includes('exppqn5tp5jke6oqiby6.supabase.co')
+  ) {
     return saved;
   }
-  return {
-    url: DEFAULT_SUPABASE_URL,
-    anonKey: DEFAULT_SUPABASE_ANON_KEY,
+  
+  // Always fallback to and persist the permanent configuration
+  const permanentConfig: SupabaseConfig = {
+    url: PERMANENT_SUPABASE_URL,
+    anonKey: PERMANENT_SUPABASE_ANON_KEY,
     tableName: DEFAULT_TABLE_NAME
   };
+  safeSetStorage(STORAGE_KEY_CONFIG, permanentConfig);
+  return permanentConfig;
 }
 
 /**
@@ -79,6 +92,19 @@ export function getSavedSupabaseConfig(): SupabaseConfig {
  */
 export function saveSupabaseConfigToStorage(config: SupabaseConfig): void {
   safeSetStorage(STORAGE_KEY_CONFIG, config);
+}
+
+/**
+ * Reset to permanent Supabase config for SMPN 7 Pasuruan
+ */
+export function resetToPermanentSupabaseConfig(): SupabaseConfig {
+  const permanentConfig: SupabaseConfig = {
+    url: PERMANENT_SUPABASE_URL,
+    anonKey: PERMANENT_SUPABASE_ANON_KEY,
+    tableName: DEFAULT_TABLE_NAME
+  };
+  safeSetStorage(STORAGE_KEY_CONFIG, permanentConfig);
+  return permanentConfig;
 }
 
 // Cached client

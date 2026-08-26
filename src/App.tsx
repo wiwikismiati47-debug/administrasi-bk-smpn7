@@ -132,8 +132,8 @@ export default function App() {
   const [isLoadingJurnalBK, setIsLoadingJurnalBK] = useState<boolean>(true);
   const [isSubmittingJurnalBK, setIsSubmittingJurnalBK] = useState<boolean>(false);
 
-  // Connection state
-  const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(false);
+  // Connection state (Default true with permanent SMPN 7 Supabase connection)
+  const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(true);
 
   // Modals state
   const [isLinkModalOpen, setIsLinkModalOpen] = useState<boolean>(false);
