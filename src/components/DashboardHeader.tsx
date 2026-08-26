@@ -9,7 +9,8 @@ import {
   ShieldCheck,
   Sparkles,
   Layers,
-  BookOpen
+  BookOpen,
+  RefreshCw
 } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -18,6 +19,8 @@ interface DashboardHeaderProps {
   isSupabaseActive: boolean;
   onOpenSupabaseConfig: () => void;
   totalLinksCount: number;
+  onRefreshData?: () => void;
+  isSyncing?: boolean;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -26,6 +29,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   isSupabaseActive,
   onOpenSupabaseConfig,
   totalLinksCount,
+  onRefreshData,
+  isSyncing = false,
 }) => {
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
   const [isInstallable, setIsInstallable] = React.useState(false);
@@ -157,13 +162,28 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               onClick={onOpenSupabaseConfig}
               className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
                 isSupabaseActive
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20'
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700'
                   : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
               }`}
+              title="Status koneksi database Supabase Cloud"
             >
-              <Database className="w-3.5 h-3.5 text-amber-500" />
-              <span>{isSupabaseActive ? 'Database Supabase' : 'Atur Supabase'}</span>
+              <Database className="w-3.5 h-3.5" />
+              <span>{isSupabaseActive ? 'Supabase Cloud (Multiuser)' : 'Atur Supabase'}</span>
+              <span className={`w-2 h-2 rounded-full ${isSupabaseActive ? 'bg-emerald-300 animate-pulse' : 'bg-amber-400'}`} />
             </button>
+
+            {/* Manual Cloud Refresh / Sync Button */}
+            {onRefreshData && (
+              <button
+                onClick={onRefreshData}
+                disabled={isSyncing}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                title="Muat ulang & sinkronkan data terbaru langsung dari Supabase Cloud"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />
+                <span>{isSyncing ? 'Sinkronisasi...' : 'Sinkronkan Data'}</span>
+              </button>
+            )}
 
             {/* Backup Links JSON Button */}
             <button

@@ -56,17 +56,7 @@ import {
   deleteJurnalBKItem,
   getSavedSupabaseConfig,
   getSupabaseClient,
-  STORAGE_KEY_CONFIG,
-  STORAGE_KEY_DATA,
-  STORAGE_KEY_UNDANGAN,
-  STORAGE_KEY_HOME_VISIT,
-  STORAGE_KEY_REKAM_PERMASALAHAN,
-  STORAGE_KEY_KONSELING_INDIVIDU,
-  STORAGE_KEY_KONSELING_KELOMPOK,
-  STORAGE_KEY_SURAT_PERNYATAAN,
-  STORAGE_KEY_KONFERENSI_KASUS,
-  STORAGE_KEY_SISWA,
-  STORAGE_KEY_JURNAL_BK
+  STORAGE_KEY_CONFIG
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -76,7 +66,6 @@ import {
   parseLinksBackupJSON,
   STORAGE_KEY_APP_LINKS
 } from './lib/appLinksManager';
-import { STORAGE_KEY_SIGNATURES } from './lib/signatures';
 import { initStorageKeys } from './lib/storageManager';
 import { DashboardHeader } from './components/DashboardHeader';
 import { SidebarMenu } from './components/SidebarMenu';
@@ -348,18 +337,7 @@ export default function App() {
     async function initApp() {
       await initStorageKeys([
         STORAGE_KEY_CONFIG,
-        STORAGE_KEY_DATA,
-        STORAGE_KEY_UNDANGAN,
-        STORAGE_KEY_HOME_VISIT,
-        STORAGE_KEY_REKAM_PERMASALAHAN,
-        STORAGE_KEY_KONSELING_INDIVIDU,
-        STORAGE_KEY_KONSELING_KELOMPOK,
-        STORAGE_KEY_SURAT_PERNYATAAN,
-        STORAGE_KEY_KONFERENSI_KASUS,
-        STORAGE_KEY_SISWA,
-        STORAGE_KEY_JURNAL_BK,
-        STORAGE_KEY_APP_LINKS,
-        STORAGE_KEY_SIGNATURES
+        STORAGE_KEY_APP_LINKS
       ]);
       const saved = getSavedAppLinks();
       setLinks(saved);
@@ -408,16 +386,16 @@ export default function App() {
         await loadAgendaData();
         showToast(
           data.id
-            ? 'Data Agenda Kerja BK berhasil diperbarui!'
-            : 'Data Agenda Kerja BK berhasil disimpan!',
+            ? 'Data Agenda Kerja BK berhasil diperbarui di Supabase!'
+            : 'Data Agenda Kerja BK berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan agenda.', 'error');
+        showToast(res.error || 'Gagal menyimpan agenda ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingAgenda(false);
     }
@@ -429,10 +407,12 @@ export default function App() {
       const res = await deleteAgendaItem(id);
       if (res.success) {
         await loadAgendaData();
-        showToast('Data Agenda berhasil dihapus.', 'success');
+        showToast('Data Agenda berhasil dihapus dari Supabase.', 'success');
+      } else {
+        showToast(res.error || 'Gagal menghapus data agenda dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data agenda.', 'error');
+      showToast('Gagal menghapus data agenda dari Supabase.', 'error');
     }
   };
 
@@ -457,16 +437,16 @@ export default function App() {
         await loadUndanganData();
         showToast(
           data.id
-            ? 'Data Undangan Orang Tua berhasil diperbarui!'
-            : 'Data Undangan Orang Tua berhasil disimpan!',
+            ? 'Data Undangan Orang Tua berhasil diperbarui di Supabase!'
+            : 'Data Undangan Orang Tua berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan undangan orang tua.', 'error');
+        showToast(res.error || 'Gagal menyimpan undangan orang tua ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingUndangan(false);
     }
@@ -479,10 +459,14 @@ export default function App() {
       const res = await deleteUndanganItem(id);
       if (res.success) {
         await loadUndanganData();
-        showToast('Data Undangan Orang Tua berhasil dihapus.', 'success');
+        showToast('Data Undangan Orang Tua berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadUndanganData();
+        showToast(res.error || 'Gagal menghapus data undangan dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data undangan orang tua.', 'error');
+      await loadUndanganData();
+      showToast('Gagal menghapus data undangan orang tua dari Supabase.', 'error');
     }
   };
 
@@ -507,16 +491,16 @@ export default function App() {
         await loadHomeVisitData();
         showToast(
           data.id
-            ? 'Data Home Visit / Kunjungan Rumah berhasil diperbarui!'
-            : 'Data Home Visit / Kunjungan Rumah berhasil disimpan!',
+            ? 'Data Home Visit berhasil diperbarui di Supabase!'
+            : 'Data Home Visit berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data home visit.', 'error');
+        showToast(res.error || 'Gagal menyimpan data home visit ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingHomeVisit(false);
     }
@@ -529,10 +513,14 @@ export default function App() {
       const res = await deleteHomeVisitItem(id);
       if (res.success) {
         await loadHomeVisitData();
-        showToast('Data Home Visit berhasil dihapus.', 'success');
+        showToast('Data Home Visit berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadHomeVisitData();
+        showToast(res.error || 'Gagal menghapus data home visit dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data home visit.', 'error');
+      await loadHomeVisitData();
+      showToast('Gagal menghapus data home visit dari Supabase.', 'error');
     }
   };
 
@@ -557,16 +545,16 @@ export default function App() {
         await loadRekamPermasalahanData();
         showToast(
           data.id
-            ? 'Data Rekam Permasalahan Siswa berhasil diperbarui!'
-            : 'Data Rekam Permasalahan Siswa berhasil disimpan!',
+            ? 'Data Rekam Permasalahan Siswa berhasil diperbarui di Supabase!'
+            : 'Data Rekam Permasalahan Siswa berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data rekam permasalahan.', 'error');
+        showToast(res.error || 'Gagal menyimpan data rekam permasalahan ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingRekamPermasalahan(false);
     }
@@ -579,10 +567,14 @@ export default function App() {
       const res = await deleteRekamPermasalahanItem(id);
       if (res.success) {
         await loadRekamPermasalahanData();
-        showToast('Data Rekam Permasalahan berhasil dihapus.', 'success');
+        showToast('Data Rekam Permasalahan berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadRekamPermasalahanData();
+        showToast(res.error || 'Gagal menghapus data rekam permasalahan dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data rekam permasalahan.', 'error');
+      await loadRekamPermasalahanData();
+      showToast('Gagal menghapus data rekam permasalahan dari Supabase.', 'error');
     }
   };
 
@@ -607,16 +599,16 @@ export default function App() {
         await loadKonselingIndividuData();
         showToast(
           data.id
-            ? 'Data Konseling Individu berhasil diperbarui!'
-            : 'Data Konseling Individu berhasil disimpan!',
+            ? 'Data Konseling Individu berhasil diperbarui di Supabase!'
+            : 'Data Konseling Individu berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data konseling individu.', 'error');
+        showToast(res.error || 'Gagal menyimpan data konseling individu ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingKonselingIndividu(false);
     }
@@ -628,10 +620,14 @@ export default function App() {
       const res = await deleteKonselingIndividuItem(id);
       if (res.success) {
         await loadKonselingIndividuData();
-        showToast('Data Konseling Individu berhasil dihapus.', 'success');
+        showToast('Data Konseling Individu berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadKonselingIndividuData();
+        showToast(res.error || 'Gagal menghapus data konseling individu dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data konseling individu.', 'error');
+      await loadKonselingIndividuData();
+      showToast('Gagal menghapus data konseling individu dari Supabase.', 'error');
     }
   };
 
@@ -656,16 +652,16 @@ export default function App() {
         await loadKonselingKelompokData();
         showToast(
           data.id
-            ? 'Data Konseling Kelompok berhasil diperbarui!'
-            : 'Data Konseling Kelompok berhasil disimpan!',
+            ? 'Data Konseling Kelompok berhasil diperbarui di Supabase!'
+            : 'Data Konseling Kelompok berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data konseling kelompok.', 'error');
+        showToast(res.error || 'Gagal menyimpan data konseling kelompok ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingKonselingKelompok(false);
     }
@@ -677,10 +673,14 @@ export default function App() {
       const res = await deleteKonselingKelompokItem(id);
       if (res.success) {
         await loadKonselingKelompokData();
-        showToast('Data Konseling Kelompok berhasil dihapus.', 'success');
+        showToast('Data Konseling Kelompok berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadKonselingKelompokData();
+        showToast(res.error || 'Gagal menghapus data konseling kelompok dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data konseling kelompok.', 'error');
+      await loadKonselingKelompokData();
+      showToast('Gagal menghapus data konseling kelompok dari Supabase.', 'error');
     }
   };
 
@@ -705,16 +705,16 @@ export default function App() {
         await loadSuratPernyataanData();
         showToast(
           data.id
-            ? 'Data Surat Pernyataan berhasil diperbarui!'
-            : 'Data Surat Pernyataan berhasil disimpan!',
+            ? 'Data Surat Pernyataan berhasil diperbarui di Supabase!'
+            : 'Data Surat Pernyataan berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data surat pernyataan.', 'error');
+        showToast(res.error || 'Gagal menyimpan data surat pernyataan ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingSuratPernyataan(false);
     }
@@ -726,10 +726,14 @@ export default function App() {
       const res = await deleteSuratPernyataanItem(id);
       if (res.success) {
         await loadSuratPernyataanData();
-        showToast('Data Surat Pernyataan berhasil dihapus.', 'success');
+        showToast('Data Surat Pernyataan berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadSuratPernyataanData();
+        showToast(res.error || 'Gagal menghapus data surat pernyataan dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data surat pernyataan.', 'error');
+      await loadSuratPernyataanData();
+      showToast('Gagal menghapus data surat pernyataan dari Supabase.', 'error');
     }
   };
 
@@ -754,16 +758,16 @@ export default function App() {
         await loadKonferensiKasusData();
         showToast(
           data.id
-            ? 'Data Konferensi Kasus berhasil diperbarui!'
-            : 'Data Konferensi Kasus berhasil disimpan!',
+            ? 'Data Konferensi Kasus berhasil diperbarui di Supabase!'
+            : 'Data Konferensi Kasus berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data konferensi kasus.', 'error');
+        showToast(res.error || 'Gagal menyimpan data konferensi kasus ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingKonferensiKasus(false);
     }
@@ -775,10 +779,14 @@ export default function App() {
       const res = await deleteKonferensiKasusItem(id);
       if (res.success) {
         await loadKonferensiKasusData();
-        showToast('Data Konferensi Kasus berhasil dihapus.', 'success');
+        showToast('Data Konferensi Kasus berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadKonferensiKasusData();
+        showToast(res.error || 'Gagal menghapus data konferensi kasus dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data konferensi kasus.', 'error');
+      await loadKonferensiKasusData();
+      showToast('Gagal menghapus data konferensi kasus dari Supabase.', 'error');
     }
   };
 
@@ -803,16 +811,16 @@ export default function App() {
         await loadSiswaData();
         showToast(
           data.id
-            ? 'Data Siswa berhasil diperbarui!'
-            : 'Data Siswa berhasil disimpan!',
+            ? 'Data Siswa berhasil diperbarui di Supabase!'
+            : 'Data Siswa berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan data siswa.', 'error');
+        showToast(res.error || 'Gagal menyimpan data siswa ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingSiswa(false);
     }
@@ -824,10 +832,14 @@ export default function App() {
       const res = await deleteSiswaItem(id);
       if (res.success) {
         await loadSiswaData();
-        showToast('Data Siswa berhasil dihapus.', 'success');
+        showToast('Data Siswa berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadSiswaData();
+        showToast(res.error || 'Gagal menghapus data siswa dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data siswa.', 'error');
+      await loadSiswaData();
+      showToast('Gagal menghapus data siswa dari Supabase.', 'error');
     }
   };
 
@@ -840,14 +852,14 @@ export default function App() {
         if (res.error) {
           showToast(res.error, 'info');
         } else {
-          showToast(`Berhasil mengimpor/memperbarui ${students.length} data siswa.`, 'success');
+          showToast(`Berhasil mengimpor ${students.length} data siswa ke Supabase.`, 'success');
         }
       } else {
-        showToast(res.error || 'Gagal mengimpor data siswa.', 'error');
+        showToast(res.error || 'Gagal mengimpor data siswa ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan saat import massal';
-      showToast(`Gagal mengimpor: ${msg}`, 'error');
+      showToast(`Gagal mengimpor ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingSiswa(false);
     }
@@ -874,16 +886,16 @@ export default function App() {
         await loadJurnalBKData();
         showToast(
           data.id
-            ? 'Data Jurnal BK berhasil diperbarui!'
-            : 'Data Jurnal BK berhasil disimpan!',
+            ? 'Data Jurnal BK berhasil diperbarui di Supabase!'
+            : 'Data Jurnal BK berhasil disimpan di Supabase!',
           'success'
         );
       } else {
-        showToast('Gagal menyimpan Jurnal BK.', 'error');
+        showToast(res.error || 'Gagal menyimpan Jurnal BK ke Supabase.', 'error');
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
-      showToast(`Error: ${msg}`, 'error');
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
     } finally {
       setIsSubmittingJurnalBK(false);
     }
@@ -896,10 +908,14 @@ export default function App() {
       const res = await deleteJurnalBKItem(id);
       if (res.success) {
         await loadJurnalBKData();
-        showToast('Data Jurnal BK berhasil dihapus.', 'success');
+        showToast('Data Jurnal BK berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadJurnalBKData();
+        showToast(res.error || 'Gagal menghapus data Jurnal BK dari Supabase.', 'error');
       }
     } catch {
-      showToast('Gagal menghapus data Jurnal BK.', 'error');
+      await loadJurnalBKData();
+      showToast('Gagal menghapus data Jurnal BK dari Supabase.', 'error');
     }
   };
 
@@ -1025,6 +1041,19 @@ export default function App() {
           isSupabaseActive={isSupabaseConnected}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}
           totalLinksCount={links.length}
+          onRefreshData={refreshAllData}
+          isSyncing={
+            isLoadingAgenda ||
+            isLoadingUndangan ||
+            isLoadingHomeVisit ||
+            isLoadingRekamPermasalahan ||
+            isLoadingKonselingIndividu ||
+            isLoadingKonselingKelompok ||
+            isLoadingSuratPernyataan ||
+            isLoadingKonferensiKasus ||
+            isLoadingSiswa ||
+            isLoadingJurnalBK
+          }
         />
       </div>
 

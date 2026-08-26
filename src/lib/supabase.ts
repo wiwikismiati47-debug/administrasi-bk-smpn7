@@ -1,19 +1,38 @@
-import { getActiveGuruBK } from './guruBk';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JenisSuratPernyataan, SupabaseConfig, KonferensiKasus, Siswa, JurnalBK, FormJurnalBKData } from '../types';
+import {
+  AgendaKerja,
+  FormAgendaData,
+  UndanganOrangTua,
+  FormUndanganData,
+  HomeVisit,
+  FormHomeVisitData,
+  RekamPermasalahan,
+  FormRekamPermasalahanData,
+  KonselingIndividu,
+  FormKonselingIndividuData,
+  KonselingKelompok,
+  FormKonselingKelompokData,
+  SuratPernyataan,
+  FormSuratPernyataanData,
+  KonferensiKasus,
+  FormKonferensiKasusData,
+  Siswa,
+  FormSiswaData,
+  JurnalBK,
+  FormJurnalBKData,
+  SupabaseConfig
+} from '../types';
 import { safeGetStorage, safeSetStorage } from './storageManager';
+import { getActiveGuruBK } from './guruBk';
 
-export const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
-export const STORAGE_KEY_DATA = 'bk_smpn7_agenda_data_local';
-export const STORAGE_KEY_UNDANGAN = 'bk_smpn7_undangan_data_local';
-export const STORAGE_KEY_HOME_VISIT = 'bk_smpn7_home_visit_data_local';
-export const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_data_local';
-export const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_data_local';
-export const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_data_local';
-export const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_data_local';
-export const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_data_local';
-export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_data_local';
-export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_data_local';
+// Default Supabase Configuration for SMPN 7 Pasuruan (ADM_BK_SMPN7)
+export const DEFAULT_SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ||
+  'https://exppqn5tp5jke6oqiby6.supabase.co';
+
+export const DEFAULT_SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4cHBxbjV0cDVqa2U2b3FpYnk2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAxMjY3MzEsImV4cCI6MjA1NTcwMjczMX0.y92Qz1K1x7a79xQY01X70f5rX7n-o_8LgHnK4P-wE40';
 
 export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
@@ -27,1200 +46,866 @@ export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
 export const DEFAULT_JURNAL_BK_TABLE_NAME = 'jurnal_bk_siswa';
 export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
-export const DEFAULT_SUPABASE_URL = 'https://kedffsrkxwlnynrnicek.supabase.co';
-export const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_d_FaCtLsGNP2n2PKuI-1gQ_Lc3E5DJi';
+// Storage Keys (Kept for config persistence)
+export const STORAGE_KEY_CONFIG = 'bk_smpn7_supabase_config';
+export const STORAGE_KEY_DATA = 'bk_smpn7_agenda_local';
+export const STORAGE_KEY_UNDANGAN = 'bk_smpn7_undangan_local';
+export const STORAGE_KEY_HOME_VISIT = 'bk_smpn7_home_visit_local';
+export const STORAGE_KEY_REKAM_PERMASALAHAN = 'bk_smpn7_rekam_permasalahan_local';
+export const STORAGE_KEY_KONSELING_INDIVIDU = 'bk_smpn7_konseling_individu_local';
+export const STORAGE_KEY_KONSELING_KELOMPOK = 'bk_smpn7_konseling_kelompok_local';
+export const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_local';
+export const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_local';
+export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_local';
+export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_local';
 
-// Get active config automatically from storage, env, or built-in defaults
+/**
+ * Get Saved Supabase Config with automatic fallback to system defaults
+ */
 export function getSavedSupabaseConfig(): SupabaseConfig {
-  const env = (import.meta as unknown as { env?: Record<string, string> }).env || {};
-  const fallbackUrl = env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-  const fallbackKey = env.VITE_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
-
-  const parsed = safeGetStorage<Partial<SupabaseConfig> | null>(STORAGE_KEY_CONFIG, null);
-  if (parsed && typeof parsed.url === 'string' && parsed.url.trim() && typeof parsed.anonKey === 'string' && parsed.anonKey.trim()) {
-    return {
-      url: parsed.url.trim(),
-      anonKey: parsed.anonKey.trim(),
-      tableName: parsed.tableName || DEFAULT_TABLE_NAME,
-    };
+  const saved = safeGetStorage<SupabaseConfig | null>(STORAGE_KEY_CONFIG, null);
+  if (saved && saved.url && saved.anonKey) {
+    return saved;
   }
-
-  // Auto-connect with default cloud database
-  const defaultConfig: SupabaseConfig = {
-    url: fallbackUrl,
-    anonKey: fallbackKey,
-    tableName: DEFAULT_TABLE_NAME,
+  return {
+    url: DEFAULT_SUPABASE_URL,
+    anonKey: DEFAULT_SUPABASE_ANON_KEY,
+    tableName: DEFAULT_TABLE_NAME
   };
-
-  // Pre-save so local storage across desktop / web is immediately synced
-  safeSetStorage(STORAGE_KEY_CONFIG, defaultConfig);
-
-  return defaultConfig;
 }
 
-export function saveSupabaseConfigToStorage(config: SupabaseConfig) {
-  const toSave: SupabaseConfig = {
-    url: config.url?.trim() || DEFAULT_SUPABASE_URL,
-    anonKey: config.anonKey?.trim() || DEFAULT_SUPABASE_ANON_KEY,
-    tableName: config.tableName || DEFAULT_TABLE_NAME,
-  };
-  safeSetStorage(STORAGE_KEY_CONFIG, toSave);
+/**
+ * Save Supabase Config to local storage
+ */
+export function saveSupabaseConfigToStorage(config: SupabaseConfig): void {
+  safeSetStorage(STORAGE_KEY_CONFIG, config);
 }
 
-let cachedClient: { key: string; client: SupabaseClient } | null = null;
+// Cached client
+let cachedClient: SupabaseClient | null = null;
+let lastClientKey = '';
 
-export function getSupabaseClient(config?: SupabaseConfig): SupabaseClient | null {
-  const activeConfig = config || getSavedSupabaseConfig();
-  if (!activeConfig.url || !activeConfig.anonKey) {
+export function getSupabaseClient(customConfig?: SupabaseConfig): SupabaseClient | null {
+  const config = customConfig || getSavedSupabaseConfig();
+  const url = (config.url || '').trim();
+  const anonKey = (config.anonKey || '').trim();
+
+  if (!url || !anonKey) {
     return null;
   }
 
-  const clientKey = `${activeConfig.url}_${activeConfig.anonKey}`;
-  if (cachedClient && cachedClient.key === clientKey) {
-    return cachedClient.client;
+  const key = `${url}___${anonKey}`;
+  if (cachedClient && lastClientKey === key) {
+    return cachedClient;
   }
 
   try {
-    const client = createClient(activeConfig.url, activeConfig.anonKey);
-    cachedClient = { key: clientKey, client };
-    return client;
+    cachedClient = createClient(url, anonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    });
+    lastClientKey = key;
+    return cachedClient;
   } catch (err) {
-    console.error('Gagal inisialisasi Supabase client:', err);
+    console.error('Failed to initialize Supabase client:', err);
     return null;
   }
 }
 
-// Local Storage Helpers - Agenda BK
-const INITIAL_DEMO_AGENDA: AgendaKerja[] = [
-  {
-    id: 'demo-1',
-    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-    hari: 'Senin',
-    tanggal: '2026-08-03',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '07:30 - 08:30 WIB',
-    uraian_kegiatan: 'Layanan Bimbingan Klasikal: Pengenalan Lingkungan Sekolah & Etika Pergaulan SMP',
-    sasaran: 'Siswa Kelas VII A & VII B',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Terlaksana dengan lancar, siswa antusias mengikuti diskusi.',
-  },
-  {
-    id: 'demo-2',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Selasa',
-    tanggal: '2026-08-04',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '09:00 - 10:30 WIB',
-    uraian_kegiatan: 'Konseling Individual: Pendampingan Kesulitan Belajar dan Kedisiplinan Siswa',
-    sasaran: 'Siswa Kelas VIII C (A.n. Budi)',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Dibuatkan kontrak perilaku dan perlu tindak lanjut minggu depan.',
-  },
-];
+/**
+ * Test basic connection to Supabase
+ */
+export async function testSupabaseConnection(customConfig?: SupabaseConfig): Promise<{ success: boolean; message: string }> {
+  const config = customConfig || getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
 
-export function getLocalAgendaList(): AgendaKerja[] {
-  return safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, INITIAL_DEMO_AGENDA);
-}
-
-export function saveLocalAgendaList(data: AgendaKerja[]) {
-  safeSetStorage(STORAGE_KEY_DATA, data);
-}
-
-// Local Storage Helpers - Undangan Orang Tua
-const INITIAL_DEMO_UNDANGAN: UndanganOrangTua[] = [
-  {
-    id: 'demo-u1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Rabu',
-    tanggal: '2026-08-05',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '08:30 WIB',
-    kelas: 'VIII A',
-    nama_siswa: 'Ahmad Rizky Pratama',
-    nama_orang_tua: 'Bapak Santoso',
-    pekerjaan_orang_tua: 'Wiraswasta',
-    alamat: 'Jl. Pahlawan No. 45, Pasuruan',
-    perihal_undangan: 'Konsultasi Perkembangan Belajar & Kedisiplinan Siswa',
-    uraian_permasalahan: 'Siswa sering terlambat masuk sekolah lebih dari 3 kali dalam seminggu dan nilai akademik menurun.',
-    tindak_lanjut: 'Musyawarah bersama orang tua, penyusunan komitmen belajar rumah, dan pemantauan harian oleh guru BK.',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Orang tua hadir tepat waktu dan menyepakati komitmen pendampingan.',
+  if (!client) {
+    return {
+      success: false,
+      message: 'Supabase URL dan Anon Key belum dikonfigurasi.'
+    };
   }
-];
 
-export function getLocalUndanganList(): UndanganOrangTua[] {
-  return safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, INITIAL_DEMO_UNDANGAN);
+  try {
+    const targetTable = config.tableName || DEFAULT_TABLE_NAME;
+    const { error } = await client.from(targetTable).select('id').limit(1);
+
+    if (error) {
+      if (error.code === '42P01' || error.message.toLowerCase().includes('does not exist')) {
+        return {
+          success: false,
+          message: `Tabel '${targetTable}' belum dibuat di Supabase. Silakan jalankan script SQL setup.`
+        };
+      }
+      return {
+        success: false,
+        message: `Koneksi gagal: ${error.message}`
+      };
+    }
+
+    return {
+      success: true,
+      message: 'Koneksi ke Supabase Cloud berhasil & data siap disinkronkan secara realtime!'
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Koneksi jaringan gagal';
+    return {
+      success: false,
+      message: `Gagal menghubungi Supabase: ${msg}`
+    };
+  }
 }
 
-export function saveLocalUndanganList(data: UndanganOrangTua[]) {
-  safeSetStorage(STORAGE_KEY_UNDANGAN, data);
-}
+/* ==========================================================================
+   1. AGENDA KERJA BK (Direct Supabase)
+   ========================================================================== */
 
-// Unified API Functions - Agenda BK
 export async function fetchAllAgenda(): Promise<{ data: AgendaKerja[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(config.tableName)
-        .select('*')
-        .order('tanggal', { ascending: false });
-
-      if (!error && data) {
-        saveLocalAgendaList(data as AgendaKerja[]);
-        return { data: data as AgendaKerja[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch agenda query error:', error.message);
-        return {
-          data: getLocalAgendaList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalAgendaList(), isFromSupabase: false, error: msg };
-    }
+  if (!client) {
+    return {
+      data: [],
+      isFromSupabase: false,
+      error: 'Supabase belum terhubung. Konfigurasi URL dan Anon Key Supabase.'
+    };
   }
 
-  return { data: getLocalAgendaList(), isFromSupabase: false };
+  const primaryTable = config.tableName || DEFAULT_TABLE_NAME;
+  try {
+    let { data, error } = await client
+      .from(primaryTable)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    // Try fallback table name if primary doesn't exist
+    if (error && (error.code === '42P01' || error.message.toLowerCase().includes('does not exist'))) {
+      const fallbackTable = primaryTable === 'agenda_kerja_bk' ? 'agenda_kerja_guru_bk' : 'agenda_kerja_bk';
+      const fallbackRes = await client.from(fallbackTable).select('*').order('tanggal', { ascending: false });
+      if (!fallbackRes.error && fallbackRes.data) {
+        data = fallbackRes.data;
+        error = null;
+      }
+    }
+
+    if (error) {
+      console.error('Supabase fetchAllAgenda error:', error.message);
+      return {
+        data: [],
+        isFromSupabase: false,
+        error: `Gagal mengambil data Agenda dari Supabase: ${error.message}`
+      };
+    }
+
+    return {
+      data: (data || []) as AgendaKerja[],
+      isFromSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Terjadi gangguan koneksi ke database Cloud';
+    return {
+      data: [],
+      isFromSupabase: false,
+      error: msg
+    };
+  }
 }
 
 export async function saveOrUpdateAgenda(
-  agenda: Partial<AgendaKerja> & Omit<AgendaKerja, 'id'>
+  item: Partial<AgendaKerja> & FormAgendaData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: AgendaKerja; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = agenda.id || (crypto.randomUUID ? crypto.randomUUID() : `ag-${Date.now()}`);
+  if (!client) {
+    return {
+      success: false,
+      isSupabase: false,
+      error: 'Database Supabase belum terhubung. Data tidak dapat disimpan.'
+    };
+  }
 
-  const payload: AgendaKerja = {
-    ...agenda,
-    id: idToUse,
-    created_at: agenda.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `agenda-${Date.now()}`;
+  const targetTable = config.tableName || DEFAULT_TABLE_NAME;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    uraian_kegiatan: item.uraian_kegiatan,
+    sasaran: item.sasaran,
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || ''
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(config.tableName)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(targetTable)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalAgendaList();
-        const existingIdx = currentLocal.findIndex((item) => item.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as AgendaKerja;
-        } else {
-          currentLocal.unshift(data as AgendaKerja);
-        }
-        saveLocalAgendaList(currentLocal);
-
-        return { success: true, data: data as AgendaKerja, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save agenda error:', error.message);
-        saveToLocalAgendaFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalAgendaFallback(payload);
+    if (error) {
+      console.error('Supabase saveOrUpdateAgenda error:', error.message);
       return {
-        success: true,
-        data: payload,
+        success: false,
         isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
+        error: `Gagal menyimpan ke Supabase (${error.message}). Pastikan tabel '${targetTable}' sudah dibuat.`
       };
     }
-  }
 
-  saveToLocalAgendaFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalAgendaFallback(item: AgendaKerja) {
-  const current = getLocalAgendaList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as AgendaKerja,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Koneksi ke Supabase terputus';
+    return {
+      success: false,
+      isSupabase: false,
+      error: `Error jaringan Supabase: ${msg}`
+    };
   }
-  saveLocalAgendaList(current);
 }
 
 export async function deleteAgendaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(config.tableName).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalAgendaList().filter((i) => i.id !== id);
-        saveLocalAgendaList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
-  const current = getLocalAgendaList().filter((i) => i.id !== id);
-  saveLocalAgendaList(current);
-  return { success: true, isSupabase: false };
+  const targetTable = config.tableName || DEFAULT_TABLE_NAME;
+  try {
+    const { error } = await client.from(targetTable).delete().eq('id', id);
+    if (error) {
+      return { success: false, isSupabase: false, error: error.message };
+    }
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data dari Supabase';
+    return { success: false, isSupabase: false, error: msg };
+  }
 }
 
-// Unified API Functions - Undangan Orang Tua Siswa
+/* ==========================================================================
+   2. UNDANGAN ORANG TUA SISWA (Direct Supabase)
+   ========================================================================== */
+
 export async function fetchAllUndangan(): Promise<{ data: UndanganOrangTua[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_UNDANGAN_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
-
-      if (!error && data) {
-        saveLocalUndanganList(data as UndanganOrangTua[]);
-        return { data: data as UndanganOrangTua[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch undangan query error:', error.message);
-        return {
-          data: getLocalUndanganList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalUndanganList(), isFromSupabase: false, error: msg };
-    }
+  if (!client) {
+    return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
   }
 
-  return { data: getLocalUndanganList(), isFromSupabase: false };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_UNDANGAN_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllUndangan error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
+    }
+
+    return { data: (data || []) as UndanganOrangTua[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghubungi database';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateUndangan(
-  undangan: Partial<UndanganOrangTua> & Omit<UndanganOrangTua, 'id'>
+  item: Partial<UndanganOrangTua> & FormUndanganData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: UndanganOrangTua; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = undangan.id || (crypto.randomUUID ? crypto.randomUUID() : `und-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: UndanganOrangTua = {
-    ...undangan,
-    id: idToUse,
-    created_at: undangan.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `undangan-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    tempat_pelaksanaan: item.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan',
+    kelas: item.kelas,
+    nama_siswa: item.nama_siswa,
+    nama_orang_tua: item.nama_orang_tua,
+    pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
+    alamat: item.alamat || '',
+    perihal_undangan: item.perihal_undangan,
+    uraian_permasalahan: item.uraian_permasalahan || '',
+    tindak_lanjut: item.tindak_lanjut || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nomor_surat: item.nomor_surat || '',
+    tanggal_surat: item.tanggal_surat || item.tanggal,
+    tempat_surat: item.tempat_surat || 'Pasuruan',
+    semester: item.semester || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_UNDANGAN_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_UNDANGAN_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalUndanganList();
-        const existingIdx = currentLocal.findIndex((item) => item.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as UndanganOrangTua;
-        } else {
-          currentLocal.unshift(data as UndanganOrangTua);
-        }
-        saveLocalUndanganList(currentLocal);
-
-        return { success: true, data: data as UndanganOrangTua, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save undangan error:', error.message);
-        saveToLocalUndanganFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalUndanganFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateUndangan error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalUndanganFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalUndanganFallback(item: UndanganOrangTua) {
-  const current = getLocalUndanganList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as UndanganOrangTua,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalUndanganList(current);
 }
 
 export async function deleteUndanganItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_UNDANGAN_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalUndanganList().filter((i) => i.id !== id);
-        saveLocalUndanganList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_UNDANGAN_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalUndanganList().filter((i) => i.id !== id);
-  saveLocalUndanganList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Home Visit / Kunjungan Rumah
-const INITIAL_DEMO_HOME_VISIT: HomeVisit[] = [
-  {
-    id: 'demo-hv1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Kamis',
-    tanggal: '2026-08-06',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '09:00 WIB',
-    kelas: 'IX C',
-    nama_siswa: 'Rian Adiputra',
-    nama_orang_tua: 'Bapak Hartono',
-    pekerjaan_orang_tua: 'Pedagang',
-    alamat: 'Jl. Bugul Kidul No. 12, Pasuruan',
-    perihal_home_visit: 'Kunjungan Rumah Terkait Presensi & Pendampingan Siswa',
-    uraian_permasalahan: 'Siswa tidak masuk sekolah tanpa keterangan selama 4 hari berturut-turut.',
-    tindak_lanjut: 'Kunjungan rumah langsung bersama Guru BK & Wali Kelas. Orang tua siap mendampingi jam belajar malam dan memastikan presensi sekolah.',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Kunjungan rumah terlaksana baik, orang tua kooperatif.',
-  }
-];
+/* ==========================================================================
+   3. HOME VISIT / KUNJUNGAN RUMAH (Direct Supabase)
+   ========================================================================== */
 
-export function getLocalHomeVisitList(): HomeVisit[] {
-  return safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, INITIAL_DEMO_HOME_VISIT);
-}
-
-export function saveLocalHomeVisitList(data: HomeVisit[]) {
-  safeSetStorage(STORAGE_KEY_HOME_VISIT, data);
-}
-
-// Unified API Functions - Home Visit / Kunjungan Rumah
 export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_HOME_VISIT_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        saveLocalHomeVisitList(data as HomeVisit[]);
-        return { data: data as HomeVisit[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch home visit query error:', error.message);
-        return {
-          data: getLocalHomeVisitList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalHomeVisitList(), isFromSupabase: false, error: msg };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_HOME_VISIT_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllHomeVisit error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalHomeVisitList(), isFromSupabase: false };
+    return { data: (data || []) as HomeVisit[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Home Visit';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateHomeVisit(
-  homeVisit: Partial<HomeVisit> & Omit<HomeVisit, 'id'>
+  item: Partial<HomeVisit> & FormHomeVisitData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: HomeVisit; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = homeVisit.id || (crypto.randomUUID ? crypto.randomUUID() : `hv-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: HomeVisit = {
-    ...homeVisit,
-    id: idToUse,
-    created_at: homeVisit.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `homevisit-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    kelas: item.kelas,
+    nama_siswa: item.nama_siswa,
+    nama_orang_tua: item.nama_orang_tua,
+    pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
+    alamat: item.alamat || '',
+    perihal_home_visit: item.perihal_home_visit,
+    uraian_permasalahan: item.uraian_permasalahan || '',
+    tindak_lanjut: item.tindak_lanjut || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    semester_laporan: item.semester_laporan || '',
+    bidang_layanan: item.bidang_layanan || 'Pribadi & Sosial',
+    topik_permasalahan: item.topik_permasalahan || '',
+    fungsi_layanan: item.fungsi_layanan || 'Pengentasan / Advokasi',
+    pihak_terlibat: item.pihak_terlibat || 'Guru BK, Wali Kelas, Orang Tua Siswa',
+    tujuan_kegiatan: item.tujuan_kegiatan || '',
+    gambaran_ringkas_masalah: item.gambaran_ringkas_masalah || '',
+    alamat_kunjungan: item.alamat_kunjungan || item.alamat || '',
+    hari_tanggal_lama_kunjungan: item.hari_tanggal_lama_kunjungan || '',
+    anggota_keluarga_dikunjungi: item.anggota_keluarga_dikunjungi || item.nama_orang_tua || '',
+    rencana_evaluasi: item.rencana_evaluasi || '',
+    catatan_khusus: item.catatan_khusus || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    tanggal_surat: item.tanggal_surat || item.tanggal,
+    tempat_surat: item.tempat_surat || 'Pasuruan',
+    nomor_surat_tugas: item.nomor_surat_tugas || '',
+    petugas_1: item.petugas_1 || getActiveGuruBK().nama,
+    petugas_2: item.petugas_2 || '',
+    jabatan_petugas_1: item.jabatan_petugas_1 || 'Guru BK',
+    jabatan_petugas_2: item.jabatan_petugas_2 || 'Wali Kelas',
+    nis_siswa: item.nis_siswa || '',
+    tanggal_surat_tugas: item.tanggal_surat_tugas || item.tanggal,
+    petugas_penerima_kunjungan: item.petugas_penerima_kunjungan || item.nama_orang_tua || '',
+    tanggal_pernyataan_ortu: item.tanggal_pernyataan_ortu || item.tanggal
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_HOME_VISIT_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_HOME_VISIT_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalHomeVisitList();
-        const existingIdx = currentLocal.findIndex((item) => item.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as HomeVisit;
-        } else {
-          currentLocal.unshift(data as HomeVisit);
-        }
-        saveLocalHomeVisitList(currentLocal);
-
-        return { success: true, data: data as HomeVisit, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save home visit error:', error.message);
-        saveToLocalHomeVisitFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalHomeVisitFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateHomeVisit error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalHomeVisitFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalHomeVisitFallback(item: HomeVisit) {
-  const current = getLocalHomeVisitList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as HomeVisit,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalHomeVisitList(current);
 }
 
 export async function deleteHomeVisitItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_HOME_VISIT_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalHomeVisitList().filter((i) => i.id !== id);
-        saveLocalHomeVisitList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_HOME_VISIT_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalHomeVisitList().filter((i) => i.id !== id);
-  saveLocalHomeVisitList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Rekam Permasalahan Siswa
-const INITIAL_DEMO_REKAM_PERMASALAHAN: RekamPermasalahan[] = [
-  {
-    id: 'demo-rp1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Kamis',
-    tanggal: '2026-08-06',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '08:00 WIB',
-    kelas: 'VIII B',
-    nama_siswa: 'Dion Saputra',
-    nama_orang_tua: 'Bapak Mulyono',
-    pekerjaan_orang_tua: 'Karyawan Swasta',
-    alamat: 'Jl. Panglima Sudirman No. 88, Pasuruan',
-    ringkasan_uraian_permasalahan: 'Siswa mengalami penurunan motivasi belajar dan beberapa kali tidak mengumpulkan tugas mata pelajaran Matematika & IPA.',
-    upaya_konselor_walikelas: 'Konseling individual oleh Guru BK, diskusi intensif dengan Wali Kelas VIII B, serta pemanggilan orang tua untuk koordinasi jam belajar rumah.',
-    hasil_dan_kesimpulan: 'Siswa berkomitmen membuat jadwal belajar mandiri di rumah dan wali kelas serta orang tua melakukan pemantauan berkala. Hasil evaluasi awal menunjukkan respons positif.',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Proses pendampingan berjalan lancar, dijadwalkan evaluasi lanjutan bulan depan.',
-  }
-];
+/* ==========================================================================
+   4. REKAM PERMASALAHAN SISWA (Direct Supabase)
+   ========================================================================== */
 
-export function getLocalRekamPermasalahanList(): RekamPermasalahan[] {
-  return safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, INITIAL_DEMO_REKAM_PERMASALAHAN);
-}
-
-export function saveLocalRekamPermasalahanList(data: RekamPermasalahan[]) {
-  safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, data);
-}
-
-// Local Storage Helpers - Konseling Individu
-const INITIAL_DEMO_KONSELING_INDIVIDU: KonselingIndividu[] = [
-  {
-    id: 'demo-ki1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Kamis',
-    tanggal: '2026-08-06',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '08:30 WIB',
-    kelas: 'VIII A',
-    nama_siswa: 'Ahmad Rizky Pratama',
-    topik_permasalahan: 'Kesulitan Pengelolaan Waktu Belajar dan Kecanduan Game Online',
-    media_yang_diperlukan: 'Format Jadwal Harian, Lembar Kontrak Perilaku (Behavioral Contract)',
-    ringkasan_uraian_permasalahan: 'Siswa sering tidur larut malam karena bermain game online sehingga sering mengantuk di kelas dan prestasi belajar menurun.',
-    pendekatan_dan_teknik_konseling: 'Pendekatan Behavioral dengan Teknik Kontrak Perilaku (Behavioral Contracting) & Manajemen Diri (Self Management)',
-    hasil_yang_dicapai: 'Siswa menyepakati jadwal batasan bermain game maksimal 1 jam per hari dan menyusun target belajar harian.',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Siswa kooperatif, akan dilakukan pemantauan berkala minggu depan.'
-  }
-];
-
-export function getLocalKonselingIndividuList(): KonselingIndividu[] {
-  return safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, INITIAL_DEMO_KONSELING_INDIVIDU);
-}
-
-export function saveLocalKonselingIndividuList(data: KonselingIndividu[]) {
-  safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, data);
-}
-
-// Local Storage Helpers - Konseling Kelompok
-const INITIAL_DEMO_KONSELING_KELOMPOK: KonselingKelompok[] = [
-  {
-    id: 'demo-kk1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    hari: 'Jumat',
-    tanggal: '2026-08-07',
-    bulan: 'Agustus',
-    tahun: '2026',
-    waktu: '09:00 WIB',
-    kelas: 'VII C',
-    nama_siswa: '1. Budi Santoso, 2. Citra Dewi, 3. Eko Prasetyo, 4. Farhan Maulana',
-    topik_permasalahan: 'Peningkatan Sikap Asertif dan Kedisiplinan Kehadiran Sekolah',
-    media_yang_diperlukan: 'Kartu Peran (Role Play Cards), Modul Sikap Asertif, Flipchart',
-    ringkasan_uraian_permasalahan: 'Anggota kelompok memiliki kecenderungan kurang disiplin masuk kelas tepat waktu dan mudah terpengaruh ajakan membolos.',
-    pendekatan_dan_teknik_konseling: 'Pendekatan Kelompok dengan Teknik Simulation Game / Role Playing & Diskusi Kelompok Interaktif',
-    hasil_yang_dicapai: 'Anggota kelompok menyadari dampak perilaku kurang disiplin, saling mendukung untuk mengingatkan kehadiran, dan melatih komunikasi asertif.',
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Dinamika kelompok berjalan aktif, direncanakan sesi tindak lanjut 2 minggu ke depan.'
-  }
-];
-
-export function getLocalKonselingKelompokList(): KonselingKelompok[] {
-  return safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, INITIAL_DEMO_KONSELING_KELOMPOK);
-}
-
-export function saveLocalKonselingKelompokList(data: KonselingKelompok[]) {
-  safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, data);
-}
-
-// Unified API Functions - Rekam Permasalahan Siswa
 export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasalahan[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        saveLocalRekamPermasalahanList(data as RekamPermasalahan[]);
-        return { data: data as RekamPermasalahan[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch rekam permasalahan error:', error.message);
-        return {
-          data: getLocalRekamPermasalahanList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalRekamPermasalahanList(), isFromSupabase: false, error: msg };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllRekamPermasalahan error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalRekamPermasalahanList(), isFromSupabase: false };
+    return { data: (data || []) as RekamPermasalahan[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Rekam Permasalahan';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateRekamPermasalahan(
-  item: Partial<RekamPermasalahan> & Omit<RekamPermasalahan, 'id'>
+  item: Partial<RekamPermasalahan> & FormRekamPermasalahanData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: RekamPermasalahan; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `rp-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: RekamPermasalahan = {
-    ...item,
-    id: idToUse,
-    created_at: item.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `rekam-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    kelas: item.kelas,
+    nama_siswa: item.nama_siswa,
+    nama_orang_tua: item.nama_orang_tua || '',
+    pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
+    alamat: item.alamat || '',
+    ringkasan_uraian_permasalahan: item.ringkasan_uraian_permasalahan || '',
+    upaya_konselor_walikelas: item.upaya_konselor_walikelas || '',
+    hasil_dan_kesimpulan: item.hasil_dan_kesimpulan || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    tanggal_surat: item.tanggal_surat || item.tanggal,
+    tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalRekamPermasalahanList();
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as RekamPermasalahan;
-        } else {
-          currentLocal.unshift(data as RekamPermasalahan);
-        }
-        saveLocalRekamPermasalahanList(currentLocal);
-
-        return { success: true, data: data as RekamPermasalahan, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save rekam permasalahan error:', error.message);
-        saveToLocalRekamPermasalahanFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalRekamPermasalahanFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateRekamPermasalahan error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalRekamPermasalahanFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalRekamPermasalahanFallback(item: RekamPermasalahan) {
-  const current = getLocalRekamPermasalahanList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as RekamPermasalahan,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalRekamPermasalahanList(current);
 }
 
 export async function deleteRekamPermasalahanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalRekamPermasalahanList().filter((i) => i.id !== id);
-        saveLocalRekamPermasalahanList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
-  }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
 
-  const current = getLocalRekamPermasalahanList().filter((i) => i.id !== id);
-  saveLocalRekamPermasalahanList(current);
-  return { success: true, isSupabase: false };
+  try {
+    const { error } = await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
+  }
 }
 
-// Unified API Functions - Konseling Individu
+/* ==========================================================================
+   5. RENCANA KONSELING INDIVIDU (Direct Supabase)
+   ========================================================================== */
+
 export async function fetchAllKonselingIndividu(): Promise<{ data: KonselingIndividu[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        saveLocalKonselingIndividuList(data as KonselingIndividu[]);
-        return { data: data as KonselingIndividu[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch konseling individu error:', error.message);
-        return {
-          data: getLocalKonselingIndividuList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalKonselingIndividuList(), isFromSupabase: false, error: msg };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllKonselingIndividu error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalKonselingIndividuList(), isFromSupabase: false };
+    return { data: (data || []) as KonselingIndividu[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Konseling Individu';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateKonselingIndividu(
-  item: Partial<KonselingIndividu> & Omit<KonselingIndividu, 'id'>
+  item: Partial<KonselingIndividu> & FormKonselingIndividuData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: KonselingIndividu; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `ki-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: KonselingIndividu = {
-    ...item,
-    id: idToUse,
-    created_at: item.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `konseling-ind-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    kelas: item.kelas,
+    nama_siswa: item.nama_siswa,
+    topik_permasalahan: item.topik_permasalahan || '',
+    media_yang_diperlukan: item.media_yang_diperlukan || '',
+    ringkasan_uraian_permasalahan: item.ringkasan_uraian_permasalahan || '',
+    pendekatan_dan_teknik_konseling: item.pendekatan_dan_teknik_konseling || '',
+    hasil_yang_dicapai: item.hasil_yang_dicapai || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalKonselingIndividuList();
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as KonselingIndividu;
-        } else {
-          currentLocal.unshift(data as KonselingIndividu);
-        }
-        saveLocalKonselingIndividuList(currentLocal);
-
-        return { success: true, data: data as KonselingIndividu, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save konseling individu error:', error.message);
-        saveToLocalKonselingIndividuFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalKonselingIndividuFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateKonselingIndividu error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalKonselingIndividuFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalKonselingIndividuFallback(item: KonselingIndividu) {
-  const current = getLocalKonselingIndividuList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as KonselingIndividu,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalKonselingIndividuList(current);
 }
 
 export async function deleteKonselingIndividuItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalKonselingIndividuList().filter((i) => i.id !== id);
-        saveLocalKonselingIndividuList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
-  }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
 
-  const current = getLocalKonselingIndividuList().filter((i) => i.id !== id);
-  saveLocalKonselingIndividuList(current);
-  return { success: true, isSupabase: false };
+  try {
+    const { error } = await client.from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
+  }
 }
 
-// Unified API Functions - Konseling Kelompok
+/* ==========================================================================
+   6. RENCANA KONSELING KELOMPOK (Direct Supabase)
+   ========================================================================== */
+
 export async function fetchAllKonselingKelompok(): Promise<{ data: KonselingKelompok[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        saveLocalKonselingKelompokList(data as KonselingKelompok[]);
-        return { data: data as KonselingKelompok[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch konseling kelompok error:', error.message);
-        return {
-          data: getLocalKonselingKelompokList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalKonselingKelompokList(), isFromSupabase: false, error: msg };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllKonselingKelompok error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalKonselingKelompokList(), isFromSupabase: false };
+    return { data: (data || []) as KonselingKelompok[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Konseling Kelompok';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateKonselingKelompok(
-  item: Partial<KonselingKelompok> & Omit<KonselingKelompok, 'id'>
+  item: Partial<KonselingKelompok> & FormKonselingKelompokData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: KonselingKelompok; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = item.id || (crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: KonselingKelompok = {
-    ...item,
-    id: idToUse,
-    created_at: item.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `konseling-kel-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    hari: item.hari,
+    tanggal: item.tanggal,
+    bulan: item.bulan,
+    tahun: item.tahun,
+    waktu: item.waktu,
+    kelas: item.kelas,
+    nama_siswa: item.nama_siswa,
+    topik_permasalahan: item.topik_permasalahan || '',
+    media_yang_diperlukan: item.media_yang_diperlukan || '',
+    ringkasan_uraian_permasalahan: item.ringkasan_uraian_permasalahan || '',
+    pendekatan_dan_teknik_konseling: item.pendekatan_dan_teknik_konseling || '',
+    hasil_yang_dicapai: item.hasil_yang_dicapai || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const currentLocal = getLocalKonselingKelompokList();
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as KonselingKelompok;
-        } else {
-          currentLocal.unshift(data as KonselingKelompok);
-        }
-        saveLocalKonselingKelompokList(currentLocal);
-
-        return { success: true, data: data as KonselingKelompok, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save konseling kelompok error:', error.message);
-        saveToLocalKonselingKelompokFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalKonselingKelompokFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateKonselingKelompok error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalKonselingKelompokFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalKonselingKelompokFallback(item: KonselingKelompok) {
-  const current = getLocalKonselingKelompokList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as KonselingKelompok,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalKonselingKelompokList(current);
 }
 
 export async function deleteKonselingKelompokItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalKonselingKelompokList().filter((i) => i.id !== id);
-        saveLocalKonselingKelompokList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalKonselingKelompokList().filter((i) => i.id !== id);
-  saveLocalKonselingKelompokList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Surat Pernyataan Siswa
-const INITIAL_DEMO_SURAT_PERNYATAAN: SuratPernyataan[] = [
-  {
-    id: 'demo-sp1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    jenis_sp: 'SP_1',
-    nama_siswa: 'Ahmad Rizky Pratama',
-    kelas: 'VIII A',
-    nama_orang_tua: 'Bapak Santoso',
-    pekerjaan_orang_tua: 'Wiraswasta',
-    alamat_orang_tua: 'Jl. Pahlawan No. 45, Pasuruan',
-    hubungan_keluarga: 'Orang Tua / Wali',
-    peraturan_diketahui:
-      '1. Hadir di sekolah Tepat Waktu\n2. Tidak Absen lagi mulai terhitung Surat Perjanjian ini dibuat\n3. Mengerjakan semua Tugas tertulis /praktek dari Bapak /Ibu Guru Mata Pelajaran yang belum Tuntas',
-    alasan_pengunduran: '',
-    tanggal_surat: '2026-08-06',
-    tempat_surat: 'Pasuruan',
-    keterangan: 'Penerbitan Surat Peringatan 1 (SP 1) Pembinaan Kedisiplinan Siswa.',
-  },
-  {
-    id: 'demo-sp-ortu1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    jenis_sp: 'SP_ORTU_1',
-    nama_siswa: 'Budi Santoso',
-    kelas: 'VIII B',
-    nama_orang_tua: 'Bapak Suparno',
-    pekerjaan_orang_tua: 'PNS',
-    alamat_orang_tua: 'Jl. Veteran No. 12, Pasuruan',
-    hubungan_keluarga: 'Orang Tua Kandung',
-    peraturan_diketahui:
-      'Apabila dikemudian hari nanti di kelas VIII sikap anak saya masih tetap /tidak berubah sehingga mempengaruhi nilai akademis dan non akademis menjadi rendah, sehingga anak saya tidak naik kelas atau mengulang di kelas VIII, maka saya sebagai orang tua tidak akan menuntut kepada pihak sekolah.',
-    alasan_pengunduran: '',
-    tanggal_surat: '2026-08-06',
-    tempat_surat: 'Pasuruan',
-    keterangan: 'Surat Pernyataan Orang Tua / Wali Siswa terkait komitmen disiplin.',
-  },
-  {
-    id: 'demo-sp-damai',
-    created_at: new Date(Date.now() - 43200000).toISOString(),
-    updated_at: new Date(Date.now() - 43200000).toISOString(),
-    jenis_sp: 'SP_DAMAI',
-    nama_siswa: 'M. Dimas Pratama',
-    kelas: 'VIII B',
-    nama_siswa_2: 'Rian Hidayatullah',
-    kelas_2: 'VIII B',
-    hari_tanggal_kejadian: 'Senin, 17 Agustus 2026',
-    tahun_ajaran: '2026-2027',
-    jabatan_pengetahu: 'Guru BK / Wali Kelas',
-    nama_orang_tua: '',
-    pekerjaan_orang_tua: '',
-    alamat_orang_tua: '',
-    hubungan_keluarga: '',
-    peraturan_diketahui:
-      '1. Saling memaafkan dengan tulus dan tidak akan mengungkit atau memperpanjang masalah ini lagi.\n2. Kembali berteman dengan baik serta tidak akan saling mengejek, mengancam, memprovokasi, atau melakukan kekerasan dalam bentuk apa pun.\n3. Siap menerima sanksi tegas dari pihak sekolah sesuai dengan aturan yang berlaku apabila melanggar janji ini.',
-    alasan_pengunduran: '',
-    tanggal_surat: '2026-08-18',
-    tempat_surat: 'Pasuruan',
-    keterangan: 'Surat Pernyataan Damai Siswa menyelesaikan perselisihan secara kekeluargaan.',
-  },
-];
+/* ==========================================================================
+   7. SURAT PERNYATAAN SISWA / ORTU (Direct Supabase)
+   ========================================================================== */
 
-export function getLocalSuratPernyataanList(): SuratPernyataan[] {
-  return safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, INITIAL_DEMO_SURAT_PERNYATAAN);
-}
-
-export function saveLocalSuratPernyataanList(data: SuratPernyataan[]) {
-  safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, data);
-}
-
-// Unified API Functions - Surat Pernyataan Siswa
 export async function fetchAllSuratPernyataan(): Promise<{ data: SuratPernyataan[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
-        .select('*')
-        .order('tanggal_surat', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        // Merge Supabase items with local items safely so newly added local items/fields are never lost
-        const localList = getLocalSuratPernyataanList();
-        const mergedMap = new Map<string, SuratPernyataan>();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
+      .select('*')
+      .order('tanggal_surat', { ascending: false });
 
-        // 1. Put Supabase items first
-        (data as Record<string, unknown>[]).forEach((item) => {
-          const spItem: SuratPernyataan = {
-            id: String(item.id || ''),
-            created_at: String(item.created_at || new Date().toISOString()),
-            updated_at: String(item.updated_at || new Date().toISOString()),
-            jenis_sp: (item.jenis_sp as JenisSuratPernyataan) || 'SP_1',
-            nama_siswa: String(item.nama_siswa || ''),
-            kelas: String(item.kelas || ''),
-            nama_siswa_2: item.nama_siswa_2 ? String(item.nama_siswa_2) : '',
-            kelas_2: item.kelas_2 ? String(item.kelas_2) : '',
-            hari_tanggal_kejadian: item.hari_tanggal_kejadian ? String(item.hari_tanggal_kejadian) : '',
-            tahun_ajaran: item.tahun_ajaran ? String(item.tahun_ajaran) : '2026-2027',
-            jabatan_pengetahu: item.jabatan_pengetahu ? String(item.jabatan_pengetahu) : 'Guru BK / Wali Kelas',
-            nama_orang_tua: String(item.nama_orang_tua || ''),
-            pekerjaan_orang_tua: String(item.pekerjaan_orang_tua || ''),
-            alamat_orang_tua: String(item.alamat_orang_tua || ''),
-            hubungan_keluarga: String(item.hubungan_keluarga || 'Orang Tua / Wali'),
-            peraturan_diketahui: String(item.peraturan_diketahui || ''),
-            alasan_pengunduran: String(item.alasan_pengunduran || ''),
-            tanggal_surat: String(item.tanggal_surat || new Date().toISOString().slice(0, 10)),
-            tempat_surat: String(item.tempat_surat || 'Pasuruan'),
-            keterangan: String(item.keterangan || ''),
-            nama_guru_bk: String(item.nama_guru_bk || ''),
-            nip_guru_bk: String(item.nip_guru_bk || ''),
-            nama_kepala_sekolah: String(item.nama_kepala_sekolah || ''),
-            nip_kepala_sekolah: String(item.nip_kepala_sekolah || ''),
-          };
-          mergedMap.set(spItem.id, spItem);
-        });
-
-        // 2. Merge local items that are not in Supabase or have extra fields
-        localList.forEach((localItem) => {
-          const existing = mergedMap.get(localItem.id);
-          if (!existing) {
-            mergedMap.set(localItem.id, localItem);
-          } else {
-            // Keep local enriched fields if Supabase returned blank for newly added columns
-            mergedMap.set(localItem.id, {
-              ...existing,
-              nama_siswa_2: existing.nama_siswa_2 || localItem.nama_siswa_2 || '',
-              kelas_2: existing.kelas_2 || localItem.kelas_2 || '',
-              hari_tanggal_kejadian: existing.hari_tanggal_kejadian || localItem.hari_tanggal_kejadian || '',
-              tahun_ajaran: existing.tahun_ajaran || localItem.tahun_ajaran || '2026-2027',
-              jabatan_pengetahu: existing.jabatan_pengetahu || localItem.jabatan_pengetahu || 'Guru BK / Wali Kelas',
-              keterangan: existing.keterangan || localItem.keterangan || '',
-              peraturan_diketahui: existing.peraturan_diketahui || localItem.peraturan_diketahui || '',
-            });
-          }
-        });
-
-        const mergedList = Array.from(mergedMap.values()).sort((a, b) => {
-          const dateA = new Date(a.tanggal_surat || a.created_at || 0).getTime();
-          const dateB = new Date(b.tanggal_surat || b.created_at || 0).getTime();
-          return dateB - dateA;
-        });
-
-        saveLocalSuratPernyataanList(mergedList);
-        return { data: mergedList, isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch surat pernyataan error:', error.message);
-        return {
-          data: getLocalSuratPernyataanList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan data lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalSuratPernyataanList(), isFromSupabase: false, error: msg };
+    if (error) {
+      console.error('Supabase fetchAllSuratPernyataan error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalSuratPernyataanList(), isFromSupabase: false };
+    return { data: (data || []) as SuratPernyataan[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Surat Pernyataan';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateSuratPernyataan(
-  item: Partial<SuratPernyataan> & Omit<SuratPernyataan, 'id'>
+  item: Partial<SuratPernyataan> & FormSuratPernyataanData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: SuratPernyataan; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = item.id || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `sp-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: SuratPernyataan = {
-    ...item,
-    id: idToUse,
-    nama_siswa: item.nama_siswa || '',
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `sp-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
+    updated_at: now,
+    jenis_sp: item.jenis_sp,
+    nama_siswa: item.nama_siswa,
     kelas: item.kelas || '',
     nama_siswa_2: item.nama_siswa_2 || '',
     kelas_2: item.kelas_2 || '',
@@ -1230,771 +915,343 @@ export async function saveOrUpdateSuratPernyataan(
     nama_orang_tua: item.nama_orang_tua || '',
     pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
     alamat_orang_tua: item.alamat_orang_tua || '',
-    hubungan_keluarga: item.hubungan_keluarga || 'Orang Tua / Wali',
+    hubungan_keluarga: item.hubungan_keluarga || '',
     peraturan_diketahui: item.peraturan_diketahui || '',
     alasan_pengunduran: item.alasan_pengunduran || '',
-    tanggal_surat: item.tanggal_surat || now.slice(0, 10),
+    tanggal_surat: item.tanggal_surat || new Date().toISOString().split('T')[0],
     tempat_surat: item.tempat_surat || 'Pasuruan',
     keterangan: item.keterangan || '',
-    nama_guru_bk: item.nama_guru_bk || '',
-    nip_guru_bk: item.nip_guru_bk || '',
-    nama_kepala_sekolah: item.nama_kepala_sekolah || '',
-    nip_kepala_sekolah: item.nip_kepala_sekolah || '',
-    created_at: item.created_at || now,
-    updated_at: now,
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  // Always save locally first so user data is immediately available and preserved
-  saveToLocalSuratPernyataanFallback(payload);
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-  if (client) {
-    try {
-      // 1. Try full upsert with all modern columns
-      const { data, error } = await client
-        .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (!error && data) {
-        const mergedData: SuratPernyataan = {
-          ...payload,
-          ...(data as SuratPernyataan),
-        };
-        saveToLocalSuratPernyataanFallback(mergedData);
-        return { success: true, data: mergedData, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase full upsert error, trying legacy fallback fields:', error.message);
-
-        // 2. If table in Supabase doesn't have the new columns yet, fallback to base schema fields
-        const legacyPayload: Record<string, unknown> = {
-          id: payload.id,
-          created_at: payload.created_at,
-          updated_at: payload.updated_at,
-          jenis_sp: payload.jenis_sp,
-          nama_siswa: payload.nama_siswa,
-          kelas: payload.kelas,
-          nama_orang_tua: payload.nama_orang_tua || (payload.nama_siswa_2 ? `Siswa 2: ${payload.nama_siswa_2} (${payload.kelas_2 || ''})` : ''),
-          pekerjaan_orang_tua: payload.pekerjaan_orang_tua,
-          alamat_orang_tua: payload.alamat_orang_tua,
-          hubungan_keluarga: payload.hubungan_keluarga,
-          peraturan_diketahui: payload.peraturan_diketahui,
-          alasan_pengunduran: payload.alasan_pengunduran,
-          tanggal_surat: payload.tanggal_surat,
-          tempat_surat: payload.tempat_surat,
-          keterangan: payload.keterangan || (payload.hari_tanggal_kejadian ? `Kejadian: ${payload.hari_tanggal_kejadian}` : ''),
-          nama_guru_bk: payload.nama_guru_bk,
-          nip_guru_bk: payload.nip_guru_bk,
-          nama_kepala_sekolah: payload.nama_kepala_sekolah,
-          nip_kepala_sekolah: payload.nip_kepala_sekolah,
-        };
-
-        const fallbackRes = await client
-          .from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME)
-          .upsert(legacyPayload, { onConflict: 'id' })
-          .select()
-          .single();
-
-        if (!fallbackRes.error) {
-          // Saved to Supabase with legacy fields; local storage holds full fields
-          saveToLocalSuratPernyataanFallback(payload);
-          return { success: true, data: payload, isSupabase: true };
-        }
-
-        console.warn('Supabase legacy upsert also failed:', fallbackRes.error.message);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Disimpan di penyimpanan lokal (${error.message}).`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung ke Supabase';
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateSuratPernyataan error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalSuratPernyataanFallback(item: SuratPernyataan) {
-  const current = getLocalSuratPernyataanList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as SuratPernyataan,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalSuratPernyataanList(current);
 }
 
 export async function deleteSuratPernyataanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalSuratPernyataanList().filter((i) => i.id !== id);
-        saveLocalSuratPernyataanList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalSuratPernyataanList().filter((i) => i.id !== id);
-  saveLocalSuratPernyataanList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Konferensi Kasus Siswa
-const INITIAL_DEMO_KONFERENSI_KASUS: KonferensiKasus[] = [
-  {
-    id: 'demo-kk1',
-    created_at: new Date(Date.now() - 86400000).toISOString(),
-    updated_at: new Date(Date.now() - 86400000).toISOString(),
-    nama_konseli: 'Syahnaz (IXE)',
-    kelas_ta: '9E / 2016-2017',
-    jenis_masalah: 'Berkelahi karena salah paham',
-    hari_tgl_jam: 'Kamis, 8 September 2016 Jam 10.30 wib',
-    pemandu_konferensi: 'Konselor Sekolah',
-    pemandu_nama: 'Wiwik Ismiati, S.Pd',
-    pemandu_jabatan: 'Konselor',
-    data_ingin_diperoleh: 'Identifikasi permasalahan siswa',
-    uraian_kegiatan_inti: 'Untuk mengetahui tentang kejadian yang sebenarnya dari siswa yang terlibat permasalahan tersebut di sekolah, baik dari pihak sekolah dengan siswa yang berseteru. Dan mencari solusi yang terbaik diantara siswa dengan teman-temannya.',
-    data_diperoleh_simpulan: 'Dari informasi yang terkumpul bahwa Syahnaz terlibat perseteruan karena membela sahabatnya yaitu Aminah. Karena membela sahabatnya maka Syahnaz yang di bully oleh anak-anak kelas 7C. Karena merasa tersinggung dengan perlakuan siswa kelas 7C maka Syahnaz tidak terima dan terjadi perkelahian sampai akan melempar batu. Ketika mereka berseteru dan ditemukan penyelesaiannya maka persoalan bisa dengan mudah terselesaikan.',
-    keterpenuhan_kebutuhan_data: 'terpenuhi',
-    rujukan_pelayanan: 'Guru Mata Pelajaran, Wali Kelas, Konselor Sekolah',
-    rapat_nama_sekolah: 'UPT SMPN 7 PASURUAN',
-    rapat_alamat: 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo',
-    rapat_tempat: 'UPT SMPN 7 PASURUAN',
-    rapat_ketua: 'Konselor',
-    rapat_jumlah_hadir: '9 orang',
-    rapat_dimulai_pukul: '10.30 WIB',
-    rapat_diakhiri_pukul: '11.00 WIB',
-    rapat_hasil_pertemuan: 'A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena anak kelas 7C yang bermasalah sering mengolok-olok Aminah.\nB. Dari peristiwa tersebut temannya Aminah tidak terima dan terjadi pertengkaran/adu mulut dengan Syahnaz.\nC. Syahnaz yang membela Aminah akhirnya kena tampar oleh M. Badru dan tidak terima sehingga membawa batu bata mau dilemparkan.\nD. Setelah terjadi konferensi kasus, maka masing-masing pihak mau menerima keputusan bersama dan saling memaafkan. Akhirnya permasalahan selesai dengan saling memaafkan dan untuk kelas 7C semua panggilan orang tua untuk selanjutnya diberi pengarahan.',
-    daftar_hadir_peserta_singkat: '1. Konselor, 2. M. Badru T (VIIC), 3. M. Usman (VIIC), 4. M. Amyak (VIIC), 5. M. Nabil (VIIC), 6. Aminah Husain (VIIIB), 7. Syahnaz (IXE)',
-    daftar_hadir_rows: JSON.stringify([
-      { no: 1, nama: 'Ibu Citra Dwi W', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-      { no: 2, nama: 'Ibu Wiwik Ismiati', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-      { no: 3, nama: 'Ibu Eki', jabatan: 'Konselor', kelas: '-', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' },
-      { no: 4, nama: 'M. Badru', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 5, nama: 'M. Usman', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 6, nama: 'M. Amyak', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 7, nama: 'M. Nabil', jabatan: 'Siswa', kelas: '7C', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 8, nama: 'Syahnaz', jabatan: 'Siswa', kelas: '9E', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 9, nama: 'Aminah', jabatan: 'Siswa', kelas: '8B', asal_sekolah: '-', ttd: 'Ada' },
-      { no: 10, nama: 'Naval R.', jabatan: 'Siswa', kelas: '7C', asal_sekolah: 'UPT SMPN 7 Pas', ttd: 'Ada' }
-    ]),
-    tanggal_surat: '2026-08-06',
-    tempat_surat: 'Pasuruan',
-    nama_guru_bk: getActiveGuruBK().nama,
-    nip_guru_bk: getActiveGuruBK().nip,
-    nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
-    nip_kepala_sekolah: '19860410 201001 2 030',
-    keterangan: 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.'
-  }
-];
+/* ==========================================================================
+   8. KONFERENSI KASUS SISWA (Direct Supabase)
+   ========================================================================== */
 
-export function getLocalKonferensiKasusList(): KonferensiKasus[] {
-  return safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, INITIAL_DEMO_KONFERENSI_KASUS);
-}
-
-export function saveLocalKonferensiKasusList(data: KonferensiKasus[]) {
-  safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, data);
-}
-
-// Unified API Functions - Konferensi Kasus Siswa
 export async function fetchAllKonferensiKasus(): Promise<{ data: KonferensiKasus[]; isFromSupabase: boolean; error?: string }> {
-  const localList = getLocalKonferensiKasusList();
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const getSafeTime = (item: KonferensiKasus): number => {
-    if (item.tanggal_surat) {
-      const t = new Date(item.tanggal_surat).getTime();
-      if (!isNaN(t)) return t;
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
+
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
+      .select('*')
+      .order('tanggal_surat', { ascending: false });
+
+    if (error) {
+      console.error('Supabase fetchAllKonferensiKasus error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-    if (item.created_at) {
-      const t = new Date(item.created_at).getTime();
-      if (!isNaN(t)) return t;
-    }
-    return 0;
-  };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
-        .select('*')
-        .order('tanggal_surat', { ascending: false });
-
-      if (!error && data) {
-        // Merge Supabase remote items with local items so local items are never wiped
-        const mergedMap = new Map<string, KonferensiKasus>();
-        (data as KonferensiKasus[]).forEach((item) => {
-          if (item && item.id) mergedMap.set(item.id, item);
-        });
-        (localList || []).forEach((item) => {
-          if (item && item.id) {
-            const existingRemote = mergedMap.get(item.id);
-            if (!existingRemote) {
-              mergedMap.set(item.id, item);
-            } else {
-              // If local item is newer, preserve local version
-              const localTime = new Date(item.updated_at || item.created_at || 0).getTime();
-              const remoteTime = new Date(existingRemote.updated_at || existingRemote.created_at || 0).getTime();
-              if (localTime > remoteTime) {
-                mergedMap.set(item.id, item);
-              }
-            }
-          }
-        });
-
-        const mergedList = Array.from(mergedMap.values()).sort((a, b) => getSafeTime(b) - getSafeTime(a));
-
-        saveLocalKonferensiKasusList(mergedList);
-        return { data: mergedList, isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch konferensi kasus error:', error.message);
-        const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
-        return {
-          data: sortedLocal,
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
-      return { data: sortedLocal, isFromSupabase: false, error: msg };
-    }
+    return { data: (data || []) as KonferensiKasus[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Konferensi Kasus';
+    return { data: [], isFromSupabase: false, error: msg };
   }
-
-  const sortedLocal = [...localList].sort((a, b) => getSafeTime(b) - getSafeTime(a));
-  return { data: sortedLocal, isFromSupabase: false };
 }
 
 export async function saveOrUpdateKonferensiKasus(
-  item: Partial<KonferensiKasus> & Omit<KonferensiKasus, 'id'>
+  item: Partial<KonferensiKasus> & FormKonferensiKasusData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: KonferensiKasus; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const idToUse = (item.id && item.id.trim()) || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `kk-${Date.now()}`);
-  const safeDate = item.tanggal_surat && item.tanggal_surat.trim() ? item.tanggal_surat : now.slice(0, 10);
-
-  let safeDaftarHadirRows = item.daftar_hadir_rows || '[]';
-  if (typeof safeDaftarHadirRows !== 'string') {
-    try {
-      safeDaftarHadirRows = JSON.stringify(safeDaftarHadirRows);
-    } catch {
-      safeDaftarHadirRows = '[]';
-    }
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
-  const payload: KonferensiKasus = {
-    ...item,
-    id: idToUse,
-    tanggal_surat: safeDate,
-    daftar_hadir_rows: safeDaftarHadirRows,
-    created_at: item.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `kk-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    nama_konseli: item.nama_konseli,
+    kelas_ta: item.kelas_ta || '',
+    jenis_masalah: item.jenis_masalah || '',
+    hari_tgl_jam: item.hari_tgl_jam || '',
+    pemandu_konferensi: item.pemandu_konferensi || 'Guru Pembimbing / Konselor',
+    pemandu_nama: item.pemandu_nama || getActiveGuruBK().nama,
+    pemandu_jabatan: item.pemandu_jabatan || 'Guru BK',
+    data_ingin_diperoleh: item.data_ingin_diperoleh || '',
+    uraian_kegiatan_inti: item.uraian_kegiatan_inti || '',
+    data_diperoleh_simpulan: item.data_diperoleh_simpulan || '',
+    keterpenuhan_kebutuhan_data: item.keterpenuhan_kebutuhan_data || 'Memadai',
+    rujukan_pelayanan: item.rujukan_pelayanan || 'Konseling Lanjutan',
+    rapat_nama_sekolah: item.rapat_nama_sekolah || 'SMP Negeri 7 Pasuruan',
+    rapat_alamat: item.rapat_alamat || 'Kota Pasuruan',
+    rapat_tempat: item.rapat_tempat || 'Ruang BK SMPN 7 Pasuruan',
+    rapat_ketua: item.rapat_ketua || getActiveGuruBK().nama,
+    rapat_jumlah_hadir: item.rapat_jumlah_hadir || '5',
+    rapat_dimulai_pukul: item.rapat_dimulai_pukul || '08.00 WIB',
+    rapat_diakhiri_pukul: item.rapat_diakhiri_pukul || '09.30 WIB',
+    rapat_hasil_pertemuan: item.rapat_hasil_pertemuan || '',
+    daftar_hadir_peserta_singkat: item.daftar_hadir_peserta_singkat || '',
+    daftar_hadir_rows: item.daftar_hadir_rows || '[]',
+    tanggal_surat: item.tanggal_surat || new Date().toISOString().split('T')[0],
+    tempat_surat: item.tempat_surat || 'Pasuruan',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    keterangan: item.keterangan || ''
   };
 
-  // Guarantee persistence in local storage first
-  saveToLocalKonferensiKasusFallback(payload);
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (!error && data) {
-        const currentLocal = getLocalKonferensiKasusList();
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as KonferensiKasus;
-        } else {
-          currentLocal.unshift(data as KonferensiKasus);
-        }
-        saveLocalKonferensiKasusList(currentLocal);
-
-        return { success: true, data: data as KonferensiKasus, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save konferensi kasus error:', error.message);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateKonferensiKasus error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalKonferensiKasusFallback(item: KonferensiKasus) {
-  const current = getLocalKonferensiKasusList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.unshift(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as KonferensiKasus,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalKonferensiKasusList(current);
 }
 
 export async function deleteKonferensiKasusItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalKonferensiKasusList().filter((i) => i.id !== id);
-        saveLocalKonferensiKasusList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalKonferensiKasusList().filter((i) => i.id !== id);
-  saveLocalKonferensiKasusList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Siswa
-const INITIAL_DEMO_SISWA: Siswa[] = [
-  {
-    id: 'demo-s1',
-    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 5).toISOString(),
-    nama_siswa: 'Ahmad Rizky Pratama',
-    kelas: 'VIII A',
-    nis: '12345',
-    jenis_kelamin: 'Laki-laki',
-    keterangan: 'Siswa aktif'
-  },
-  {
-    id: 'demo-s2',
-    created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 4).toISOString(),
-    nama_siswa: 'Siti Aminah',
-    kelas: 'VIII A',
-    nis: '12346',
-    jenis_kelamin: 'Perempuan',
-    keterangan: 'Siswa aktif'
-  },
-  {
-    id: 'demo-s3',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    nama_siswa: 'Rian Adiputra',
-    kelas: 'IX C',
-    nis: '12347',
-    jenis_kelamin: 'Laki-laki',
-    keterangan: 'Pernah bimbingan kedisiplinan'
-  }
-];
-
-export function getLocalSiswaList(): Siswa[] {
-  return safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, INITIAL_DEMO_SISWA);
-}
-
-export function saveLocalSiswaList(data: Siswa[]) {
-  safeSetStorage(STORAGE_KEY_SISWA, data);
-}
+/* ==========================================================================
+   9. DATA MANAGEMENT SISWA (Direct Supabase)
+   ========================================================================== */
 
 export async function fetchSiswaList(): Promise<{ data: Siswa[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_SISWA_TABLE_NAME)
-        .select('*')
-        .order('nama_siswa', { ascending: true });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        saveLocalSiswaList(data as Siswa[]);
-        return { data: data as Siswa[], isFromSupabase: true };
-      } else if (error) {
-        console.warn('Supabase fetch siswa error:', error.message);
-        return {
-          data: getLocalSiswaList(),
-          isFromSupabase: false,
-          error: `Supabase: ${error.message}. Menggunakan penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Koneksi gagal';
-      return { data: getLocalSiswaList(), isFromSupabase: false, error: msg };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_SISWA_TABLE_NAME)
+      .select('*')
+      .order('kelas', { ascending: true })
+      .order('nama_siswa', { ascending: true });
+
+    if (error) {
+      console.error('Supabase fetchSiswaList error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalSiswaList(), isFromSupabase: false };
+    return { data: (data || []) as Siswa[], isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Siswa';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateSiswa(
-  siswa: Partial<Siswa> & Omit<Siswa, 'id'>
+  item: Partial<Siswa> & FormSiswaData,
+  existingId?: string
 ): Promise<{ success: boolean; data?: Siswa; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  const now = new Date().toISOString();
-  const currentLocal = getLocalSiswaList();
-  
-  // Find by NIS for upserting behavior
-  const matchedSiswaByNis = currentLocal.find(s => s.nis && s.nis.trim() === siswa.nis.trim());
-  const idToUse = siswa.id || matchedSiswaByNis?.id || (crypto.randomUUID ? crypto.randomUUID() : `sis-${Date.now()}`);
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
 
-  const payload: Siswa = {
-    ...siswa,
-    id: idToUse,
-    created_at: siswa.created_at || matchedSiswaByNis?.created_at || now,
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `siswa-${Date.now()}`;
+
+  const payload: any = {
+    id: targetId,
     updated_at: now,
+    nama_siswa: item.nama_siswa,
+    kelas: item.kelas,
+    nis: item.nis,
+    jenis_kelamin: item.jenis_kelamin,
+    keterangan: item.keterangan || ''
   };
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_SISWA_TABLE_NAME)
-        .upsert(payload, { onConflict: 'id' })
-        .select()
-        .single();
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_SISWA_TABLE_NAME)
+      .upsert(payload, { onConflict: 'id' })
+      .select()
+      .single();
 
-      if (!error && data) {
-        const existingIdx = currentLocal.findIndex((i) => i.id === payload.id);
-        if (existingIdx >= 0) {
-          currentLocal[existingIdx] = data as Siswa;
-        } else {
-          currentLocal.push(data as Siswa);
-        }
-        saveLocalSiswaList(currentLocal);
-
-        return { success: true, data: data as Siswa, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase save siswa error:', error.message);
-        saveToLocalSiswaFallback(payload);
-        return {
-          success: true,
-          data: payload,
-          isSupabase: false,
-          error: `Gagal ke Supabase (${error.message}). Disimpan ke penyimpanan lokal.`,
-        };
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Gagal terhubung Supabase';
-      saveToLocalSiswaFallback(payload);
-      return {
-        success: true,
-        data: payload,
-        isSupabase: false,
-        error: `${msg}. Disimpan di penyimpanan lokal.`,
-      };
+    if (error) {
+      console.error('Supabase saveOrUpdateSiswa error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  saveToLocalSiswaFallback(payload);
-  return { success: true, data: payload, isSupabase: false };
-}
-
-function saveToLocalSiswaFallback(item: Siswa) {
-  const current = getLocalSiswaList();
-  const existingIdx = current.findIndex((i) => i.id === item.id);
-  if (existingIdx >= 0) {
-    current[existingIdx] = item;
-  } else {
-    current.push(item);
+    return {
+      success: true,
+      data: (data || { ...payload, created_at: item.created_at || now }) as Siswa,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
   }
-  saveLocalSiswaList(current);
 }
 
 export async function bulkSaveOrUpdateSiswa(
   students: Omit<Siswa, 'id' | 'created_at' | 'updated_at'>[]
-): Promise<{ success: boolean; count: number; isSupabase: boolean; error?: string }> {
+): Promise<{ success: boolean; count: number; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
+
+  if (!client) {
+    return { success: false, count: 0, error: 'Database Supabase belum terhubung.' };
+  }
+
   const now = new Date().toISOString();
+  const payloadRows = students.map((s, idx) => ({
+    id: `siswa-${Date.now()}-${idx}-${Math.random().toString(36).substring(2, 7)}`,
+    created_at: now,
+    updated_at: now,
+    nama_siswa: s.nama_siswa,
+    kelas: s.kelas,
+    nis: s.nis,
+    jenis_kelamin: s.jenis_kelamin,
+    keterangan: s.keterangan || ''
+  }));
 
-  // Get current state
-  let currentList: Siswa[] = [];
-  let isSupabase = false;
-
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_SISWA_TABLE_NAME)
-        .select('*');
-      if (!error && data) {
-        currentList = data as Siswa[];
-        isSupabase = true;
-      } else {
-        console.warn('Gagal fetch siswa untuk bulk import, menggunakan local:', error?.message);
-        currentList = getLocalSiswaList();
-      }
-    } catch (err) {
-      console.warn('Exception fetch siswa untuk bulk import, menggunakan local:', err);
-      currentList = getLocalSiswaList();
+  try {
+    const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).upsert(payloadRows, { onConflict: 'id' });
+    if (error) {
+      console.error('Supabase bulkSaveOrUpdateSiswa error:', error.message);
+      return { success: false, count: 0, error: `Gagal import ke Supabase: ${error.message}` };
     }
-  } else {
-    currentList = getLocalSiswaList();
+    return { success: true, count: payloadRows.length };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal import massal siswa';
+    return { success: false, count: 0, error: msg };
   }
-
-  // Map existing students by NIS (case-insensitive, trimmed)
-  const existingByNisMap = new Map<string, Siswa>();
-  currentList.forEach(s => {
-    if (s.nis) {
-      existingByNisMap.set(s.nis.trim().toLowerCase(), s);
-    }
-  });
-
-  // De-duplicate the incoming students array by NIS (case-insensitive, trimmed) to avoid database conflicts
-  const uniqueStudentsMap = new Map<string, Omit<Siswa, 'id' | 'created_at' | 'updated_at'>>();
-  students.forEach(s => {
-    if (s.nis) {
-      uniqueStudentsMap.set(s.nis.trim().toLowerCase(), s);
-    }
-  });
-  const uniqueStudents = Array.from(uniqueStudentsMap.values());
-
-  // Prepare payloads using the deduplicated students
-  const payloads: Siswa[] = uniqueStudents.map((s, index) => {
-    const key = s.nis.trim().toLowerCase();
-    const existing = existingByNisMap.get(key);
-    
-    const idToUse = existing?.id || (
-      crypto && typeof crypto.randomUUID === 'function'
-        ? crypto.randomUUID()
-        : `sis-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 11)}`
-    );
-    const created_at = existing?.created_at || now;
-
-    return {
-      id: idToUse,
-      created_at,
-      updated_at: now,
-      nama_siswa: s.nama_siswa,
-      kelas: s.kelas,
-      nis: s.nis,
-      jenis_kelamin: s.jenis_kelamin,
-      keterangan: s.keterangan
-    };
-  });
-
-  if (client && isSupabase) {
-    try {
-      // Bulk upsert into Supabase based on 'nis' column
-      const { error } = await client
-        .from(DEFAULT_SISWA_TABLE_NAME)
-        .upsert(payloads, { onConflict: 'nis' });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      // If successful, update our local cache by merging
-      const mergedList = [...currentList];
-      payloads.forEach(p => {
-        const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
-        if (idx !== -1) {
-          mergedList[idx] = p;
-        } else {
-          mergedList.push(p);
-        }
-      });
-      saveLocalSiswaList(mergedList);
-
-      return { success: true, count: payloads.length, isSupabase: true };
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi';
-      
-      // Fallback to local
-      const mergedList = [...currentList];
-      payloads.forEach(p => {
-        const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
-        if (idx !== -1) {
-          mergedList[idx] = p;
-        } else {
-          mergedList.push(p);
-        }
-      });
-      saveLocalSiswaList(mergedList);
-
-      return { 
-        success: true, 
-        count: payloads.length, 
-        isSupabase: false, 
-        error: `Supabase: ${msg}. Data berhasil disimpan ke penyimpanan lokal.` 
-      };
-    }
-  }
-
-  // Local storage only
-  const mergedList = [...currentList];
-  payloads.forEach(p => {
-    const idx = mergedList.findIndex(item => item.id === p.id || (item.nis && p.nis && item.nis.trim().toLowerCase() === p.nis.trim().toLowerCase()));
-    if (idx !== -1) {
-      mergedList[idx] = p;
-    } else {
-      mergedList.push(p);
-    }
-  });
-  saveLocalSiswaList(mergedList);
-
-  return { success: true, count: payloads.length, isSupabase: false };
 }
 
 export async function deleteSiswaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalSiswaList().filter((i) => i.id !== id);
-        saveLocalSiswaList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+
+  try {
+    const { error } = await client.from(DEFAULT_SISWA_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data siswa';
+    return { success: false, isSupabase: false, error: msg };
   }
-
-  const current = getLocalSiswaList().filter((i) => i.id !== id);
-  saveLocalSiswaList(current);
-  return { success: true, isSupabase: false };
 }
 
-// Local Storage Helpers - Jurnal BK
-const INITIAL_DEMO_JURNAL_BK: JurnalBK[] = [
-  {
-    id: 'demo-jurnal-1',
-    created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    updated_at: new Date(Date.now() - 86400000 * 3).toISOString(),
-    hari: 'Senin',
-    tanggal: '2026-08-03',
-    bulan: 'Agustus',
-    tahun: '2026',
-    jam_ke: '1 - 2',
-    kelas: 'VIII A',
-    sasaran_peserta: 'Siswa Kelas VIII A',
-    materi_layanan: 'Pengelolaan Emosi dan Kedisiplinan Belajar Mandiri',
-    bidang_layanan: 'Pribadi',
-    jenis_layanan: 'Bimbingan Klasikal / Lintas Kelas',
-    fungsi_layanan: 'Pemahaman: Membantu konseli memahami diri dan lingkungannya.',
-    hasil_layanan_bmb3: 'B: Siswa memahami dampak emosi negatif. M: Siswa merasa termotivasi mengontrol emosi. B: Siswa bersikap sopan. T: Siswa membuat jurnal refleksi harian. B: Siswa bertanggung jawab menjalankan komitmen kelas.',
-    siswa_tidak_mengikuti: [
-      { nama_siswa: 'Ahmad Rizky', alasan: 'Sakit (Izin Orang Tua)', tindak_lanjut: 'Layanan susulan modul ringkasan & bimbingan individual' }
-    ],
-    link_foto_kegiatan: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800',
-    keterangan: 'Layanan berjalan lancar dan interaktif.',
-    nama_guru_bk: getActiveGuruBK().nama,
-    nip_guru_bk: getActiveGuruBK().nip,
-    nama_kepala_sekolah: 'NUR FADILAH, S.Pd,. M.Pd',
-    nip_kepala_sekolah: '19860410 201001 2 030',
-    tanggal_surat: '2026-08-03',
-    tempat_surat: 'Pasuruan'
-  }
-];
-
-export function getLocalJurnalBKList(): JurnalBK[] {
-  return safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, INITIAL_DEMO_JURNAL_BK);
-}
-
-export function saveLocalJurnalBKList(data: JurnalBK[]) {
-  safeSetStorage(STORAGE_KEY_JURNAL_BK, data);
-}
+/* ==========================================================================
+   10. JURNAL LAYANAN BK (Direct Supabase)
+   ========================================================================== */
 
 export async function fetchAllJurnalBK(): Promise<{ data: JurnalBK[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_JURNAL_BK_TABLE_NAME)
-        .select('*')
-        .order('tanggal', { ascending: false });
+  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
 
-      if (!error && data) {
-        const mappedList: JurnalBK[] = data.map((row: any) => {
-          let siswaAbsenList = [];
-          if (row.siswa_tidak_mengikuti_json) {
-            try {
-              siswaAbsenList = typeof row.siswa_tidak_mengikuti_json === 'string'
-                ? JSON.parse(row.siswa_tidak_mengikuti_json)
-                : row.siswa_tidak_mengikuti_json;
-            } catch {
-              siswaAbsenList = [];
-            }
-          }
-          return {
-            id: row.id,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            hari: row.hari || '',
-            tanggal: row.tanggal || '',
-            bulan: row.bulan || '',
-            tahun: row.tahun || '',
-            jam_ke: row.jam_ke || '',
-            materi_layanan: row.materi_layanan || '',
-            bidang_layanan: row.bidang_layanan || 'Pribadi',
-            jenis_layanan: row.jenis_layanan || 'Bimbingan Klasikal / Lintas Kelas',
-            fungsi_layanan: row.fungsi_layanan || '',
-            hasil_layanan_bmb3: row.hasil_layanan_bmb3 || '',
-            siswa_tidak_mengikuti: Array.isArray(siswaAbsenList) ? siswaAbsenList : [],
-            kelas: row.kelas || '',
-            sasaran_peserta: row.sasaran_peserta || '',
-            link_foto_kegiatan: row.link_foto_kegiatan || '',
-            keterangan: row.keterangan || '',
-            nama_guru_bk: row.nama_guru_bk || '',
-            nip_guru_bk: row.nip_guru_bk || '',
-            nama_kepala_sekolah: row.nama_kepala_sekolah || '',
-            nip_kepala_sekolah: row.nip_kepala_sekolah || '',
-            tanggal_surat: row.tanggal_surat || '',
-            tempat_surat: row.tempat_surat || 'Pasuruan'
-          };
-        });
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_JURNAL_BK_TABLE_NAME)
+      .select('*')
+      .order('tanggal', { ascending: false });
 
-        saveLocalJurnalBKList(mappedList);
-        return { data: mappedList, isFromSupabase: true };
-      }
-    } catch (err: any) {
-      console.warn('Gagal fetch Jurnal BK dari Supabase, fallback Local Storage:', err);
+    if (error) {
+      console.error('Supabase fetchAllJurnalBK error:', error.message);
+      return { data: [], isFromSupabase: false, error: error.message };
     }
-  }
 
-  return { data: getLocalJurnalBKList(), isFromSupabase: false };
+    const formattedData: JurnalBK[] = (data || []).map((row: any) => {
+      let siswaParsed: string[] = [];
+      try {
+        if (row.siswa_tidak_mengikuti_json) {
+          siswaParsed = typeof row.siswa_tidak_mengikuti_json === 'string'
+            ? JSON.parse(row.siswa_tidak_mengikuti_json)
+            : row.siswa_tidak_mengikuti_json;
+        }
+      } catch {
+        siswaParsed = [];
+      }
+
+      return {
+        ...row,
+        siswa_tidak_mengikuti: Array.isArray(siswaParsed) ? siswaParsed : []
+      };
+    });
+
+    return { data: formattedData, isFromSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Jurnal BK';
+    return { data: [], isFromSupabase: false, error: msg };
+  }
 }
 
 export async function saveOrUpdateJurnalBK(
@@ -2004,10 +1261,14 @@ export async function saveOrUpdateJurnalBK(
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
+  if (!client) {
+    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  }
+
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `jurnal-${Date.now()}`;
 
-  const payloadRow = {
+  const payloadRow: any = {
     id: targetId,
     updated_at: now,
     hari: item.hari,
@@ -2033,75 +1294,56 @@ export async function saveOrUpdateJurnalBK(
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 
-  const formattedObject: JurnalBK = {
-    ...item,
-    id: targetId,
-    created_at: item.created_at || now,
-    updated_at: now
-  };
+  try {
+    const { data, error } = await client
+      .from(DEFAULT_JURNAL_BK_TABLE_NAME)
+      .upsert(payloadRow, { onConflict: 'id' })
+      .select()
+      .single();
 
-  if (client) {
-    try {
-      const { data, error } = await client
-        .from(DEFAULT_JURNAL_BK_TABLE_NAME)
-        .upsert(payloadRow, { onConflict: 'id' })
-        .select()
-        .single();
-
-      if (!error && data) {
-        const current = getLocalJurnalBKList();
-        const idx = current.findIndex((i) => i.id === targetId);
-        if (idx >= 0) {
-          current[idx] = formattedObject;
-        } else {
-          current.unshift(formattedObject);
-        }
-        saveLocalJurnalBKList(current);
-        return { success: true, data: formattedObject, isSupabase: true };
-      } else if (error) {
-        console.warn('Supabase upsert error Jurnal BK:', error.message);
-      }
-    } catch (err: any) {
-      console.warn('Catch error saving Jurnal BK to Supabase:', err);
+    if (error) {
+      console.error('Supabase saveOrUpdateJurnalBK error:', error.message);
+      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
     }
-  }
 
-  // Fallback to local storage
-  const current = getLocalJurnalBKList();
-  const idx = current.findIndex((i) => i.id === targetId);
-  if (idx >= 0) {
-    current[idx] = formattedObject;
-  } else {
-    current.unshift(formattedObject);
-  }
-  saveLocalJurnalBKList(current);
+    const formattedObject: JurnalBK = {
+      ...item,
+      id: targetId,
+      created_at: item.created_at || now,
+      updated_at: now
+    };
 
-  return { success: true, data: formattedObject, isSupabase: false };
+    return {
+      success: true,
+      data: formattedObject,
+      isSupabase: true
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
+    return { success: false, isSupabase: false, error: msg };
+  }
 }
 
 export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (client) {
-    try {
-      const { error } = await client.from(DEFAULT_JURNAL_BK_TABLE_NAME).delete().eq('id', id);
-      if (!error) {
-        const current = getLocalJurnalBKList().filter((i) => i.id !== id);
-        saveLocalJurnalBKList(current);
-        return { success: true, isSupabase: true };
-      }
-    } catch {
-      // ignore
-    }
-  }
+  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
 
-  const current = getLocalJurnalBKList().filter((i) => i.id !== id);
-  saveLocalJurnalBKList(current);
-  return { success: true, isSupabase: false };
+  try {
+    const { error } = await client.from(DEFAULT_JURNAL_BK_TABLE_NAME).delete().eq('id', id);
+    if (error) return { success: false, isSupabase: false, error: error.message };
+    return { success: true, isSupabase: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Gagal menghapus data Jurnal BK';
+    return { success: false, isSupabase: false, error: msg };
+  }
 }
 
-// SQL Script generator for user setup in Supabase SQL Editor
+/* ==========================================================================
+   SQL Script Generator & Multi-Table Diagnostic Tool
+   ========================================================================== */
+
 export function getSupabaseSqlSetup(
   tableName: string = DEFAULT_TABLE_NAME,
   undanganTableName: string = DEFAULT_UNDANGAN_TABLE_NAME,
@@ -2141,6 +1383,7 @@ create policy "Akses Tambah Publik Signatures" on public.signatures_bk for inser
 create policy "Akses Update Publik Signatures" on public.signatures_bk for update using (true);
 create policy "Akses Hapus Publik Signatures" on public.signatures_bk for delete using (true);
 
+--------------------------------------------------------------------------------
 -- 2. TABEL A: AGENDA KERJA BK (${tableName})
 --------------------------------------------------------------------------------
 create table if not exists public.${tableName} (
@@ -2159,8 +1402,6 @@ create table if not exists public.${tableName} (
 );
 
 alter table public.${tableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Agenda BK" on public.${tableName};
 drop policy if exists "Akses Tambah Publik Agenda BK" on public.${tableName};
 drop policy if exists "Akses Update Publik Agenda BK" on public.${tableName};
@@ -2205,8 +1446,6 @@ create table if not exists public.${undanganTableName} (
 );
 
 alter table public.${undanganTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Undangan Ortu" on public.${undanganTableName};
 drop policy if exists "Akses Tambah Publik Undangan Ortu" on public.${undanganTableName};
 drop policy if exists "Akses Update Publik Undangan Ortu" on public.${undanganTableName};
@@ -2269,8 +1508,6 @@ create table if not exists public.${homeVisitTableName} (
 );
 
 alter table public.${homeVisitTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Home Visit" on public.${homeVisitTableName};
 drop policy if exists "Akses Tambah Publik Home Visit" on public.${homeVisitTableName};
 drop policy if exists "Akses Update Publik Home Visit" on public.${homeVisitTableName};
@@ -2312,8 +1549,6 @@ create table if not exists public.${rekamPermasalahanTableName} (
 );
 
 alter table public.${rekamPermasalahanTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
 drop policy if exists "Akses Tambah Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
 drop policy if exists "Akses Update Publik Rekam Permasalahan" on public.${rekamPermasalahanTableName};
@@ -2352,8 +1587,6 @@ create table if not exists public.${konselingIndividuTableName} (
 );
 
 alter table public.${konselingIndividuTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Konseling Individu" on public.${konselingIndividuTableName};
 drop policy if exists "Akses Tambah Publik Konseling Individu" on public.${konselingIndividuTableName};
 drop policy if exists "Akses Update Publik Konseling Individu" on public.${konselingIndividuTableName};
@@ -2392,8 +1625,6 @@ create table if not exists public.${konselingKelompokTableName} (
 );
 
 alter table public.${konselingKelompokTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Konseling Kelompok" on public.${konselingKelompokTableName};
 drop policy if exists "Akses Tambah Publik Konseling Kelompok" on public.${konselingKelompokTableName};
 drop policy if exists "Akses Update Publik Konseling Kelompok" on public.${konselingKelompokTableName};
@@ -2434,16 +1665,7 @@ create table if not exists public.${suratPernyataanTableName} (
   nip_kepala_sekolah text default ''
 );
 
--- Migrasi kolom otomatis jika tabel sudah ada sebelumnya
-alter table public.${suratPernyataanTableName} add column if not exists nama_siswa_2 text default '';
-alter table public.${suratPernyataanTableName} add column if not exists kelas_2 text default '';
-alter table public.${suratPernyataanTableName} add column if not exists hari_tanggal_kejadian text default '';
-alter table public.${suratPernyataanTableName} add column if not exists tahun_ajaran text default '2026-2027';
-alter table public.${suratPernyataanTableName} add column if not exists jabatan_pengetahu text default 'Guru BK / Wali Kelas';
-
 alter table public.${suratPernyataanTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Surat Pernyataan" on public.${suratPernyataanTableName};
 drop policy if exists "Akses Tambah Publik Surat Pernyataan" on public.${suratPernyataanTableName};
 drop policy if exists "Akses Update Publik Surat Pernyataan" on public.${suratPernyataanTableName};
@@ -2493,8 +1715,6 @@ create table if not exists public.${konferensiKasusTableName} (
 );
 
 alter table public.${konferensiKasusTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Konferensi Kasus" on public.${konferensiKasusTableName};
 drop policy if exists "Akses Tambah Publik Konferensi Kasus" on public.${konferensiKasusTableName};
 drop policy if exists "Akses Update Publik Konferensi Kasus" on public.${konferensiKasusTableName};
@@ -2520,8 +1740,6 @@ create table if not exists public.${siswaTableName} (
 );
 
 alter table public.${siswaTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Siswa" on public.${siswaTableName};
 drop policy if exists "Akses Tambah Publik Siswa" on public.${siswaTableName};
 drop policy if exists "Akses Update Publik Siswa" on public.${siswaTableName};
@@ -2563,8 +1781,6 @@ create table if not exists public.${jurnalBKTableName} (
 );
 
 alter table public.${jurnalBKTableName} enable row level security;
-
--- Drop policy jika sudah ada agar re-runnable (tidak error)
 drop policy if exists "Akses Baca Publik Jurnal BK" on public.${jurnalBKTableName};
 drop policy if exists "Akses Tambah Publik Jurnal BK" on public.${jurnalBKTableName};
 drop policy if exists "Akses Update Publik Jurnal BK" on public.${jurnalBKTableName};
@@ -2627,6 +1843,11 @@ alter table public.${konselingKelompokTableName} add column if not exists nip_gu
 alter table public.${konselingKelompokTableName} add column if not exists nama_kepala_sekolah text default '';
 alter table public.${konselingKelompokTableName} add column if not exists nip_kepala_sekolah text default '';
 
+alter table public.${suratPernyataanTableName} add column if not exists nama_siswa_2 text default '';
+alter table public.${suratPernyataanTableName} add column if not exists kelas_2 text default '';
+alter table public.${suratPernyataanTableName} add column if not exists hari_tanggal_kejadian text default '';
+alter table public.${suratPernyataanTableName} add column if not exists tahun_ajaran text default '2026-2027';
+alter table public.${suratPernyataanTableName} add column if not exists jabatan_pengetahu text default 'Guru BK / Wali Kelas';
 alter table public.${suratPernyataanTableName} add column if not exists nama_guru_bk text default '';
 alter table public.${suratPernyataanTableName} add column if not exists nip_guru_bk text default '';
 alter table public.${suratPernyataanTableName} add column if not exists nama_kepala_sekolah text default '';
@@ -2751,4 +1972,3 @@ export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Prom
     tables: results
   };
 }
-
