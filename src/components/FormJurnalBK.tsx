@@ -229,27 +229,28 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
   // Auto calculate Hari, Bulan, Tahun when date changes
   useEffect(() => {
     if (dateVal) {
-      const d = new Date(dateVal);
-      if (!isNaN(d.getTime())) {
+      const parts = dateVal.split('-').map(Number);
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
         const dayIdx = d.getDay();
         const monthIdx = d.getMonth();
         setHari(NAMA_HARI[dayIdx]);
         setBulan(NAMA_BULAN[monthIdx]);
-        setTahun(d.getFullYear().toString());
+        setTahun(String(parts[0]));
       }
     }
   }, [dateVal]);
 
-  // Load initialData when editing an existing Jurnal BK
+  // Load initialData when editing an existing Jurnal BK or reset when new
   useEffect(() => {
     if (initialData) {
       setDateVal(initialData.tanggal || defaultDateStr);
       setHari(initialData.hari || 'Senin');
       setBulan(initialData.bulan || 'Agustus');
       setTahun(initialData.tahun || '2026');
-      setJamKe(initialData.jam_ke || '');
-      setKelas(initialData.kelas || '');
-      setSasaranPeserta(initialData.sasaran_peserta || `Siswa Kelas ${initialData.kelas || ''}`);
+      setJamKe(initialData.jam_ke || 'Jam Ke 1 - 2 (07.15 - 08.35 WIB)');
+      setKelas(initialData.kelas || 'VIII A');
+      setSasaranPeserta(initialData.sasaran_peserta || `Siswa Kelas ${initialData.kelas || 'VIII A'}`);
       setMateriLayanan(initialData.materi_layanan || '');
       setBidangLayanan(initialData.bidang_layanan || 'Pribadi');
       setJenisLayanan(initialData.jenis_layanan || 'Bimbingan Klasikal / Lintas Kelas');
@@ -262,6 +263,22 @@ export const FormJurnalBK: React.FC<FormJurnalBKProps> = ({
       setNipGuruBK(initialData.nip_guru_bk || activeGuruBK.nip);
       setNamaKepalaSekolah(initialData.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd');
       setNipKepalaSekolah(initialData.nip_kepala_sekolah || '19860410 201001 2 030');
+    } else {
+      const today = new Date();
+      setDateVal(today.toISOString().split('T')[0]);
+      setJamKe('Jam Ke 1 - 2 (07.15 - 08.35 WIB)');
+      setKelas('VIII A');
+      setSasaranPeserta('Siswa Kelas VIII A');
+      setMateriLayanan('');
+      setBidangLayanan('Pribadi');
+      setJenisLayanan('Bimbingan Klasikal / Lintas Kelas');
+      setFungsiLayanan(FUNGSI_LAYANAN_OPTIONS[0]);
+      setHasilLayananBmb3('');
+      setSiswaTidakMengikuti([]);
+      setLinkFoto('');
+      setKeterangan('');
+      setNamaGuruBK(activeGuruBK.nama);
+      setNipGuruBK(activeGuruBK.nip);
     }
   }, [initialData]);
 

@@ -20,6 +20,7 @@ import {
   FormSiswaData,
   JurnalBK,
   FormJurnalBKData,
+  SiswaTidakHadir,
   SupabaseConfig
 } from '../types';
 import { safeGetStorage, safeSetStorage } from './storageManager';
@@ -1450,64 +1451,245 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
 }
 
 /* ==========================================================================
-   10. JURNAL LAYANAN BK (Direct Supabase)
+   10. JURNAL LAYANAN BK (Direct Supabase & Multi-Table Resolver)
    ========================================================================== */
+
+export const JURNAL_BK_TABLE_CANDIDATES = [
+  'jurnal_bk_siswa',
+  'jurnal_bk',
+  'jurnal_BK',
+  'Jurnal_BK',
+  'Jurnal_bk',
+  'jurnal_layanan_bk',
+  'jurnal_layanan_BK',
+  'Jurnal_Layanan_BK',
+  'jurnal',
+  'Jurnal',
+  'data_jurnal_bk'
+];
+
+let cachedActiveJurnalBKTable: string | null = null;
+
+export function getActiveJurnalBKTableName(): string {
+  return cachedActiveJurnalBKTable || 'jurnal_bk_siswa';
+}
+
+export function setActiveJurnalBKTableName(name: string) {
+  cachedActiveJurnalBKTable = name;
+}
+
+/**
+ * Robust mapper for Jurnal BK record from Supabase table
+ * Normalizes all possible column names and formats of non-attending students list
+ */
+export function mapSupabaseRowToJurnalBK(row: any, index: number = 0): JurnalBK {
+  if (!row || typeof row !== 'object') {
+    return {
+      id: `jurnal-${Date.now()}-${index}`,
+      hari: 'Senin',
+      tanggal: new Date().toISOString().split('T')[0],
+      bulan: 'Agustus',
+      tahun: '2026',
+      jam_ke: '',
+      materi_layanan: '',
+      bidang_layanan: 'Pribadi',
+      jenis_layanan: 'Bimbingan Klasikal / Lintas Kelas',
+      fungsi_layanan: 'Pemahaman & Pengembangan',
+      hasil_layanan_bmb3: '',
+      siswa_tidak_mengikuti: [],
+      kelas: ''
+    };
+  }
+
+  const id = String(row.id || row.ID || row.Id || `jurnal-${Date.now()}-${index}`);
+
+  // Parse siswa_tidak_mengikuti (handles JSON string, object array, or string array)
+  let rawAbsen =
+    row.siswa_tidak_mengikuti_json ??
+    row.siswa_tidak_mengikuti ??
+    row.siswa_absen ??
+    row.absen_siswa ??
+    [];
+
+  let siswaList: SiswaTidakHadir[] = [];
+
+  if (typeof rawAbsen === 'string' && rawAbsen.trim().length > 0) {
+    try {
+      rawAbsen = JSON.parse(rawAbsen);
+    } catch {
+      // If it's a comma-separated string
+      if (rawAbsen.includes(',')) {
+        rawAbsen = rawAbsen.split(',').map((s: string) => s.trim());
+      } else {
+        rawAbsen = [rawAbsen.trim()];
+      }
+    }
+  }
+
+  if (Array.isArray(rawAbsen)) {
+    siswaList = rawAbsen
+      .map((item: any) => {
+        if (typeof item === 'string') {
+          return {
+            nama_siswa: item.trim(),
+            alasan: 'Tanpa Keterangan',
+            tindak_lanjut: 'Konfirmasi Wali Kelas'
+          };
+        }
+        if (item && typeof item === 'object') {
+          return {
+            nama_siswa: String(item.nama_siswa || item.nama || item.name || '').trim(),
+            alasan: String(item.alasan || item.reason || 'Tanpa Keterangan').trim(),
+            tindak_lanjut: String(item.tindak_lanjut || item.follow_up || 'Konfirmasi Wali Kelas').trim()
+          };
+        }
+        return null;
+      })
+      .filter((s): s is SiswaTidakHadir => Boolean(s && s.nama_siswa.length > 0));
+  }
+
+  // Format date correctly
+  let formattedTanggal = '';
+  if (row.tanggal) {
+    formattedTanggal = String(row.tanggal).split('T')[0];
+  } else if (row.created_at) {
+    formattedTanggal = String(row.created_at).split('T')[0];
+  } else {
+    formattedTanggal = new Date().toISOString().split('T')[0];
+  }
+
+  return {
+    id,
+    created_at: row.created_at || row.createdAt || new Date().toISOString(),
+    updated_at: row.updated_at || row.updatedAt || new Date().toISOString(),
+    hari: String(row.hari || 'Senin'),
+    tanggal: formattedTanggal,
+    bulan: String(row.bulan || ''),
+    tahun: String(row.tahun || ''),
+    jam_ke: String(row.jam_ke || row.jam || row.waktu || ''),
+    materi_layanan: String(row.materi_layanan || row.materi || row.topik || row.uraian_kegiatan || ''),
+    bidang_layanan: String(row.bidang_layanan || row.bidang || 'Pribadi'),
+    jenis_layanan: String(row.jenis_layanan || row.jenis || 'Bimbingan Klasikal / Lintas Kelas'),
+    fungsi_layanan: String(row.fungsi_layanan || row.fungsi || ''),
+    hasil_layanan_bmb3: String(row.hasil_layanan_bmb3 || row.hasil_bmb3 || row.hasil || ''),
+    siswa_tidak_mengikuti: siswaList,
+    kelas: String(row.kelas || row.Kelas || ''),
+    sasaran_peserta: String(row.sasaran_peserta || row.sasaran || ''),
+    link_foto_kegiatan: String(row.link_foto_kegiatan || row.link_foto || ''),
+    keterangan: String(row.keterangan || ''),
+    nama_guru_bk: String(row.nama_guru_bk || getActiveGuruBK().nama),
+    nip_guru_bk: String(row.nip_guru_bk || getActiveGuruBK().nip),
+    nama_kepala_sekolah: String(row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd'),
+    nip_kepala_sekolah: String(row.nip_kepala_sekolah || '19860410 201001 2 030'),
+    tanggal_surat: String(row.tanggal_surat || formattedTanggal),
+    tempat_surat: String(row.tempat_surat || 'Pasuruan')
+  };
+}
 
 export async function fetchAllJurnalBK(): Promise<{ data: JurnalBK[]; isFromSupabase: boolean; error?: string }> {
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { data: [], isFromSupabase: false, error: 'Supabase belum terhubung.' };
-
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_JURNAL_BK_TABLE_NAME)
-      .select('*')
-      .order('tanggal', { ascending: false });
-
-    if (error) {
-      console.error('Supabase fetchAllJurnalBK error:', error.message);
-      return { data: [], isFromSupabase: false, error: error.message };
-    }
-
-    const formattedData: JurnalBK[] = (data || []).map((row: any) => {
-      let siswaParsed: string[] = [];
-      try {
-        if (row.siswa_tidak_mengikuti_json) {
-          siswaParsed = typeof row.siswa_tidak_mengikuti_json === 'string'
-            ? JSON.parse(row.siswa_tidak_mengikuti_json)
-            : row.siswa_tidak_mengikuti_json;
-        }
-      } catch {
-        siswaParsed = [];
-      }
-
-      return {
-        ...row,
-        siswa_tidak_mengikuti: Array.isArray(siswaParsed) ? siswaParsed : []
-      };
-    });
-
-    return { data: formattedData, isFromSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Jurnal BK';
-    return { data: [], isFromSupabase: false, error: msg };
+  if (!client) {
+    const localData = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+    return { data: localData, isFromSupabase: false, error: 'Supabase belum terhubung.' };
   }
+
+  const candidateTables = Array.from(new Set([
+    getActiveJurnalBKTableName(),
+    ...JURNAL_BK_TABLE_CANDIDATES
+  ]));
+
+  let lastErrorMessage = '';
+
+  for (const tableName of candidateTables) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        setActiveJurnalBKTableName(tableName);
+        const mappedData = data.map((row, idx) => mapSupabaseRowToJurnalBK(row, idx));
+        // Save fresh backup to local storage
+        safeSetStorage(STORAGE_KEY_JURNAL_BK, mappedData);
+        return { data: mappedData, isFromSupabase: true };
+      } else if (error) {
+        lastErrorMessage = error.message;
+      }
+    } catch (err: unknown) {
+      lastErrorMessage = err instanceof Error ? err.message : `Error query table ${tableName}`;
+    }
+  }
+
+  // Fallback to local storage if remote tables were unreachable
+  const localBackup = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+  return {
+    data: localBackup,
+    isFromSupabase: false,
+    error: lastErrorMessage || 'Tabel data Jurnal BK tidak dapat diakses di Supabase.'
+  };
 }
 
 export async function saveOrUpdateJurnalBK(
   item: Partial<JurnalBK> & FormJurnalBKData,
   existingId?: string
 ): Promise<{ success: boolean; data?: JurnalBK; isSupabase: boolean; error?: string }> {
+  const now = new Date().toISOString();
+  const targetId = existingId || item.id || `jurnal-${Date.now()}`;
+
+  const formattedObject: JurnalBK = {
+    ...item,
+    id: targetId,
+    created_at: item.created_at || now,
+    updated_at: now,
+    hari: item.hari || 'Senin',
+    tanggal: item.tanggal || now.split('T')[0],
+    bulan: item.bulan || '',
+    tahun: item.tahun || '',
+    jam_ke: item.jam_ke || '',
+    materi_layanan: item.materi_layanan || '',
+    bidang_layanan: item.bidang_layanan || 'Pribadi',
+    jenis_layanan: item.jenis_layanan || 'Bimbingan Klasikal / Lintas Kelas',
+    fungsi_layanan: item.fungsi_layanan || '',
+    hasil_layanan_bmb3: item.hasil_layanan_bmb3 || '',
+    siswa_tidak_mengikuti: item.siswa_tidak_mengikuti || [],
+    kelas: item.kelas || '',
+    sasaran_peserta: item.sasaran_peserta || '',
+    link_foto_kegiatan: item.link_foto_kegiatan || '',
+    keterangan: item.keterangan || '',
+    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    tanggal_surat: item.tanggal_surat || item.tanggal || now.split('T')[0],
+    tempat_surat: item.tempat_surat || 'Pasuruan'
+  };
+
+  // 1. Always update local storage first so user edits are instantly retained
+  const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+  const existingIdx = localList.findIndex((i) => i.id === targetId);
+  let updatedLocal: JurnalBK[];
+  if (existingIdx >= 0) {
+    updatedLocal = [...localList];
+    updatedLocal[existingIdx] = formattedObject;
+  } else {
+    updatedLocal = [formattedObject, ...localList];
+  }
+  safeSetStorage(STORAGE_KEY_JURNAL_BK, updatedLocal);
+
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+    return {
+      success: true,
+      data: formattedObject,
+      isSupabase: false,
+      error: 'Tersimpan di database lokal (Supabase belum terhubung).'
+    };
   }
-
-  const now = new Date().toISOString();
-  const targetId = existingId || item.id || `jurnal-${Date.now()}`;
 
   const payloadRow: any = {
     id: targetId,
@@ -1535,50 +1717,76 @@ export async function saveOrUpdateJurnalBK(
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_JURNAL_BK_TABLE_NAME)
-      .upsert(payloadRow, { onConflict: 'id' })
-      .select()
-      .single();
+  const candidateTables = Array.from(new Set([
+    getActiveJurnalBKTableName(),
+    ...JURNAL_BK_TABLE_CANDIDATES
+  ]));
 
-    if (error) {
-      console.error('Supabase saveOrUpdateJurnalBK error:', error.message);
-      return { success: false, isSupabase: false, error: `Gagal menyimpan ke Supabase: ${error.message}` };
+  let lastErrorMsg = '';
+
+  for (const tableName of candidateTables) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .upsert(payloadRow, { onConflict: 'id' })
+        .select()
+        .single();
+
+      if (!error) {
+        setActiveJurnalBKTableName(tableName);
+        const mappedResult = data ? mapSupabaseRowToJurnalBK(data) : formattedObject;
+        return {
+          success: true,
+          data: mappedResult,
+          isSupabase: true
+        };
+      } else {
+        lastErrorMsg = error.message;
+      }
+    } catch (err: unknown) {
+      lastErrorMsg = err instanceof Error ? err.message : `Error upserting to ${tableName}`;
     }
-
-    const formattedObject: JurnalBK = {
-      ...item,
-      id: targetId,
-      created_at: item.created_at || now,
-      updated_at: now
-    };
-
-    return {
-      success: true,
-      data: formattedObject,
-      isSupabase: true
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: false, isSupabase: false, error: msg };
   }
+
+  console.warn('Supabase saveOrUpdateJurnalBK remote warning:', lastErrorMsg);
+  // Still return success with local data so user UI does not break
+  return {
+    success: true,
+    data: formattedObject,
+    isSupabase: false,
+    error: `Data tersimpan di perangkat lokal. Gagal sinkron ke Supabase Cloud: ${lastErrorMsg}`
+  };
 }
 
 export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  // 1. Delete from local storage
+  const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+  const filtered = localList.filter((i) => i.id !== id);
+  safeSetStorage(STORAGE_KEY_JURNAL_BK, filtered);
+
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: false, isSupabase: false, error: 'Database belum terhubung.' };
+  if (!client) return { success: true, isSupabase: false };
 
-  try {
-    const { error } = await client.from(DEFAULT_JURNAL_BK_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: false, isSupabase: false, error: error.message };
-    return { success: true, isSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal menghapus data Jurnal BK';
-    return { success: false, isSupabase: false, error: msg };
+  const candidateTables = Array.from(new Set([
+    getActiveJurnalBKTableName(),
+    ...JURNAL_BK_TABLE_CANDIDATES
+  ]));
+
+  for (const tableName of candidateTables) {
+    try {
+      const { error } = await client.from(tableName).delete().eq('id', id);
+      if (!error) {
+        setActiveJurnalBKTableName(tableName);
+        return { success: true, isSupabase: true };
+      }
+    } catch {
+      // try next
+    }
   }
+
+  return { success: true, isSupabase: false };
 }
 
 /* ==========================================================================
@@ -2185,6 +2393,22 @@ export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Prom
           'data_siswa'
         ];
         const uniqueCandidates = Array.from(new Set(candidateSiswaTables));
+        for (const candidate of uniqueCandidates) {
+          const { error } = await client.from(candidate).select('*').limit(1);
+          if (!error) {
+            isFound = true;
+            detectedTableName = candidate;
+            break;
+          } else {
+            lastErrMsg = error.message;
+          }
+        }
+      } else if (item.title === 'Jurnal Layanan BK') {
+        const candidateJurnalTables = [
+          item.tableName,
+          ...JURNAL_BK_TABLE_CANDIDATES
+        ];
+        const uniqueCandidates = Array.from(new Set(candidateJurnalTables));
         for (const candidate of uniqueCandidates) {
           const { error } = await client.from(candidate).select('*').limit(1);
           if (!error) {

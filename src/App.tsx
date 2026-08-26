@@ -56,7 +56,8 @@ import {
   deleteJurnalBKItem,
   getSavedSupabaseConfig,
   getSupabaseClient,
-  STORAGE_KEY_CONFIG
+  STORAGE_KEY_CONFIG,
+  STORAGE_KEY_JURNAL_BK
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -337,7 +338,8 @@ export default function App() {
     async function initApp() {
       await initStorageKeys([
         STORAGE_KEY_CONFIG,
-        STORAGE_KEY_APP_LINKS
+        STORAGE_KEY_APP_LINKS,
+        STORAGE_KEY_JURNAL_BK
       ]);
       const saved = getSavedAppLinks();
       setLinks(saved);
