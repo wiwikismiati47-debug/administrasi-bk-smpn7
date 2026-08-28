@@ -73,13 +73,18 @@ import { SidebarMenu } from './components/SidebarMenu';
 import { MainAppViewer } from './components/MainAppViewer';
 import { LinkModal } from './components/LinkModal';
 import { SupabaseSettingsModal } from './components/SupabaseSettingsModal';
+import { LOGO_BK_BASE64 } from './lib/logo';
 import {
   CheckCircle2,
-  Info
+  Info,
+  LogIn,
+  LogOut,
+  ShieldCheck
 } from 'lucide-react';
 
 export default function App() {
-  // App links state
+  // App state
+  const [isAppExited, setIsAppExited] = useState<boolean>(false);
   const [links, setLinks] = useState<AppLink[]>([]);
   const [selectedLink, setSelectedLink] = useState<AppLink | null>(null);
   
@@ -998,6 +1003,58 @@ export default function App() {
     e.target.value = '';
   };
 
+  if (isAppExited) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4 selection:bg-blue-600 selection:text-white relative overflow-hidden">
+        {/* Glow effects */}
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-6 backdrop-blur-md animate-in zoom-in-95 duration-200">
+          <div className="w-24 h-24 mx-auto rounded-3xl bg-slate-800/80 p-3.5 border border-slate-700/80 flex items-center justify-center shadow-lg">
+            <img
+              src={LOGO_BK_BASE64}
+              alt="Logo SABDA BK SPANJU"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-800/60 text-blue-300 text-xs font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span>Sesi Aplikasi Selesai</span>
+            </div>
+            <h2 className="text-2xl font-black text-white tracking-tight">
+              SABDA BK SPANJU
+            </h2>
+            <p className="text-xs font-bold text-slate-400 tracking-wider">
+              SMP NEGERI 7 PASURUAN
+            </p>
+            <p className="text-xs sm:text-sm text-slate-300 pt-2 leading-relaxed font-normal">
+              Terima kasih telah menggunakan sistem administrasi BK. Seluruh data telah tersimpan aman di database Cloud.
+            </p>
+          </div>
+
+          <div className="pt-2 space-y-3">
+            <button
+              onClick={() => setIsAppExited(false)}
+              className="w-full py-3.5 px-4 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 active:scale-98 transition-all shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Buka / Masuk Aplikasi Kembali</span>
+            </button>
+            <p className="text-[11px] text-slate-500">
+              Anda juga dapat menutup tab browser ini dengan aman.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans antialiased selection:bg-blue-600 selection:text-white relative overflow-x-hidden">
       {/* Subtle Background Decorative Blur Effects */}
@@ -1134,6 +1191,10 @@ export default function App() {
                 onBackup={handleBackupLinks}
                 onImportClick={handleTriggerImport}
                 onResetDefault={handleResetDefaultLinks}
+                onExitApp={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsAppExited(true);
+                }}
                 counts={{
                   jurnal: jurnalBKItems.length,
                   agenda: agendaItems.length,
@@ -1173,6 +1234,7 @@ export default function App() {
             onBackup={handleBackupLinks}
             onImportClick={handleTriggerImport}
             onResetDefault={handleResetDefaultLinks}
+            onExitApp={() => setIsAppExited(true)}
             counts={{
               jurnal: jurnalBKItems.length,
               agenda: agendaItems.length,

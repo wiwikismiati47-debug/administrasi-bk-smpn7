@@ -26,8 +26,10 @@ import {
   AlertTriangle,
   X,
   Compass,
-  CheckCircle2
+  CheckCircle2,
+  LogOut
 } from 'lucide-react';
+import { ExitAppModal } from './ExitAppModal';
 
 interface SidebarMenuProps {
   links: AppLink[];
@@ -40,6 +42,7 @@ interface SidebarMenuProps {
   onImportClick: () => void;
   onResetDefault?: () => void;
   onCloseMobile?: () => void;
+  onExitApp?: () => void;
   counts?: {
     jurnal?: number;
     agenda?: number;
@@ -99,9 +102,11 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
   onImportClick,
   onResetDefault,
   onCloseMobile,
+  onExitApp,
   counts
 }) => {
   const [search, setSearch] = useState('');
+  const [isExitModalOpen, setIsExitModalOpen] = useState(false);
 
   const getItemCount = (link: AppLink): number | undefined => {
     if (!counts) return undefined;
@@ -382,35 +387,64 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
       </div>
 
       {/* Footer Backup & Utilities */}
-      <div className="pt-2.5 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-500">
-        <span className="font-semibold text-slate-400">Total {links.length} Modul</span>
+      <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-2">
+        <span className="font-bold text-slate-400 text-xs shrink-0">Total {links.length} Modul</span>
 
-        <div className="flex items-center gap-1">
-          {onResetDefault && (
+        {/* Action Controls */}
+        <div className="flex items-center gap-2">
+          {/* Keluar Aplikasi Button */}
+          <button
+            type="button"
+            id="btn-keluar-aplikasi"
+            onClick={() => setIsExitModalOpen(true)}
+            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-700 border border-red-200 hover:border-red-300 rounded-xl font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+            title="Keluar / Tutup Sesi Aplikasi BK"
+          >
+            <LogOut className="w-3.5 h-3.5 text-red-600 shrink-0" />
+            <span>Keluar</span>
+          </button>
+
+          <div className="flex items-center gap-1 pl-1 border-l border-slate-200">
+            {onResetDefault && (
+              <button
+                onClick={onResetDefault}
+                className="p-1.5 text-slate-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                title="Reset Susunan Menu Awal"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            )}
             <button
-              onClick={onResetDefault}
-              className="p-1.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-colors"
-              title="Reset Susunan Menu Awal"
+              onClick={onBackup}
+              className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+              title="Download Backup Menu (JSON)"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5" />
             </button>
-          )}
-          <button
-            onClick={onBackup}
-            className="p-1.5 text-slate-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-            title="Download Backup Menu (JSON)"
-          >
-            <Download className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={onImportClick}
-            className="p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-            title="Upload / Restore Menu (JSON)"
-          >
-            <Upload className="w-3.5 h-3.5" />
-          </button>
+            <button
+              onClick={onImportClick}
+              className="p-1.5 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+              title="Upload / Restore Menu (JSON)"
+            >
+              <Upload className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Exit App Confirmation Popup Modal */}
+      <ExitAppModal
+        isOpen={isExitModalOpen}
+        onClose={() => setIsExitModalOpen(false)}
+        onConfirmExit={() => {
+          setIsExitModalOpen(false);
+          if (onExitApp) {
+            onExitApp();
+          } else {
+            window.location.reload();
+          }
+        }}
+      />
 
     </aside>
   );
