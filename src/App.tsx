@@ -136,7 +136,8 @@ export default function App() {
   // Connection state (Default true with permanent SMPN 7 Supabase connection)
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(true);
 
-  // Modals state
+  // Modals & Navigation state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState<boolean>(false);
   const [editingLink, setEditingLink] = useState<AppLink | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
@@ -1035,8 +1036,8 @@ export default function App() {
         </div>
       )}
 
-      {/* 3D Header with Logo */}
-      <div className="print:hidden">
+      {/* Header with Logo, Guru BK Selector, Sync Status, and Mobile Toggle */}
+      <div className="print:hidden sticky top-0 z-30">
         <DashboardHeader
           onBackup={handleBackupLinks}
           onImportClick={handleTriggerImport}
@@ -1044,6 +1045,8 @@ export default function App() {
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}
           totalLinksCount={links.length}
           onRefreshData={refreshAllData}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          isMobileMenuOpen={isMobileMenuOpen}
           isSyncing={
             isLoadingAgenda ||
             isLoadingUndangan ||
@@ -1057,13 +1060,103 @@ export default function App() {
             isLoadingJurnalBK
           }
         />
+
+        {/* Quick Horizontal Form Navigation Chips for Mobile & Laptop */}
+        <div className="bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar shadow-xs">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
+            Akses Cepat:
+          </span>
+          {links.slice(0, 8).map((link) => {
+            const isSelected = selectedLink?.id === link.id;
+            return (
+              <button
+                key={link.id}
+                onClick={() => {
+                  setSelectedLink(link);
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                  isSelected
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
+              >
+                <span className={`text-[9px] px-1 rounded font-black ${isSelected ? 'bg-blue-800 text-blue-100' : 'bg-slate-200 text-slate-600'}`}>
+                  {link.badge || 'FORM'}
+                </span>
+                <span>{link.title.replace('SMPN 7 PASURUAN', '').trim()}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* Mobile Drawer Navigation */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          {/* Drawer Content */}
+          <div className="relative w-84 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col z-50 animate-in slide-in-from-left duration-200">
+            <div className="p-3 bg-slate-900 text-white flex items-center justify-between">
+              <span className="font-extrabold text-sm tracking-tight text-white flex items-center gap-2">
+                <span>📚 Menu Administrasi BK</span>
+              </span>
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              <SidebarMenu
+                links={links}
+                selectedLink={selectedLink}
+                onSelectLink={(link) => {
+                  setSelectedLink(link);
+                  setIsMobileMenuOpen(false);
+                }}
+                onAddLink={() => {
+                  setEditingLink(null);
+                  setIsLinkModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                onEditLink={(link) => {
+                  setEditingLink(link);
+                  setIsLinkModalOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
+                onDeleteLink={handleDeleteLink}
+                onBackup={handleBackupLinks}
+                onImportClick={handleTriggerImport}
+                onResetDefault={handleResetDefaultLinks}
+                counts={{
+                  jurnal: jurnalBKItems.length,
+                  agenda: agendaItems.length,
+                  undangan: undanganItems.length,
+                  homeVisit: homeVisitItems.length,
+                  rekam: rekamPermasalahanItems.length,
+                  konselingIndividu: konselingIndividuItems.length,
+                  konselingKelompok: konselingKelompokItems.length,
+                  suratPernyataan: suratPernyataanItems.length,
+                  konferensiKasus: konferensiKasusItems.length,
+                  siswa: siswaItems.length,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Container Layout */}
-      <main className="flex-1 max-w-[1700px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col lg:flex-row gap-6 print:p-0 print:m-0 print:max-w-none print:block">
+      <main className="flex-1 max-w-[1700px] w-full mx-auto p-3 sm:p-5 lg:p-6 flex flex-col lg:flex-row gap-5 print:p-0 print:m-0 print:max-w-none print:block">
         
-        {/* Left Sidebar Menu */}
-        <div className="print:hidden w-full lg:w-88 xl:w-96 shrink-0">
+        {/* Left Sidebar Menu (Desktop/Laptop) */}
+        <div className="print:hidden hidden lg:block w-80 xl:w-88 shrink-0">
           <SidebarMenu
             links={links}
             selectedLink={selectedLink}
@@ -1080,6 +1173,18 @@ export default function App() {
             onBackup={handleBackupLinks}
             onImportClick={handleTriggerImport}
             onResetDefault={handleResetDefaultLinks}
+            counts={{
+              jurnal: jurnalBKItems.length,
+              agenda: agendaItems.length,
+              undangan: undanganItems.length,
+              homeVisit: homeVisitItems.length,
+              rekam: rekamPermasalahanItems.length,
+              konselingIndividu: konselingIndividuItems.length,
+              konselingKelompok: konselingKelompokItems.length,
+              suratPernyataan: suratPernyataanItems.length,
+              konferensiKasus: konferensiKasusItems.length,
+              siswa: siswaItems.length,
+            }}
           />
         </div>
 

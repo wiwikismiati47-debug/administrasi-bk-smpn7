@@ -351,41 +351,44 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
   }
 
   return (
-    <section className="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200/90 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden">
+    <section className="flex-1 min-w-0 bg-white rounded-3xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
       
       {/* Viewer Header Bar */}
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-4 sm:p-5 border-b border-blue-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+      <div className="bg-slate-900 text-white p-4 sm:p-5 border-b border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         
-        {/* Title & Badge */}
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-white text-blue-700 rounded-2xl font-black shadow-md shrink-0">
+        {/* Title, Badge & Category */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-2.5 bg-blue-600/20 border border-blue-500/30 text-blue-400 rounded-2xl shrink-0">
             {isInternalAgenda ? (
-              <BookOpen className="w-6 h-6" />
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalUndangan ? (
-              <Users className="w-6 h-6" />
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalHomeVisit ? (
-              <Home className="w-6 h-6" />
+              <Home className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalRekamPermasalahan ? (
-              <AlertTriangle className="w-6 h-6" />
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalKonselingIndividu ? (
-              <UserCheck className="w-6 h-6" />
+              <UserCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalKonselingKelompok ? (
-              <UserPlus className="w-6 h-6" />
+              <UserPlus className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalSuratPernyataan ? (
-              <FileCheck2 className="w-6 h-6" />
+              <FileCheck2 className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalKonferensiKasus ? (
-              <Users className="w-6 h-6" />
+              <Users className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : isInternalSiswa ? (
-              <GraduationCap className="w-6 h-6" />
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
+            ) : isInternalJurnalBK ? (
+              <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
             ) : (
-              <Globe className="w-6 h-6" />
+              <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
             )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="bg-amber-400 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-sm">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] font-black uppercase px-2 py-0.5 rounded-md">
                 {selectedLink?.badge || (
-                  isInternalSiswa ? 'SISWA' :
+                  isInternalJurnalBK ? 'JURNAL' :
+                  isInternalSiswa ? 'DATA SISWA' :
                   isInternalKonferensiKasus ? 'FORM H' :
                   isInternalSuratPernyataan ? 'FORM G' :
                   isInternalKonselingKelompok ? 'FORM F' :
@@ -395,12 +398,12 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                   isInternalUndangan ? 'FORM B' : 'FORM A'
                 )}
               </span>
-              <span className="text-xs text-blue-100 font-semibold">
+              <span className="text-xs text-slate-400 font-medium truncate">
                 {selectedLink?.category || 'Administrasi BK'}
               </span>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-0.5">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-extrabold tracking-tight text-white mt-1 truncate">
               {selectedLink
                 ? selectedLink.title
                 : 'AGENDA KERJA BK SMPN 7 PASURUAN'}
@@ -409,13 +412,13 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
         </div>
 
         {/* Right Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {isInternal ? (
             /* Internal Tabs & Direct Document Actions */
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
               
-              {/* Core Tabs */}
-              <div className="bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20 flex items-center gap-1">
+              {/* Core Tabs Segmented Control */}
+              <div className="bg-slate-800/90 p-1 rounded-xl border border-slate-700/80 flex items-center gap-1 overflow-x-auto max-w-full">
                 <button
                   onClick={() => {
                     setInternalTab('form');
@@ -430,10 +433,10 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                     if (editingSiswa) setEditingSiswa(null);
                     if (editingJurnalBK) setEditingJurnalBK(null);
                   }}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                     internalTab === 'form'
-                      ? 'bg-white text-blue-700 shadow-sm'
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                   }`}
                 >
                   <PlusCircle className="w-3.5 h-3.5" />
@@ -444,73 +447,75 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
  
                 <button
                   onClick={() => setInternalTab('table')}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                     internalTab === 'table'
-                      ? 'bg-white text-blue-700 shadow-sm'
-                      : 'text-white/90 hover:text-white hover:bg-white/10'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                   }`}
                 >
                   <ListFilter className="w-3.5 h-3.5" />
                   <span>
                     {isInternalJurnalBK
-                      ? `Daftar Jurnal BK (${(jurnalBKItems || []).length})`
+                      ? `Rekap Jurnal (${(jurnalBKItems || []).length})`
                       : isInternalKonferensiKasus
-                      ? `Daftar Konferensi Kasus (${(konferensiKasusItems || []).length})`
+                      ? `Rekap Kasus (${(konferensiKasusItems || []).length})`
                       : isInternalSuratPernyataan
-                      ? `Daftar Surat Pernyataan (${(suratPernyataanItems || []).length})`
+                      ? `Rekap Surat (${(suratPernyataanItems || []).length})`
                       : isInternalKonselingKelompok
-                      ? `Daftar Konseling Kelompok (${(konselingKelompokItems || []).length})`
+                      ? `Rekap Kelompok (${(konselingKelompokItems || []).length})`
                       : isInternalKonselingIndividu
-                      ? `Daftar Konseling Individu (${(konselingIndividuItems || []).length})`
+                      ? `Rekap Individu (${(konselingIndividuItems || []).length})`
                       : isInternalRekamPermasalahan
-                      ? `Daftar Rekam (${(rekamPermasalahanItems || []).length})`
+                      ? `Rekap Masalah (${(rekamPermasalahanItems || []).length})`
                       : isInternalHomeVisit
-                      ? `Daftar Home Visit (${(homeVisitItems || []).length})`
+                      ? `Rekap Home Visit (${(homeVisitItems || []).length})`
                       : isInternalUndangan
-                      ? `Daftar Undangan (${(undanganItems || []).length})`
-                      : `Daftar Agenda (${(agendaItems || []).length})`}
+                      ? `Rekap Undangan (${(undanganItems || []).length})`
+                      : isInternalSiswa
+                      ? `Daftar Siswa (${(siswaItems || []).length})`
+                      : `Rekap Agenda (${(agendaItems || []).length})`}
                   </span>
                 </button>
 
                 {isInternalAgenda && (
                   <button
                     onClick={() => setInternalTab('stats')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                       internalTab === 'stats'
-                        ? 'bg-white text-blue-700 shadow-sm'
-                        : 'text-white/90 hover:text-white hover:bg-white/10'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-700/60'
                     }`}
                   >
                     <BarChart2 className="w-3.5 h-3.5" />
-                    <span>Rekap</span>
+                    <span>Statistik</span>
                   </button>
                 )}
               </div>
 
               {/* Form B Quick Document Shortcut Actions */}
               {isInternalUndangan && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('surat_undangan')}
-                    className="px-2.5 py-1.5 bg-white text-blue-900 hover:bg-blue-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Surat Undangan Orang Tua"
                   >
-                    <Mail className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Surat Undangan</span>
+                    <Mail className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="hidden sm:inline">Surat Undangan</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('laporan_konsultasi')}
-                    className="px-2.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Laporan Konsultasi Orang Tua"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Laporan Konsultasi</span>
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="hidden sm:inline">Laporan Konsultasi</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('undangan_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Undangan"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -521,37 +526,37 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form C Home Visit Quick Document Shortcut Actions */}
               {isInternalHomeVisit && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('surat_tugas_home_visit')}
-                    className="px-2.5 py-1.5 bg-white text-amber-900 hover:bg-amber-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Surat Tugas Kunjungan Rumah"
                   >
-                    <FileText className="w-3.5 h-3.5 text-amber-600" />
-                    <span>Surat Tugas</span>
+                    <FileText className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="hidden sm:inline">Surat Tugas</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('surat_kesediaan_ortu')}
-                    className="px-2.5 py-1.5 bg-white text-emerald-900 hover:bg-emerald-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Surat Kesediaan Menerima Kunjungan Orang Tua"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Surat Kesediaan Ortu</span>
+                    <FileCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="hidden sm:inline">Kesediaan Ortu</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('laporan_home_visit')}
-                    className="px-2.5 py-1.5 bg-white text-blue-900 hover:bg-blue-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Laporan Home Visit"
                   >
-                    <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Laporan Home Visit</span>
+                    <FileCheck className="w-3.5 h-3.5 text-blue-400" />
+                    <span className="hidden sm:inline">Laporan</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('home_visit_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Home Visit"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -562,19 +567,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form D Rekam Permasalahan Quick Document Shortcut Actions */}
               {isInternalRekamPermasalahan && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('rekam_permasalahan_dokumen')}
-                    className="px-2.5 py-1.5 bg-white text-purple-900 hover:bg-purple-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Rekam Permasalahan Siswa"
                   >
-                    <FileText className="w-3.5 h-3.5 text-purple-600" />
-                    <span>Laporan Rekam</span>
+                    <FileText className="w-3.5 h-3.5 text-purple-400" />
+                    <span className="hidden sm:inline">Laporan Rekam</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('rekam_permasalahan_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Rekam Permasalahan"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -585,19 +590,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form E Konseling Individu Quick Document Shortcut Actions */}
               {isInternalKonselingIndividu && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('konseling_individu_dokumen')}
-                    className="px-2.5 py-1.5 bg-white text-teal-900 hover:bg-teal-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Dokumen Rencana Konseling Individu"
                   >
-                    <FileText className="w-3.5 h-3.5 text-teal-600" />
-                    <span>Cetak Rencana</span>
+                    <FileText className="w-3.5 h-3.5 text-teal-400" />
+                    <span className="hidden sm:inline">Cetak Rencana</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('konseling_individu_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Konseling Individu"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -608,19 +613,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form F Konseling Kelompok Quick Document Shortcut Actions */}
               {isInternalKonselingKelompok && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('konseling_kelompok_dokumen')}
-                    className="px-2.5 py-1.5 bg-white text-indigo-900 hover:bg-indigo-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Dokumen Rencana Konseling Kelompok"
                   >
-                    <FileText className="w-3.5 h-3.5 text-indigo-600" />
-                    <span>Cetak Rencana</span>
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="hidden sm:inline">Cetak Rencana</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('konseling_kelompok_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Konseling Kelompok"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -631,19 +636,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form G Surat Pernyataan Quick Document Shortcut Actions */}
               {isInternalSuratPernyataan && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('surat_pernyataan_dokumen')}
-                    className="px-2.5 py-1.5 bg-white text-violet-900 hover:bg-violet-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Dokumen Surat Pernyataan"
                   >
-                    <FileText className="w-3.5 h-3.5 text-violet-600" />
-                    <span>Cetak Surat</span>
+                    <FileText className="w-3.5 h-3.5 text-violet-400" />
+                    <span className="hidden sm:inline">Cetak Surat</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('surat_pernyataan_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Surat Pernyataan"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -654,19 +659,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form H Konferensi Kasus Quick Document Shortcut Actions */}
               {isInternalKonferensiKasus && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('konferensi_kasus_gabungan')}
-                    className="px-2.5 py-1.5 bg-white text-teal-900 hover:bg-teal-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Seluruh Dokumen Konferensi Kasus"
                   >
-                    <FileText className="w-3.5 h-3.5 text-teal-600" />
-                    <span>Cetak Gabungan</span>
+                    <FileText className="w-3.5 h-3.5 text-teal-400" />
+                    <span className="hidden sm:inline">Cetak Gabungan</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('konferensi_kasus_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Konferensi Kasus"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -677,19 +682,19 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
 
               {/* Form Jurnal BK Quick Document Shortcut Actions */}
               {isInternalJurnalBK && (
-                <div className="flex items-center gap-1.5 bg-white/10 backdrop-blur-md p-1 rounded-xl border border-white/20">
+                <div className="flex items-center gap-1.5 bg-slate-800/90 p-1 rounded-xl border border-slate-700/80">
                   <button
                     onClick={() => handleOpenPrint('jurnal_bk_dokumen')}
-                    className="px-2.5 py-1.5 bg-white text-sky-900 hover:bg-sky-50 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak / Preview Jurnal BK"
                   >
-                    <FileText className="w-3.5 h-3.5 text-sky-600" />
-                    <span>Cetak Jurnal</span>
+                    <FileText className="w-3.5 h-3.5 text-sky-400" />
+                    <span className="hidden sm:inline">Cetak Jurnal</span>
                   </button>
 
                   <button
                     onClick={() => handleOpenPrint('jurnal_bk_tabel')}
-                    className="px-2.5 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1"
+                    className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
                     title="Cetak Rekap Tabel Jurnal BK"
                   >
                     <Printer className="w-3.5 h-3.5 text-amber-300" />

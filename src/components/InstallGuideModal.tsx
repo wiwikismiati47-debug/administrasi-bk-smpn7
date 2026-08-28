@@ -17,8 +17,8 @@ import {
 interface InstallGuideModalProps {
   isOpen: boolean;
   onClose: () => void;
-  deferredPrompt: any;
-  onDirectInstall: () => void;
+  deferredPrompt?: any;
+  onDirectInstall?: () => void;
 }
 
 export const InstallGuideModal: React.FC<InstallGuideModalProps> = ({

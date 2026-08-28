@@ -3,14 +3,16 @@ import { GuruBkSelector } from './GuruBkSelector';
 import { InstallGuideModal } from './InstallGuideModal';
 import { LOGO_BK_BASE64 } from '../lib/logo';
 import {
+  Database,
+  RefreshCw,
+  Menu,
+  Sparkles,
   Download,
   Upload,
-  Database,
-  ShieldCheck,
-  Sparkles,
-  Layers,
-  BookOpen,
-  RefreshCw
+  Settings,
+  Smartphone,
+  CheckCircle2,
+  BookOpen
 } from 'lucide-react';
 
 interface DashboardHeaderProps {
@@ -21,6 +23,8 @@ interface DashboardHeaderProps {
   totalLinksCount: number;
   onRefreshData?: () => void;
   isSyncing?: boolean;
+  onToggleMobileMenu?: () => void;
+  isMobileMenuOpen?: boolean;
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
@@ -31,6 +35,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   totalLinksCount,
   onRefreshData,
   isSyncing = false,
+  onToggleMobileMenu,
 }) => {
   const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
   const [isInstallable, setIsInstallable] = React.useState(false);
@@ -47,7 +52,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       setIsInstallable(false);
       setDeferredPrompt(null);
       setIsInstallGuideOpen(false);
-      alert('Selamat! SABDA BK SPANJU dengan ikon BK Peduli berhasil diinstal di perangkat Anda.');
+      alert('Selamat! SABDA BK SPANJU berhasil diinstal di perangkat Anda.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -75,27 +80,32 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   };
 
   return (
-    <header className="bg-white/90 backdrop-blur-md text-slate-900 shadow-md border-b-4 border-gradient-to-r border-blue-600 relative overflow-hidden">
-      {/* Decorative Gradient Top Stripe */}
-      <div className="h-1.5 w-full bg-gradient-to-r from-blue-600 via-purple-600 via-pink-600 to-amber-500" />
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm transition-all">
+      {/* Top Accent Stripe */}
+      <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600" />
 
-      {/* Soft Background Accents */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-10 left-10 w-80 h-80 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
-
-      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 relative z-10">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3">
+        <div className="flex items-center justify-between gap-3">
           
-          {/* Logo & Application Title */}
-          <div className="flex items-center gap-4 text-center md:text-left">
-            {/* 3D Framed Emblem Logo */}
-            <div className="relative group shrink-0">
-              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl blur opacity-60 group-hover:opacity-100 transition duration-300" />
-              <div className="relative bg-white p-2 sm:p-2.5 rounded-2xl border border-slate-200 shadow-lg flex items-center justify-center">
+          {/* Left: Mobile Menu Toggle & Brand Logo */}
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+            {/* Mobile Menu Button (< lg) */}
+            <button
+              onClick={onToggleMobileMenu}
+              className="lg:hidden p-2 rounded-xl text-slate-700 hover:text-blue-600 hover:bg-slate-100 active:bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Buka Menu Navigasi"
+              title="Buka Menu Navigasi"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+
+            {/* School Logo Emblem */}
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-slate-50 border border-slate-200 p-1 flex items-center justify-center shadow-sm">
                 <img
                   src={LOGO_BK_BASE64}
                   alt="Logo SABDA BK SPANJU SMPN 7 Pasuruan"
-                  className="w-12 h-12 sm:w-14 sm:h-14 object-contain filter drop-shadow-md transform group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
@@ -104,120 +114,99 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
               </div>
             </div>
 
-            {/* School & App Names */}
-            <div>
-              <h1 className="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1 flex flex-col sm:flex-row sm:items-center gap-x-2 justify-center md:justify-start leading-tight">
-                <span className="bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent">
+            {/* Brand Title & School Info */}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-base sm:text-lg lg:text-xl font-black tracking-tight text-slate-900 leading-tight truncate">
                   SABDA BK SPANJU
+                </h1>
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  SMPN 7 PASURUAN
                 </span>
-                <span className="text-xs sm:text-sm font-semibold text-slate-500">
-                  (Sistem Administrasi BK Digital dan Akuntabel) SMPN 7 PASURUAN
-                </span>
-              </h1>
-
-              <p className="text-xs font-semibold text-slate-600 mt-1.5 flex items-center gap-1.5 justify-center md:justify-start">
-                <BookOpen className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
-                <span className="italic">"Data Tertata, Layanan Berkualitas."</span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate flex items-center gap-1">
+                <span className="text-blue-600 font-semibold hidden md:inline">Sistem Administrasi BK Digital</span>
+                <span className="hidden md:inline">•</span>
+                <span className="italic text-slate-600 truncate">"Data Tertata, Layanan Berkualitas"</span>
               </p>
             </div>
           </div>
 
-          {/* Action Bar: Backup, Upload, Supabase Pill */}
-          <div className="flex flex-wrap items-center justify-center md:justify-end gap-2.5">
+          {/* Right: Quick Action Controls */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Guru BK Selector */}
             <GuruBkSelector />
-            
-            {/* Install PWA Button with School Logo Mascot */}
-            <button
-              onClick={handleInstallClick}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white rounded-xl text-xs font-black shadow-md shadow-orange-500/20 hover:shadow-orange-500/30 active:scale-95 transition-all cursor-pointer relative overflow-hidden group/install"
-              title="Instal aplikasi SABDA BK SPANJU dengan ikon BK Peduli di HP atau Laptop Anda"
-            >
-              <div className="absolute inset-0 bg-white/10 translate-y-full group-hover/install:translate-y-0 transition-transform duration-300" />
-              <img
-                src={LOGO_BK_BASE64}
-                alt="Maskot BK"
-                className="w-4 h-4 object-contain rounded-full bg-white p-0.5 shadow-sm transform group-hover/install:rotate-12 transition-transform"
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://i.ibb.co/W4w3pQ3v/logo-konselor.jpg";
-                }}
-              />
-              <span>Instal Aplikasi</span>
-              {isInstallable && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-              )}
-            </button>
 
-            {/* Public Access Badge */}
-            <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm">
-              <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Akses Publik</span>
+            {/* Supabase Status Chip & Quick Refresh */}
+            <div className="hidden sm:flex items-center gap-1.5 bg-slate-50 border border-slate-200/80 rounded-xl px-2.5 py-1.5 shadow-sm">
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  {isSupabaseActive && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${isSupabaseActive ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                </span>
+                <span className="text-xs font-semibold text-slate-700 hidden md:inline">
+                  {isSupabaseActive ? 'Supabase Cloud' : 'Database Lokal'}
+                </span>
+              </div>
+
+              {onRefreshData && (
+                <button
+                  onClick={onRefreshData}
+                  disabled={isSyncing}
+                  className={`p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer ${
+                    isSyncing ? 'animate-spin text-blue-600' : ''
+                  }`}
+                  title="Sinkronisasi & Refresh Data Cloud"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Supabase Status Button */}
-            <button
-              onClick={onOpenSupabaseConfig}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
-                isSupabaseActive
-                  ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-emerald-500/20 hover:from-emerald-700 hover:to-teal-700'
-                  : 'bg-amber-50 text-amber-900 border border-amber-300 hover:bg-amber-100'
-              }`}
-              title="Status koneksi database Supabase Cloud"
-            >
-              <Database className="w-3.5 h-3.5" />
-              <span>{isSupabaseActive ? 'Supabase Cloud (Multiuser)' : 'Atur Supabase'}</span>
-              <span className={`w-2 h-2 rounded-full ${isSupabaseActive ? 'bg-emerald-300 animate-pulse' : 'bg-amber-400'}`} />
-            </button>
-
-            {/* Manual Cloud Refresh / Sync Button */}
+            {/* Mobile Sync Button (compact for small screens) */}
             {onRefreshData && (
               <button
                 onClick={onRefreshData}
                 disabled={isSyncing}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-xl text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50"
-                title="Muat ulang & sinkronkan data terbaru langsung dari Supabase Cloud"
+                className="sm:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors"
+                title="Refresh Data"
               >
-                <RefreshCw className={`w-3.5 h-3.5 text-blue-600 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span>{isSyncing ? 'Sinkronisasi...' : 'Sinkronkan Data'}</span>
+                <RefreshCw className={`w-4 h-4 text-slate-600 ${isSyncing ? 'animate-spin text-blue-600' : ''}`} />
               </button>
             )}
 
-            {/* Backup Links JSON Button */}
+            {/* Install PWA Button */}
             <button
-              onClick={onBackup}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold shadow-sm transition-all"
-              title="Unduh file backup JSON seluruh tombol aplikasi link"
+              onClick={handleInstallClick}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold shadow-sm active:scale-95 transition-all cursor-pointer"
+              title="Instal Aplikasi di HP atau Laptop"
             >
-              <Download className="w-3.5 h-3.5 text-blue-600" />
-              <span>Backup Link</span>
+              <Smartphone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Instal App</span>
             </button>
 
-            {/* Import JSON Button */}
+            {/* Supabase Config / Settings Trigger */}
             <button
-              onClick={onImportClick}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 transition-all"
-              title="Upload file JSON backup link aplikasi"
+              onClick={onOpenSupabaseConfig}
+              className="p-2 rounded-xl text-slate-700 hover:text-blue-600 hover:bg-slate-100 border border-slate-200 transition-colors"
+              title="Pengaturan Database Supabase"
             >
-              <Upload className="w-3.5 h-3.5" />
-              <span>Upload Link</span>
+              <Settings className="w-4 h-4 text-slate-600" />
             </button>
-
           </div>
 
         </div>
       </div>
 
-      {/* Interactive PWA Install Guide Modal */}
+      {/* Install Guide Modal */}
       <InstallGuideModal
         isOpen={isInstallGuideOpen}
         onClose={() => setIsInstallGuideOpen(false)}
         deferredPrompt={deferredPrompt}
-        onDirectInstall={handleDirectInstall}
+        onDirectInstall={deferredPrompt ? handleDirectInstall : undefined}
       />
     </header>
   );
 };
-
