@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sabda-bk-spanju-cache-v10';
+const CACHE_NAME = 'sabda-bk-spanju-cache-v11';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -7,15 +7,18 @@ const ASSETS_TO_CACHE = [
   '/favicon-16x16.png',
   '/favicon-32x32.png',
   '/favicon-48x48.png',
+  '/favicon-96x96.png',
   '/favicon.png',
+  '/icon-96.png',
   '/icon-128.png',
   '/icon-192.png',
   '/icon-256.png',
+  '/icon-384.png',
   '/icon-512.png',
   '/icon-maskable-192.png',
   '/icon-maskable-512.png',
   '/apple-touch-icon.png',
-  '/logo-bk-peduli.png'
+  '/logo-konselor.jpg'
 ];
 
 self.addEventListener('install', (event) => {
