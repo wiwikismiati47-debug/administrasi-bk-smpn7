@@ -1,5 +1,5 @@
 import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { HomeVisit, FormHomeVisitData, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
 import {
@@ -21,7 +21,14 @@ import {
   Eye,
   RotateCcw,
   CheckCircle2,
-  Pencil
+  Pencil,
+  Search,
+  ChevronDown,
+  X,
+  Layers,
+  Sparkles,
+  School,
+  Check
 } from 'lucide-react';
 
 interface FormHomeVisitProps {
@@ -42,6 +49,17 @@ const KELAS_PRESETS = [
   '7-A', '7-B', '7-C', '7-D', '7-E', '7-F', '7-G', '7-H',
   '8-A', '8-B', '8-C', '8-D', '8-E', '8-F', '8-G', '8-H',
   '9-A', '9-B', '9-C', '9-D', '9-E', '9-F', '9-G', '9-H'
+];
+
+const SEMESTER_LAPORAN_OPTIONS = [
+  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027',
+  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2026-2027',
+  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026',
+  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2025-2026',
+  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2024-2025',
+  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2024-2025',
+  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2023-2024',
+  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024',
 ];
 
 const PERIHAL_PRESETS = [
@@ -136,6 +154,35 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [catatanKhusus, setCatatanKhusus] = useState(
     'Konseli selama mengikuti pembelajaran disekolah termasuk siswa yang baik, tekun, tidak pernah membuat pelanggaran tata tertib sekolah dan tidak pernah bolos sekolah.'
   );
+
+  // Popup Modals state for Section 8 (14 Poin Laporan)
+  const [isSemesterPopupOpen, setIsSemesterPopupOpen] = useState(false);
+  const [isSiswaPopupOpen, setIsSiswaPopupOpen] = useState(false);
+  const [isKelasSemesterPopupOpen, setIsKelasSemesterPopupOpen] = useState(false);
+  const [searchSiswaPopup, setSearchSiswaPopup] = useState('');
+  const [filterKelasSiswaPopup, setFilterKelasSiswaPopup] = useState('ALL');
+
+  // Filtered students for popup selector
+  const filteredSiswaForPopup = useMemo(() => {
+    return (siswaItems || []).filter((s) => {
+      const q = searchSiswaPopup.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        (s.nama_siswa || '').toLowerCase().includes(q) ||
+        (s.nis || '').toLowerCase().includes(q) ||
+        (s.kelas || '').toLowerCase().includes(q);
+
+      const k = (s.kelas || '').toUpperCase().replace(/\s+/g, '');
+      const matchKelas =
+        filterKelasSiswaPopup === 'ALL' ||
+        k === filterKelasSiswaPopup.replace(/\s+/g, '') ||
+        (filterKelasSiswaPopup === 'KELAS_7' && k.startsWith('7')) ||
+        (filterKelasSiswaPopup === 'KELAS_8' && k.startsWith('8')) ||
+        (filterKelasSiswaPopup === 'KELAS_9' && k.startsWith('9'));
+
+      return matchSearch && matchKelas;
+    });
+  }, [siswaItems, searchSiswaPopup, filterKelasSiswaPopup]);
 
   // Auto Sync 14 Poin dari Form Utama
   const handleSyncLaporan14Poin = () => {
@@ -455,8 +502,13 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                 type="date"
                 value={tanggal}
                 onChange={(e) => handleDateChange(e.target.value)}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
                 required
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all [color-scheme:dark]"
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all [color-scheme:dark] cursor-pointer"
               />
             </div>
 
@@ -746,7 +798,12 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                 type="date"
                 value={tanggalSurat}
                 onChange={(e) => setTanggalSurat(e.target.value)}
-                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500 [color-scheme:dark]"
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-mono focus:ring-2 focus:ring-amber-500 [color-scheme:dark] cursor-pointer"
               />
             </div>
 
@@ -1054,27 +1111,39 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
 
             {/* Tanggal Surat Tugas */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                TGL SURAT TUGAS <span className="text-emerald-400 font-normal">(GARIS BAWAH)</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                <span>TGL SURAT TUGAS <span className="text-emerald-400 font-normal">(KALENDER)</span></span>
               </label>
               <input
                 type="date"
                 value={tanggalSuratTugas}
                 onChange={(e) => setTanggalSuratTugas(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-emerald-500/50 rounded-xl text-emerald-300 font-bold focus:ring-2 focus:ring-emerald-500"
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-emerald-500/50 rounded-xl text-emerald-300 font-bold focus:ring-2 focus:ring-emerald-500 [color-scheme:dark] cursor-pointer"
               />
             </div>
 
             {/* Tanggal Pernyataan Orang Tua */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                TGL PERNYATAAN ORANG TUA <span className="text-emerald-400 font-normal">(PASUARUAN, ...)</span>
+              <label className="block text-xs font-bold text-slate-300 mb-1 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-emerald-400" />
+                <span>TGL PERNYATAAN ORANG TUA <span className="text-emerald-400 font-normal">(KALENDER)</span></span>
               </label>
               <input
                 type="date"
                 value={tanggalPernyataanOrtu}
                 onChange={(e) => setTanggalPernyataanOrtu(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-emerald-500/50 rounded-xl text-emerald-300 font-bold focus:ring-2 focus:ring-emerald-500"
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-emerald-500/50 rounded-xl text-emerald-300 font-bold focus:ring-2 focus:ring-emerald-500 [color-scheme:dark] cursor-pointer"
               />
             </div>
           </div>
@@ -1105,50 +1174,150 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Header Judul Laporan & Semester */}
-            <div className="md:col-span-2 bg-slate-900/80 p-3.5 rounded-xl border border-slate-800">
-              <label className="block text-xs font-bold text-blue-300 mb-1">
-                SUB-JUDUL / SEMESTER & TAHUN PELAJARAN LAPORAN
-              </label>
-              <input
-                type="text"
-                value={semesterLaporan}
-                onChange={(e) => setSemesterLaporan(e.target.value)}
-                placeholder="SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024"
-                className="w-full px-3.5 py-2 text-xs bg-slate-950 border border-slate-700 rounded-xl text-white font-bold focus:ring-2 focus:ring-blue-500"
-              />
+            <div className="md:col-span-2 bg-slate-900/80 p-3.5 rounded-xl border border-blue-500/30">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-bold text-blue-300 flex items-center gap-1.5">
+                  <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                  <span>SUB-JUDUL / SEMESTER & TAHUN PELAJARAN LAPORAN <span className="text-blue-400 font-normal">(PILIHAN POPUP)</span></span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsSemesterPopupOpen(true)}
+                  className="text-[11px] bg-blue-600/90 hover:bg-blue-500 text-white font-bold px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 shadow"
+                >
+                  <Layers className="w-3 h-3" />
+                  <span>Pilihan Popup</span>
+                </button>
+              </div>
+              <div className="relative">
+                <select
+                  value={semesterLaporan}
+                  onChange={(e) => setSemesterLaporan(e.target.value)}
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-950 border border-blue-500/50 rounded-xl text-blue-200 font-bold focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer pr-10"
+                >
+                  {SEMESTER_LAPORAN_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt} className="bg-slate-900 text-white py-1">
+                      {opt}
+                    </option>
+                  ))}
+                  {!SEMESTER_LAPORAN_OPTIONS.includes(semesterLaporan) && semesterLaporan && (
+                    <option value={semesterLaporan} className="bg-slate-900 text-amber-300 py-1">
+                      {semesterLaporan} (Kustom)
+                    </option>
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-blue-400">
+                  <ChevronDown className="w-4 h-4" />
+                </div>
+              </div>
             </div>
 
             {/* Poin 1: Nama peserta didik/konseli */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                1. Nama peserta didik/konseli
-              </label>
-              <input
-                type="text"
-                value={namaSiswa}
-                onChange={(e) => setNamaSiswa(e.target.value)}
-                placeholder="Nama Siswa"
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-bold"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-blue-400" />
+                  <span>1. Nama peserta didik/konseli <span className="text-blue-400 font-normal">(PILIHAN POPUP)</span></span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsSiswaPopupOpen(true)}
+                  className="text-[11px] bg-blue-600 hover:bg-blue-500 text-white font-bold px-2.5 py-0.5 rounded-lg transition-colors flex items-center gap-1 shadow"
+                >
+                  <Search className="w-3 h-3" />
+                  <span>Pilih Siswa (Popup)</span>
+                </button>
+              </div>
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  value={namaSiswa}
+                  onChange={(e) => setNamaSiswa(e.target.value)}
+                  placeholder="Klik 'Pilih Siswa (Popup)' atau ketik nama..."
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-900 border border-blue-500/40 rounded-xl text-white font-bold focus:ring-2 focus:ring-blue-500 pr-9"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsSiswaPopupOpen(true)}
+                  className="absolute right-2 text-slate-400 hover:text-blue-300 p-1"
+                  title="Buka Popup Database Siswa"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Poin 2: Kelas/Semester */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
-                2. Kelas / Semester
-              </label>
-              <input
-                type="text"
-                value={kelas ? `${kelas} / ${semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}` : ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val.includes('/')) {
-                    setKelas(val.split('/')[0].trim());
-                  }
-                }}
-                placeholder="mis. VII-G / Genap"
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <School className="w-3.5 h-3.5 text-blue-400" />
+                  <span>2. Kelas / Semester <span className="text-blue-400 font-normal">(PILIHAN POPUP)</span></span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsKelasSemesterPopupOpen(true)}
+                  className="text-[11px] bg-blue-600/90 hover:bg-blue-500 text-white font-bold px-2.5 py-0.5 rounded-lg transition-colors flex items-center gap-1 shadow"
+                >
+                  <Layers className="w-3 h-3" />
+                  <span>Pilih Popup</span>
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Dropdown Kelas */}
+                <div className="relative">
+                  <select
+                    value={kelas}
+                    onChange={(e) => setKelas(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-blue-500/40 rounded-xl text-white font-bold focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer pr-8"
+                  >
+                    <option value="">-- Pilih Kelas --</option>
+                    {KELAS_PRESETS.map((k) => (
+                      <option key={k} value={k} className="bg-slate-900 text-white">
+                        Kelas {k}
+                      </option>
+                    ))}
+                    {!KELAS_PRESETS.includes(kelas) && kelas && (
+                      <option value={kelas} className="bg-slate-900 text-amber-300">
+                        {kelas} (Kustom)
+                      </option>
+                    )}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+
+                {/* Dropdown Semester */}
+                <div className="relative">
+                  <select
+                    value={semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}
+                    onChange={(e) => {
+                      const sem = e.target.value;
+                      if (sem === 'Ganjil') {
+                        setSemesterLaporan((prev) =>
+                          prev.replace(/GENAP/g, 'GANJIL').replace(/Semester 2/g, 'Semester 1').replace(/SEMESTER 2/g, 'SEMESTER 1')
+                        );
+                      } else {
+                        setSemesterLaporan((prev) =>
+                          prev.replace(/GANJIL/g, 'GENAP').replace(/Semester 1/g, 'Semester 2').replace(/SEMESTER 1/g, 'SEMESTER 2')
+                        );
+                      }
+                    }}
+                    className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-blue-500/40 rounded-xl text-white font-bold focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer pr-8"
+                  >
+                    <option value="Ganjil" className="bg-slate-900 text-white">
+                      Semester 1 (Ganjil)
+                    </option>
+                    <option value="Genap" className="bg-slate-900 text-white">
+                      Semester 2 (Genap)
+                    </option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Poin 3: Bidang Layanan */}
@@ -1156,13 +1325,28 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 3. Bidang Layanan
               </label>
-              <input
-                type="text"
-                value={bidangLayanan}
-                onChange={(e) => setBidangLayanan(e.target.value)}
-                placeholder="Pribadi / Belajar"
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
-              />
+              <div className="relative">
+                <select
+                  value={bidangLayanan}
+                  onChange={(e) => setBidangLayanan(e.target.value)}
+                  className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer pr-8"
+                >
+                  <option value="Pribadi / Belajar">Pribadi / Belajar</option>
+                  <option value="Pribadi">Pribadi</option>
+                  <option value="Sosial">Sosial</option>
+                  <option value="Belajar">Belajar</option>
+                  <option value="Karir">Karir</option>
+                  <option value="Pribadi / Sosial">Pribadi / Sosial</option>
+                  <option value="Belajar / Karir">Belajar / Karir</option>
+                  <option value="Sosial / Belajar">Sosial / Belajar</option>
+                  {!['Pribadi / Belajar', 'Pribadi', 'Sosial', 'Belajar', 'Karir', 'Pribadi / Sosial', 'Belajar / Karir', 'Sosial / Belajar'].includes(bidangLayanan) && bidangLayanan && (
+                    <option value={bidangLayanan}>{bidangLayanan} (Kustom)</option>
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
             </div>
 
             {/* Poin 5: Fungsi Layanan */}
@@ -1170,13 +1354,26 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
               <label className="block text-xs font-bold text-slate-300 mb-1">
                 5. Fungsi layanan
               </label>
-              <input
-                type="text"
-                value={fungsiLayanan}
-                onChange={(e) => setFungsiLayanan(e.target.value)}
-                placeholder="Pemahaman/Pencegahan/Penyembuhan"
-                className="w-full px-3.5 py-2 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold"
-              />
+              <div className="relative">
+                <select
+                  value={fungsiLayanan}
+                  onChange={(e) => setFungsiLayanan(e.target.value)}
+                  className="w-full px-3 py-2.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-white font-semibold focus:ring-2 focus:ring-blue-500 appearance-none cursor-pointer pr-8"
+                >
+                  <option value="Pemahaman/Pencegahan/Penyembuhan">Pemahaman/Pencegahan/Penyembuhan</option>
+                  <option value="Pemahaman">Pemahaman</option>
+                  <option value="Pencegahan">Pencegahan</option>
+                  <option value="Pengentasan / Penyembuhan">Pengentasan / Penyembuhan</option>
+                  <option value="Pemeliharaan dan Pengembangan">Pemeliharaan dan Pengembangan</option>
+                  <option value="Advokasi">Advokasi</option>
+                  {!['Pemahaman/Pencegahan/Penyembuhan', 'Pemahaman', 'Pencegahan', 'Pengentasan / Penyembuhan', 'Pemeliharaan dan Pengembangan', 'Advokasi'].includes(fungsiLayanan) && fungsiLayanan && (
+                    <option value={fungsiLayanan}>{fungsiLayanan} (Kustom)</option>
+                  )}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none text-slate-400">
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </div>
+              </div>
             </div>
 
             {/* Poin 4: Topik / Permasalahan */}
@@ -1364,6 +1561,353 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
         </div>
 
       </form>
+
+      {/* MODAL POPUP 1: PILIH SEMESTER & TAHUN PELAJARAN LAPORAN */}
+      {isSemesterPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                <GraduationCap className="w-5 h-5 text-blue-400" />
+                <span>Pilih Semester & Tahun Pelajaran</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSemesterPopupOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
+              <p className="text-xs text-slate-400 mb-3">
+                Pilih salah satu format semester dan tahun ajaran resmi di bawah ini:
+              </p>
+              {SEMESTER_LAPORAN_OPTIONS.map((item) => {
+                const isSelected = semesterLaporan === item;
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setSemesterLaporan(item);
+                      setIsSemesterPopupOpen(false);
+                    }}
+                    className={`w-full p-3 rounded-xl text-left text-xs font-bold transition-all flex items-center justify-between border ${
+                      isSelected
+                        ? 'bg-blue-600/30 border-blue-500 text-blue-200 shadow-md ring-1 ring-blue-500'
+                        : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:bg-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <span>{item}</span>
+                    {isSelected && <Check className="w-4 h-4 text-blue-400 shrink-0 ml-2" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-slate-400">Atau pilih kustom melalui input</span>
+              <button
+                type="button"
+                onClick={() => setIsSemesterPopupOpen(false)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition-colors"
+              >
+                Tutup Popup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP 2: PILIH PESERTA DIDIK / SISWA */}
+      {isSiswaPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            
+            {/* Header */}
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                <Users className="w-5 h-5 text-blue-400" />
+                <span>Pilih Peserta Didik / Konseli</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSiswaPopupOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search & Filter */}
+            <div className="p-4 border-b border-slate-800 bg-slate-950/30 space-y-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchSiswaPopup}
+                  onChange={(e) => setSearchSiswaPopup(e.target.value)}
+                  placeholder="Cari nama siswa atau NIS..."
+                  autoFocus
+                  className="w-full pl-9 pr-8 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-semibold focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                {searchSiswaPopup && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchSiswaPopup('')}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-white"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Class Filter Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setFilterKelasSiswaPopup('ALL')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                    filterKelasSiswaPopup === 'ALL'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  Semua ({siswaItems.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterKelasSiswaPopup('KELAS_7')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                    filterKelasSiswaPopup === 'KELAS_7'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  Kelas 7
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterKelasSiswaPopup('KELAS_8')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                    filterKelasSiswaPopup === 'KELAS_8'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  Kelas 8
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterKelasSiswaPopup('KELAS_9')}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors ${
+                    filterKelasSiswaPopup === 'KELAS_9'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  Kelas 9
+                </button>
+                {kelas && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterKelasSiswaPopup(kelas)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors border border-amber-500/40 ${
+                      filterKelasSiswaPopup === kelas
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                    }`}
+                  >
+                    Hanya Kelas {kelas}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Student List */}
+            <div className="p-4 space-y-1.5 overflow-y-auto max-h-[50vh]">
+              {filteredSiswaForPopup.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 space-y-2">
+                  <User className="w-8 h-8 mx-auto text-slate-600" />
+                  <p className="text-xs">Tidak ada siswa yang cocok dengan pencarian.</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (searchSiswaPopup.trim()) {
+                        setNamaSiswa(searchSiswaPopup.trim());
+                        setIsSiswaPopupOpen(false);
+                      }
+                    }}
+                    className="mt-2 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg font-bold"
+                  >
+                    Gunakan "{searchSiswaPopup}" Sebagai Nama Siswa
+                  </button>
+                </div>
+              ) : (
+                filteredSiswaForPopup.map((siswa) => {
+                  const isSelected = (namaSiswa || '').toLowerCase() === (siswa.nama_siswa || '').toLowerCase();
+                  return (
+                    <button
+                      key={siswa.id || `${siswa.nis}-${siswa.nama_siswa}`}
+                      type="button"
+                      onClick={() => {
+                        setNamaSiswa(siswa.nama_siswa);
+                        if (siswa.kelas) setKelas(siswa.kelas);
+                        if (siswa.nis) setNisSiswa(siswa.nis);
+                        setIsSiswaPopupOpen(false);
+                      }}
+                      className={`w-full p-2.5 rounded-xl text-left text-xs transition-all flex items-center justify-between border ${
+                        isSelected
+                          ? 'bg-blue-600/30 border-blue-500 text-blue-200 shadow ring-1 ring-blue-500'
+                          : 'bg-slate-950/80 border-slate-800 text-slate-300 hover:bg-slate-800 hover:border-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-950 border border-blue-500/40 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0">
+                          {siswa.nama_siswa ? siswa.nama_siswa.charAt(0).toUpperCase() : 'S'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-white text-xs">{siswa.nama_siswa}</div>
+                          <div className="text-[10px] text-slate-400">
+                            NIS: <span className="font-mono text-slate-300">{siswa.nis || '-'}</span> • Kelas:{' '}
+                            <span className="font-bold text-amber-400">{siswa.kelas || '-'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded font-mono text-slate-300">
+                          Pilih
+                        </span>
+                        {isSelected && <Check className="w-4 h-4 text-blue-400" />}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-3.5 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between gap-3">
+              <span className="text-[11px] text-slate-400">
+                Menampilkan <strong className="text-white">{filteredSiswaForPopup.length}</strong> siswa
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsSiswaPopupOpen(false)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* MODAL POPUP 3: PILIH KELAS & SEMESTER */}
+      {isKelasSemesterPopupOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-blue-500/50 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+              <div className="flex items-center gap-2 text-blue-400 font-black text-sm">
+                <School className="w-5 h-5 text-blue-400" />
+                <span>Pilih Kelas & Semester</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsKelasSemesterPopupOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[65vh]">
+              {/* Semester Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-2">
+                  PILIH SEMESTER:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSemesterLaporan((prev) =>
+                        prev.replace(/GENAP/g, 'GANJIL').replace(/Semester 2/g, 'Semester 1').replace(/SEMESTER 2/g, 'SEMESTER 1')
+                      );
+                    }}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all border text-center ${
+                      semesterLaporan.includes('GANJIL')
+                        ? 'bg-blue-600 text-white border-blue-400 shadow'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    Semester 1 (Ganjil)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSemesterLaporan((prev) =>
+                        prev.replace(/GANJIL/g, 'GENAP').replace(/Semester 1/g, 'Semester 2').replace(/SEMESTER 1/g, 'SEMESTER 2')
+                      );
+                    }}
+                    className={`p-2.5 rounded-xl text-xs font-bold transition-all border text-center ${
+                      semesterLaporan.includes('GENAP')
+                        ? 'bg-blue-600 text-white border-blue-400 shadow'
+                        : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'
+                    }`}
+                  >
+                    Semester 2 (Genap)
+                  </button>
+                </div>
+              </div>
+
+              {/* Class Selection Grid */}
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-2">
+                  PILIH KELAS:
+                </label>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {KELAS_PRESETS.map((k) => {
+                    const isSelected = kelas === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setKelas(k)}
+                        className={`p-2 rounded-xl text-xs font-bold transition-all border text-center ${
+                          isSelected
+                            ? 'bg-amber-500 text-slate-950 border-amber-300 shadow font-black'
+                            : 'bg-slate-950 border-slate-800 text-slate-300 hover:bg-slate-800'
+                        }`}
+                      >
+                        {k}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-xs text-center font-bold text-blue-300">
+                Pilihan Saat Ini: <span className="text-amber-400">{kelas || '-'}</span> /{' '}
+                <span className="text-white">{semesterLaporan.includes('GANJIL') ? 'Ganjil' : 'Genap'}</span>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-800 bg-slate-950/70 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => setIsKelasSemesterPopupOpen(false)}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl transition-colors"
+              >
+                Selesai / Terapkan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
