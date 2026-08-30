@@ -818,7 +818,10 @@ export function generateSuratKesediaanOrtuHTML(item: HomeVisit): string {
   const nisSiswa = item.nis_siswa || '....................';
   
   const petugasPenerimaKunjungan = item.petugas_penerima_kunjungan || item.petugas_1 || item.nama_guru_bk || DEFAULT_GURU_BK;
-  const nomorSuratTugas = item.nomor_surat_tugas || '015';
+  const rawNomorSuratTugas = item.nomor_surat_tugas || '015';
+  const nomorSuratTugas = rawNomorSuratTugas.includes('/423.')
+    ? rawNomorSuratTugas
+    : `400/ ${rawNomorSuratTugas} /423.102.54/${item.tahun || '2026'}`;
   const tanggalSuratTugas = item.tanggal_surat_tugas ? formatTanggalIndo(item.tanggal_surat_tugas) : (item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo);
   const tanggalPernyataanOrtu = item.tanggal_pernyataan_ortu ? formatTanggalIndo(item.tanggal_pernyataan_ortu) : todayIndo;
 
@@ -850,8 +853,8 @@ export function generateSuratKesediaanOrtuHTML(item: HomeVisit): string {
       Di Pasuruan
     </div>
 
-    <p style="margin-top: 20px;">Dengan Hormat</p>
-    <p>Kami yang bertanda tangan dibawahini :</p>
+    <p style="margin-top: 20px;">Dengan Hormat,</p>
+    <p>Kami yang bertanda tangan di bawah ini :</p>
 
     <table style="margin-left: 20px; margin-bottom: 12px; border-collapse: collapse; width: 90%;">
       <tr>
@@ -866,7 +869,7 @@ export function generateSuratKesediaanOrtuHTML(item: HomeVisit): string {
       </tr>
     </table>
 
-    <p style="margin-top: 15px;">Orangtua /Wali Siswa dari tersebut di bawahini :</p>
+    <p style="margin-top: 15px;">Orang Tua / Wali Siswa dari siswa tersebut di bawah ini :</p>
 
     <table style="margin-left: 20px; margin-bottom: 12px; border-collapse: collapse; width: 90%;">
       <tr>
@@ -906,7 +909,7 @@ export function generateSuratKesediaanOrtuHTML(item: HomeVisit): string {
     </table>
 
     <p style="text-align: justify; line-height: 1.5; margin-top: 15px;">
-      Untuk membicarakan masalah yang di hadapi oleh putra /putri kami tersebut diatas sesuai dengan<br/>
+      Untuk membicarakan masalah yang dihadapi oleh putra / putri kami tersebut di atas sesuai dengan<br/>
       Surat Tugas nomor <u>${nomorSuratTugas}</u> tanggal <u>${tanggalSuratTugas}</u>
     </p>
 
@@ -915,8 +918,8 @@ export function generateSuratKesediaanOrtuHTML(item: HomeVisit): string {
         <td style="width: 45%;"></td>
         <td style="width: 55%; text-align: center;">
           Pasuruan, <u>${tanggalPernyataanOrtu}</u><br/><br/>
-          HormatKami,<br/>
-          Orang Tua /Walisiswa<br/><br/><br/><br/><br/>
+          Hormat Kami,<br/>
+          Orang Tua / Wali Siswa<br/><br/><br/><br/><br/>
           ( <u>${namaOrangTua}</u> )
         </td>
       </tr>

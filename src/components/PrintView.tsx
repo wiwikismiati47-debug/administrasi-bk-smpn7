@@ -1130,8 +1130,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   <div>Di Pasuruan</div>
                 </div>
 
-                <div className="mt-4">Dengan Hormat</div>
-                <div>Kami yang bertanda tangan dibawahini :</div>
+                <div className="mt-4">Dengan Hormat,</div>
+                <div>Kami yang bertanda tangan di bawah ini :</div>
 
                 <div className="pl-6 space-y-1 my-2">
                   <div className="grid grid-cols-[80px_10px_1fr]">
@@ -1142,7 +1142,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   </div>
                 </div>
 
-                <div className="mt-3">Orangtua /Wali Siswa dari tersebut di bawahini :</div>
+                <div className="mt-3">Orang Tua / Wali Siswa dari siswa tersebut di bawah ini :</div>
                 <div className="pl-6 space-y-1 my-2">
                   <div className="grid grid-cols-[80px_10px_1fr]">
                     <span>Nama</span><span>:</span><u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.nama_siswa || '....................................'}</u>
@@ -1171,8 +1171,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 </div>
 
                 <div className="mt-4 text-justify">
-                  Untuk membicarakan masalah yang di hadapi oleh putra /putri kami tersebut diatas sesuai dengan<br/>
-                  Surat Tugas nomor <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.nomor_surat_tugas || '......'}</u> tanggal <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.tanggal_surat_tugas ? formatIndoDate(currentHomeVisit.tanggal_surat_tugas) : (currentHomeVisit.tanggal_surat ? formatIndoDate(currentHomeVisit.tanggal_surat) : formatIndoDate(currentHomeVisit.tanggal))}</u>
+                  Untuk membicarakan masalah yang dihadapi oleh putra / putri kami tersebut di atas sesuai dengan<br/>
+                  Surat Tugas nomor <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.nomor_surat_tugas ? (currentHomeVisit.nomor_surat_tugas.includes('/423.') ? currentHomeVisit.nomor_surat_tugas : `400/ ${currentHomeVisit.nomor_surat_tugas} /423.102.54/${currentHomeVisit.tahun || '2026'}`) : `400/ 015 /423.102.54/${currentHomeVisit.tahun || '2026'}`}</u> tanggal <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.tanggal_surat_tugas ? formatIndoDate(currentHomeVisit.tanggal_surat_tugas) : (currentHomeVisit.tanggal_surat ? formatIndoDate(currentHomeVisit.tanggal_surat) : formatIndoDate(currentHomeVisit.tanggal))}</u>
                 </div>
 
                 {/* Signature */}
