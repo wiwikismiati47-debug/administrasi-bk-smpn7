@@ -706,12 +706,12 @@ export function generateSuratTugasHomeVisitHTML(item: HomeVisit): string {
 
     <div style="margin-bottom: 15px;">
       Kepada<br/>
-      Yth. Bapk /Ibu /WaliSiswa <u><b>${namaOrangTua}</b></u><br/>
+      Yth. Bapak / Ibu / Wali Siswa <u><b>${item.nama_siswa || '....................................'}</b></u><br/>
       Di<br/>
       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tempat
     </div>
 
-    <p>DenganHormat.</p>
+    <p>Dengan Hormat,</p>
     <p>Dengan ini kami menugaskan :</p>
     <table style="margin-left: 20px; margin-bottom: 10px;">
       <tr>

@@ -817,14 +817,14 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div className="mt-3">
                   <div>Kepada</div>
                   <div>
-                    Yth. Bapk /Ibu /WaliSiswa <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.nama_orang_tua || '....................................'}</u>
+                    Yth. Bapak / Ibu / Wali Siswa <u className="font-bold print:no-underline print:border-b print:border-black">{currentHomeVisit.nama_siswa || '....................................'}</u>
                   </div>
                   <div>Di</div>
                   <div className="pl-6">Tempat</div>
                 </div>
 
                 {/* Body Text */}
-                <div className="mt-3">DenganHormat.</div>
+                <div className="mt-3">Dengan Hormat,</div>
                 <div>Dengan ini kami menugaskan :</div>
 
                 <div className="pl-6 space-y-1 my-2">
