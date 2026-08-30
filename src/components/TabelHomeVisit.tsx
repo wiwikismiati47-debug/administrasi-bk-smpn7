@@ -77,25 +77,47 @@ export const TabelHomeVisit: React.FC<TabelHomeVisitProps> = ({
   const [selectedTahun, setSelectedTahun] = useState('Semua Tahun');
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
 
-  // Filter items
-  const filtered = items.filter((item) => {
-    const matchesSearch =
-      item.nama_siswa.toLowerCase().includes(search.toLowerCase()) ||
-      item.nama_orang_tua.toLowerCase().includes(search.toLowerCase()) ||
-      item.perihal_home_visit.toLowerCase().includes(search.toLowerCase()) ||
-      item.uraian_permasalahan.toLowerCase().includes(search.toLowerCase()) ||
-      item.alamat.toLowerCase().includes(search.toLowerCase()) ||
-      item.kelas.toLowerCase().includes(search.toLowerCase());
+  // Safe Filter items
+  const filtered = (items || []).filter((item) => {
+    if (!item) return false;
+    const searchLower = (search || '').toLowerCase().trim();
+    const namaSiswa = item.nama_siswa || '';
+    const namaOrtu = item.nama_orang_tua || '';
+    const perihal = item.perihal_home_visit || item.topik_permasalahan || '';
+    const uraian = item.uraian_permasalahan || item.gambaran_ringkas_masalah || '';
+    const alamat = item.alamat || item.alamat_kunjungan || '';
+    const kelas = item.kelas || '';
 
-    const matchesKelas = selectedKelas === 'Semua Kelas' || item.kelas === selectedKelas;
-    const matchesBulan = selectedBulan === 'Semua Bulan' || item.bulan === selectedBulan;
-    const matchesTahun = selectedTahun === 'Semua Tahun' || item.tahun === selectedTahun;
+    const matchesSearch =
+      !searchLower ||
+      namaSiswa.toLowerCase().includes(searchLower) ||
+      namaOrtu.toLowerCase().includes(searchLower) ||
+      perihal.toLowerCase().includes(searchLower) ||
+      uraian.toLowerCase().includes(searchLower) ||
+      alamat.toLowerCase().includes(searchLower) ||
+      kelas.toLowerCase().includes(searchLower);
+
+    const itemBulan = item.bulan || '';
+    const itemTahun = item.tahun || (item.tanggal ? item.tanggal.slice(0, 4) : '');
+
+    const matchesKelas = selectedKelas === 'Semua Kelas' || kelas === selectedKelas;
+    const matchesBulan =
+      selectedBulan === 'Semua Bulan' ||
+      itemBulan.toLowerCase() === selectedBulan.toLowerCase() ||
+      (item.tanggal && selectedBulan.toLowerCase().includes(item.tanggal.slice(5, 7)));
+    const matchesTahun = selectedTahun === 'Semua Tahun' || itemTahun === selectedTahun;
 
     return matchesSearch && matchesKelas && matchesBulan && matchesTahun;
   });
 
   // Get unique years in data
-  const yearsInSeries = Array.from(new Set(items.map((i) => i.tahun))).sort().reverse();
+  const yearsInSeries = Array.from(
+    new Set(
+      (items || [])
+        .map((i) => i?.tahun || (i?.tanggal ? i.tanggal.slice(0, 4) : ''))
+        .filter(Boolean)
+    )
+  ).sort().reverse();
 
   // Export to Excel function with Letterhead (Kop)
   const handleExportExcel = () => {

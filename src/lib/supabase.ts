@@ -491,6 +491,89 @@ export async function deleteUndanganItem(id: string): Promise<{ success: boolean
    3. HOME VISIT / KUNJUNGAN RUMAH (Hybrid Supabase & Local)
    ========================================================================== */
 
+export const HOME_VISIT_TABLE_CANDIDATES = [
+  DEFAULT_HOME_VISIT_TABLE_NAME,
+  'home_visit_bk',
+  'home_visit_BK',
+  'home_visit',
+  'Home_Visit',
+  'HomeVisit',
+  'homevisit',
+  'homevisit_bk',
+  'kunjungan_rumah',
+  'Kunjungan_Rumah'
+];
+
+export function mapSupabaseRowToHomeVisit(row: any): HomeVisit {
+  if (!row) return {} as HomeVisit;
+  const now = new Date().toISOString();
+  const rawDate = row.tanggal || row.created_at || now.split('T')[0];
+  let calculatedHari = row.hari || '';
+  let calculatedBulan = row.bulan || '';
+  let calculatedTahun = row.tahun || '';
+
+  if (rawDate && (!calculatedBulan || !calculatedTahun)) {
+    try {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        const DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        if (!calculatedHari) calculatedHari = DAYS[d.getDay()];
+        if (!calculatedBulan) calculatedBulan = MONTHS[d.getMonth()];
+        if (!calculatedTahun) calculatedTahun = String(d.getFullYear());
+      }
+    } catch {}
+  }
+
+  return {
+    id: String(row.id || `homevisit-${Date.now()}`),
+    created_at: row.created_at || now,
+    updated_at: row.updated_at || now,
+    hari: calculatedHari,
+    tanggal: rawDate,
+    bulan: calculatedBulan,
+    tahun: calculatedTahun,
+    waktu: row.waktu || row.jam || '08.00 WIB',
+    kelas: row.kelas || row.kelas_siswa || '',
+    nama_siswa: row.nama_siswa || row.nama || row.siswa || '',
+    nama_orang_tua: row.nama_orang_tua || row.orang_tua || row.ortu || row.nama_ortu || '',
+    pekerjaan_orang_tua: row.pekerjaan_orang_tua || row.pekerjaan || row.pekerjaan_ortu || '',
+    alamat: row.alamat || row.alamat_kunjungan || row.alamat_rumah || '',
+    perihal_home_visit: row.perihal_home_visit || row.topik_permasalahan || row.perihal || 'Kunjungan Rumah Terkait Pembinaan Siswa',
+    uraian_permasalahan: row.uraian_permasalahan || row.gambaran_ringkas_masalah || row.uraian || '',
+    tindak_lanjut: row.tindak_lanjut || row.tindaklanjut || '',
+    link_foto_kegiatan: row.link_foto_kegiatan || row.foto || '',
+    keterangan: row.keterangan || row.status || '',
+    semester_laporan: row.semester_laporan || '',
+    bidang_layanan: row.bidang_layanan || 'Pribadi & Sosial',
+    topik_permasalahan: row.topik_permasalahan || row.perihal_home_visit || '',
+    fungsi_layanan: row.fungsi_layanan || 'Pengentasan / Advokasi',
+    pihak_terlibat: row.pihak_terlibat || 'Guru BK, Wali Kelas, Orang Tua Siswa',
+    tujuan_kegiatan: row.tujuan_kegiatan || '',
+    gambaran_ringkas_masalah: row.gambaran_ringkas_masalah || row.uraian_permasalahan || '',
+    alamat_kunjungan: row.alamat_kunjungan || row.alamat || '',
+    hari_tanggal_lama_kunjungan: row.hari_tanggal_lama_kunjungan || '',
+    anggota_keluarga_dikunjungi: row.anggota_keluarga_dikunjungi || row.nama_orang_tua || '',
+    rencana_evaluasi: row.rencana_evaluasi || '',
+    catatan_khusus: row.catatan_khusus || '',
+    nama_guru_bk: row.nama_guru_bk || getActiveGuruBK().nama,
+    nip_guru_bk: row.nip_guru_bk || getActiveGuruBK().nip,
+    nama_kepala_sekolah: row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: row.nip_kepala_sekolah || '19860410 201001 2 030',
+    tanggal_surat: row.tanggal_surat || rawDate,
+    tempat_surat: row.tempat_surat || 'Pasuruan',
+    nomor_surat_tugas: row.nomor_surat_tugas || '',
+    petugas_1: row.petugas_1 || row.nama_guru_bk || getActiveGuruBK().nama,
+    petugas_2: row.petugas_2 || '',
+    jabatan_petugas_1: row.jabatan_petugas_1 || 'Guru BK',
+    jabatan_petugas_2: row.jabatan_petugas_2 || 'Wali Kelas',
+    nis_siswa: row.nis_siswa || row.nis || '',
+    tanggal_surat_tugas: row.tanggal_surat_tugas || rawDate,
+    petugas_penerima_kunjungan: row.petugas_penerima_kunjungan || row.nama_orang_tua || '',
+    tanggal_pernyataan_ortu: row.tanggal_pernyataan_ortu || rawDate
+  };
+}
+
 export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSupabase: boolean; error?: string }> {
   const localData = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
   const config = getSavedSupabaseConfig();
@@ -498,24 +581,40 @@ export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSu
 
   if (!client) return { data: localData, isFromSupabase: false };
 
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_HOME_VISIT_TABLE_NAME)
-      .select('*')
-      .order('tanggal', { ascending: false });
+  let lastError = '';
+  const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
 
-    if (error) {
-      console.warn('Supabase fetchAllHomeVisit warning, using local storage:', error.message);
-      return { data: localData, isFromSupabase: false, error: error.message };
+  for (const tableName of candidates) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (!error && Array.isArray(data)) {
+        if (data.length > 0 || tableName === DEFAULT_HOME_VISIT_TABLE_NAME) {
+          const mapped = data.map(mapSupabaseRowToHomeVisit);
+          // Merge local un-synced items with mapped data
+          const mergedMap = new Map<string, HomeVisit>();
+          mapped.forEach((item) => mergedMap.set(item.id, item));
+          localData.forEach((item) => {
+            if (!mergedMap.has(item.id)) {
+              mergedMap.set(item.id, item);
+            }
+          });
+          const mergedList = Array.from(mergedMap.values()).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+          safeSetStorage(STORAGE_KEY_HOME_VISIT, mergedList);
+          return { data: mergedList, isFromSupabase: true };
+        }
+      } else if (error) {
+        lastError = error.message;
+      }
+    } catch (err: any) {
+      lastError = err?.message || 'Error query';
     }
-
-    const fetched = (data || []) as HomeVisit[];
-    safeSetStorage(STORAGE_KEY_HOME_VISIT, fetched);
-    return { data: fetched, isFromSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Home Visit';
-    return { data: localData, isFromSupabase: false, error: msg };
   }
+
+  return { data: localData, isFromSupabase: false, error: lastError };
 }
 
 export async function saveOrUpdateHomeVisit(
@@ -597,17 +696,25 @@ export async function saveOrUpdateHomeVisit(
     };
   }
 
-  // 2. Try Supabase upsert
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_HOME_VISIT_TABLE_NAME)
-      .upsert(formattedObject, { onConflict: 'id' })
-      .select()
-      .single();
+  // 2. Try Supabase upsert on candidates
+  const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
+  for (const tableName of candidates) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .upsert(formattedObject, { onConflict: 'id' })
+        .select()
+        .single();
 
-    if (error) {
-      console.warn('Supabase save error (saved locally):', error.message);
-      // Attempt simplified payload if table schema is missing some columns
+      if (!error) {
+        return {
+          success: true,
+          data: (data ? mapSupabaseRowToHomeVisit(data) : formattedObject),
+          isSupabase: true
+        };
+      }
+
+      // If full object failed, attempt simplified payload
       try {
         const simplePayload: any = {
           id: targetId,
@@ -635,7 +742,7 @@ export async function saveOrUpdateHomeVisit(
           tempat_surat: formattedObject.tempat_surat
         };
         const retryRes = await client
-          .from(DEFAULT_HOME_VISIT_TABLE_NAME)
+          .from(tableName)
           .upsert(simplePayload, { onConflict: 'id' })
           .select()
           .single();
@@ -647,29 +754,15 @@ export async function saveOrUpdateHomeVisit(
           };
         }
       } catch {}
-
-      return {
-        success: true,
-        data: formattedObject,
-        isSupabase: false,
-        error: `Tersimpan di lokal. Catatan Cloud: ${error.message}`
-      };
-    }
-
-    return {
-      success: true,
-      data: (data || formattedObject) as HomeVisit,
-      isSupabase: true
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return {
-      success: true,
-      data: formattedObject,
-      isSupabase: false,
-      error: `Tersimpan di lokal. Koneksi Cloud: ${msg}`
-    };
+    } catch {}
   }
+
+  return {
+    success: true,
+    data: formattedObject,
+    isSupabase: false,
+    error: 'Tersimpan di penyimpanan lokal.'
+  };
 }
 
 export async function deleteHomeVisitItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
@@ -682,14 +775,15 @@ export async function deleteHomeVisitItem(id: string): Promise<{ success: boolea
 
   if (!client) return { success: true, isSupabase: false };
 
-  try {
-    const { error } = await client.from(DEFAULT_HOME_VISIT_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
-    return { success: true, isSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+  const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
+  for (const tableName of candidates) {
+    try {
+      const { error } = await client.from(tableName).delete().eq('id', id);
+      if (!error) return { success: true, isSupabase: true };
+    } catch {}
   }
+
+  return { success: true, isSupabase: false };
 }
 
 /* ==========================================================================
