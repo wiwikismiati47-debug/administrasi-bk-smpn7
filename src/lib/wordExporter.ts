@@ -440,7 +440,7 @@ export function generateLaporanHomeVisitHTML(item: HomeVisit): string {
   const kepalaSekolah = item.nama_kepala_sekolah || DEFAULT_KEPALA_SEKOLAH;
   const nipKepalaSekolah = item.nip_kepala_sekolah || DEFAULT_NIP_KEPALA_SEKOLAH;
 
-  const semesterLaporan = item.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024';
+  const semesterLaporan = item.semester_laporan || 'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027';
   const bidangLayanan = item.bidang_layanan || 'Pribadi / Belajar';
   const topikPermasalahan = item.topik_permasalahan || item.perihal_home_visit || '-';
   const fungsiLayanan = item.fungsi_layanan || 'Pemahaman/Pencegahan/Penyembuhan';

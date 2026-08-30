@@ -912,7 +912,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                     LAPORAN KUNJUNGAN RUMAH
                   </h2>
                   <p className="text-xs font-bold uppercase mt-1">
-                    {currentHomeVisit.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024'}
+                    {currentHomeVisit.semester_laporan || 'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027'}
                   </p>
                 </div>
 

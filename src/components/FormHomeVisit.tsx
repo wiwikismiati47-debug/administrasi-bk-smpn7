@@ -54,12 +54,6 @@ const KELAS_PRESETS = [
 const SEMESTER_LAPORAN_OPTIONS = [
   'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027',
   'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2026-2027',
-  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2025-2026',
-  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2025-2026',
-  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2024-2025',
-  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2024-2025',
-  'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2023-2024',
-  'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024',
 ];
 
 const PERIHAL_PRESETS = [
@@ -136,7 +130,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
   const [tanggalPernyataanOrtu, setTanggalPernyataanOrtu] = useState(getTodayISO());
 
   // 14 Field Laporan Kunjungan Rumah Resmi (Sesuai Lampiran User)
-  const [semesterLaporan, setSemesterLaporan] = useState('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+  const [semesterLaporan, setSemesterLaporan] = useState('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027');
   const [bidangLayanan, setBidangLayanan] = useState('Pribadi / Belajar');
   const [topikPermasalahan, setTopikPermasalahan] = useState('');
   const [fungsiLayanan, setFungsiLayanan] = useState('Pemahaman/Pencegahan/Penyembuhan');
@@ -243,7 +237,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setPetugasPenerimaKunjungan(initialData.petugas_penerima_kunjungan || initialData.petugas_1 || getActiveGuruBK().nama);
       setTanggalPernyataanOrtu(initialData.tanggal_pernyataan_ortu || getTodayISO());
 
-      setSemesterLaporan(initialData.semester_laporan || 'SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setSemesterLaporan(initialData.semester_laporan || 'SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027');
       setBidangLayanan(initialData.bidang_layanan || 'Pribadi / Belajar');
       setTopikPermasalahan(initialData.topik_permasalahan || initialData.perihal_home_visit || '');
       setFungsiLayanan(initialData.fungsi_layanan || 'Pemahaman/Pencegahan/Penyembuhan');
@@ -299,7 +293,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setPetugasPenerimaKunjungan(getActiveGuruBK().nama + ' dkk');
       setTanggalPernyataanOrtu(getTodayISO());
 
-      setSemesterLaporan('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setSemesterLaporan('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027');
       setBidangLayanan('Pribadi / Belajar');
       setTopikPermasalahan('');
       setFungsiLayanan('Pemahaman/Pencegahan/Penyembuhan');
@@ -410,7 +404,7 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
       setJabatanPetugas2('Wali Kelas / Waka Kesiswaan');
       setNisSiswa('');
 
-      setSemesterLaporan('SEMESTER 2 (GENAP) TAHUN PELAJARAN 2023-2024');
+      setSemesterLaporan('SEMESTER 1 (GANJIL) TAHUN PELAJARAN 2026-2027');
       setBidangLayanan('Pribadi / Belajar');
       setTopikPermasalahan('');
       setFungsiLayanan('Pemahaman/Pencegahan/Penyembuhan');
