@@ -153,13 +153,45 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
     const printStyles = `
       @page { size: A4 portrait; margin: 8mm 10mm; }
-      body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
-      table { width: 100%; border-collapse: collapse; break-inside: auto !important; page-break-inside: auto !important; }
+      * {
+        color: #000000 !important;
+        border-color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        text-rendering: geometricPrecision !important;
+      }
+      body {
+        font-family: 'Times New Roman', Times, Georgia, serif, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #000000 !important;
+        background: #ffffff !important;
+        margin: 0;
+        padding: 0;
+        font-size: 11pt;
+        line-height: 1.4;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #000000 !important;
+        border-color: #000000 !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
       thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
       tbody { break-inside: auto !important; page-break-inside: auto !important; }
       tr { break-inside: avoid !important; page-break-inside: avoid !important; }
-      th, td { border: 1px solid #000; padding: 6px; }
-      h1, h2, h3, h4, h5, h6 { break-after: avoid !important; page-break-after: avoid !important; }
+      th, td {
+        border-color: #000000 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
       .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
       .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
     `;
@@ -205,13 +237,45 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
     const printStyles = `
       @page { size: A4 portrait; margin: 8mm 10mm; }
-      body { font-family: system-ui, -apple-system, sans-serif; color: #000; background: #fff; margin: 0; padding: 0; }
-      table { width: 100%; border-collapse: collapse; break-inside: auto !important; page-break-inside: auto !important; }
+      * {
+        color: #000000 !important;
+        border-color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        text-rendering: geometricPrecision !important;
+      }
+      body {
+        font-family: 'Times New Roman', Times, Georgia, serif, -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #000000 !important;
+        background: #ffffff !important;
+        margin: 0;
+        padding: 0;
+        font-size: 11pt;
+        line-height: 1.4;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #000000 !important;
+        border-color: #000000 !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
       thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
       tbody { break-inside: auto !important; page-break-inside: auto !important; }
       tr { break-inside: avoid !important; page-break-inside: avoid !important; }
-      th, td { border: 1px solid #000; padding: 6px; }
-      h1, h2, h3, h4, h5, h6 { break-after: avoid !important; page-break-after: avoid !important; }
+      th, td {
+        border-color: #000000 !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        break-after: avoid !important;
+        page-break-after: avoid !important;
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+      }
       .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
       .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
     `;
@@ -363,11 +427,11 @@ export const PrintView: React.FC<PrintViewProps> = ({
       {/* Official Printable Sheet Container */}
       <div
         id="printable-sheet"
-        className="printable-sheet max-w-5xl mx-auto bg-white p-6 sm:p-12 shadow-xl rounded-xl border border-slate-300 print:shadow-none print:border-none print:p-0 print:m-0"
+        className="printable-sheet max-w-5xl mx-auto bg-white p-6 sm:p-12 shadow-xl rounded-xl border border-slate-300 print:shadow-none print:border-none print:p-0 print:m-0 text-black"
       >
         
         {/* KOP SURAT RESMI UPT SMP NEGERI 7 PASURAN */}
-        <div className="relative flex items-center justify-between border-b-4 border-double border-slate-900 pb-3 mb-6 min-h-[100px] font-serif print:pb-2 print:mb-3 print:min-h-0">
+        <div className="relative flex items-center justify-between border-b-4 border-double border-black pb-3 mb-6 min-h-[100px] font-serif print:pb-2 print:mb-3 print:min-h-0 text-black">
           {/* Logo Kota Pasuruan (Kiri Atas) */}
           <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
             <img 
@@ -378,7 +442,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 const img = e.target as HTMLImageElement;
                 if (!img.dataset.tried1) {
                   img.dataset.tried1 = "true";
-                  img.src = "https://i.ibb.co/677QPVHY/logo.png";
+                  img.src = "https://i.ibb.co.com/677QPVHY/logo.png";
                 } else if (!img.dataset.tried2) {
                   img.dataset.tried2 = "true";
                   img.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Logo_Kota_Pasuruan_-_Seal_of_Pasuruan_City.svg/240px-Logo_Kota_Pasuruan_-_Seal_of_Pasuruan_City.svg.png";
@@ -388,20 +452,20 @@ export const PrintView: React.FC<PrintViewProps> = ({
           </div>
 
           {/* Teks Kop Surat Tengah */}
-          <div className="text-center flex-1 px-2 sm:px-4 text-slate-900">
-            <h4 className="text-sm sm:text-lg font-bold tracking-wide uppercase">
+          <div className="text-center flex-1 px-2 sm:px-4 text-black">
+            <h4 className="text-sm sm:text-lg font-bold tracking-wide uppercase text-black">
               PEMERINTAH KOTA PASURAN
             </h4>
-            <h1 className="text-lg sm:text-2xl font-black tracking-wider uppercase my-0.5">
+            <h1 className="text-lg sm:text-2xl font-black tracking-wider uppercase my-0.5 text-black">
               UPT SMP NEGERI 7
             </h1>
-            <p className="text-[11px] sm:text-sm font-medium leading-tight">
+            <p className="text-xs sm:text-sm font-semibold leading-tight text-black">
               Jalan Simpang Slamet Riadi Nomor 2, Kota Pasuruan, Jawa Timur, 67139
             </p>
-            <p className="text-[11px] sm:text-sm font-medium leading-tight">
+            <p className="text-xs sm:text-sm font-semibold leading-tight text-black">
               Telepon (0343) 426845
             </p>
-            <p className="text-[10px] sm:text-xs font-medium leading-tight text-slate-800">
+            <p className="text-xs sm:text-xs font-semibold leading-tight text-black">
               Pos-el <span className="italic">smp7pas@yahoo.co.id</span>, Laman <span className="italic">www.smpn7pasuruan.sch.id</span>
             </p>
           </div>
@@ -418,101 +482,101 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 1. SURAT UNDANGAN ORANG TUA (MODE IMAGE 1) */}
         {docType === 'surat_undangan' && (
-          <div className="space-y-5 text-sm leading-relaxed text-slate-950">
+          <div className="space-y-5 text-sm sm:text-[15px] leading-relaxed text-black font-sans">
             {currentItem ? (
               <>
-                <div className="text-right font-medium">
+                <div className="text-right font-semibold text-black text-sm">
                   {currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}
                 </div>
 
-                <div className="grid grid-cols-[80px_15px_1fr] text-xs font-medium max-w-sm">
-                  <span>No</span><span>:</span><span>{currentItem.nomor_surat || `400/  /423.102.54/${currentItem.tahun || '2026'}`}</span>
-                  <span>Lamp</span><span>:</span><span>-</span>
-                  <span>Hal</span><span>:</span><span className="font-bold">Undangan Orang Tua</span>
+                <div className="grid grid-cols-[80px_15px_1fr] text-sm font-semibold text-black max-w-md">
+                  <span className="font-bold">No</span><span className="font-bold">:</span><span className="font-bold">{currentItem.nomor_surat || `400/  /423.102.54/${currentItem.tahun || '2026'}`}</span>
+                  <span className="font-bold">Lamp</span><span className="font-bold">:</span><span className="font-bold">-</span>
+                  <span className="font-bold">Hal</span><span className="font-bold">:</span><span className="font-bold underline">Undangan Orang Tua</span>
                 </div>
 
-                <div className="pt-2">
-                  <p>Kepada</p>
-                  <p>
-                    Yth. Bapak /Ibu /Wali Siswa <strong className="uppercase">{currentItem.nama_siswa}</strong> &nbsp;
-                    <span className="font-bold">KELAS {currentItem.kelas}</span>
+                <div className="pt-2 text-sm text-black">
+                  <p className="font-semibold text-black">Kepada</p>
+                  <p className="text-black font-medium">
+                    Yth. Bapak /Ibu /Wali Siswa <strong className="uppercase font-bold text-black">{currentItem.nama_siswa}</strong> &nbsp;
+                    <span className="font-bold text-black">KELAS {currentItem.kelas}</span>
                   </p>
-                  <p>Di-</p>
-                  <p className="pl-6 font-bold">Tempat</p>
+                  <p className="font-semibold text-black">Di-</p>
+                  <p className="pl-6 font-bold text-black">Tempat</p>
                 </div>
 
-                <div className="pt-2 text-justify">
-                  <p>Assalamu&apos;alaikum wr. wb.</p>
-                  <p className="mt-1">
+                <div className="pt-2 text-justify text-sm text-black">
+                  <p className="font-semibold text-black">Assalamu&apos;alaikum wr. wb.</p>
+                  <p className="mt-1 font-medium leading-relaxed text-black">
                     Mengharap dengan hormat kehadiran Bapak /Ibu /Wali Siswa SMP Negeri 7 Pasuruan pada:
                   </p>
                 </div>
 
-                <div className="pl-6">
-                  <table className="text-sm border-collapse font-medium">
+                <div className="pl-6 my-2">
+                  <table className="text-sm border-collapse font-medium text-black">
                     <tbody>
                       <tr>
-                        <td className="py-1 w-28">Hari</td>
-                        <td className="py-1 w-4">:</td>
-                        <td className="py-1 font-bold">{currentItem.hari}</td>
+                        <td className="py-1.5 w-28 font-bold text-black">Hari</td>
+                        <td className="py-1.5 w-4 font-bold text-black">:</td>
+                        <td className="py-1.5 font-bold text-black">{currentItem.hari}</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Tanggal</td>
-                        <td className="py-1">:</td>
-                        <td className="py-1 font-bold">{currentItem.tanggal} ({currentItem.bulan} {currentItem.tahun})</td>
+                        <td className="py-1.5 font-bold text-black">Tanggal</td>
+                        <td className="py-1.5 font-bold text-black">:</td>
+                        <td className="py-1.5 font-bold text-black">{formatIndoDate(currentItem.tanggal)} {currentItem.bulan && currentItem.tahun && !currentItem.tanggal.includes(currentItem.bulan) ? `(${currentItem.bulan} ${currentItem.tahun})` : ''}</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Jam</td>
-                        <td className="py-1">:</td>
-                        <td className="py-1 font-bold">{currentItem.waktu || '07.30 WIB'}</td>
+                        <td className="py-1.5 font-bold text-black">Jam</td>
+                        <td className="py-1.5 font-bold text-black">:</td>
+                        <td className="py-1.5 font-bold text-black">{currentItem.waktu || '08:00 WIB'}</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Tempat</td>
-                        <td className="py-1">:</td>
-                        <td className="py-1">{currentItem.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan'}</td>
+                        <td className="py-1.5 font-bold text-black">Tempat</td>
+                        <td className="py-1.5 font-bold text-black">:</td>
+                        <td className="py-1.5 font-bold text-black">{currentItem.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan'}</td>
                       </tr>
                       <tr>
-                        <td className="py-1">Perihal</td>
-                        <td className="py-1">:</td>
-                        <td className="py-1 font-semibold">{currentItem.perihal_undangan}</td>
+                        <td className="py-1.5 font-bold text-black align-top">Perihal</td>
+                        <td className="py-1.5 font-bold text-black align-top">:</td>
+                        <td className="py-1.5 font-bold text-black leading-snug">{currentItem.perihal_undangan}</td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
 
-                <div className="text-justify pt-2">
-                  <p>
-                    Kehadiran Bapak /Ibu /Wali Siswa <strong className="font-bold underline">mohon tidak diwakilkan</strong> sangat kami harapkan demi pendidikan putra Bapak /Ibu.
+                <div className="text-justify pt-2 text-sm text-black space-y-2 leading-relaxed">
+                  <p className="font-medium text-black">
+                    Kehadiran Bapak /Ibu /Wali Siswa <strong className="font-bold underline text-black">mohon tidak diwakilkan</strong> sangat kami harapkan demi pendidikan putra Bapak /Ibu.
                   </p>
-                  <p className="mt-2">
+                  <p className="font-medium text-black">
                     Demikian Surat panggilan ini, atas perhatian dan kerja sama yang baik kami ucapkan terima kasih.
                   </p>
-                  <p className="mt-1">Wassalamu&apos;alaikum wr. wb.</p>
+                  <p className="font-semibold text-black">Wassalamu&apos;alaikum wr. wb.</p>
                 </div>
 
-                <div className="pt-8 grid grid-cols-2 text-center text-xs font-serif">
+                <div className="pt-8 grid grid-cols-2 text-center text-sm font-serif text-black">
                   <div>
-                    <p>Mengetahui,</p>
-                    <p className="font-bold">Kepala SMP Negeri 7 Pasuruan</p>
+                    <p className="font-medium text-black">Mengetahui,</p>
+                    <p className="font-bold text-black">Kepala SMP Negeri 7 Pasuruan</p>
                     <SignatureBox recordId={currentItem.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
-                    <p className="text-xs font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
+                    <p className="font-bold underline text-black text-sm">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
+                    <p className="text-xs font-semibold text-black">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                   </div>
                   <div>
-                    <p>{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
-                    <p className="font-bold">Guru BK / Konselor</p>
+                    <p className="font-medium text-black">{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
+                    <p className="font-bold text-black">Guru BK / Konselor</p>
                     <SignatureBox recordId={currentItem.id} role="guru_bk" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{( ( currentItem.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
-                    <p className="text-xs font-mono">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
+                    <p className="font-bold underline text-black text-sm">{( ( currentItem.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
+                    <p className="text-xs font-semibold text-black">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
                   </div>
                 </div>
 
-                <div className="pt-4 font-bold text-xs">
+                <div className="pt-4 font-bold text-sm text-black">
                   NB: Beserta Putranya.
                 </div>
               </>
             ) : (
-              <div className="p-8 text-center text-slate-500 italic">
+              <div className="p-8 text-center text-slate-600 italic font-semibold">
                 Tidak ada data undangan orang tua siswa dipilih.
               </div>
             )}
@@ -521,59 +585,59 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
         {/* 2. LAPORAN KONSULTASI DENGAN ORANG TUA SISWA (MODE IMAGE 2) */}
         {docType === 'laporan_konsultasi' && (
-          <div className="space-y-5 text-sm text-slate-950">
+          <div className="space-y-5 text-sm text-black">
             {currentItem ? (
               <>
-                <div className="text-center my-3">
-                  <h3 className="text-base font-extrabold uppercase underline decoration-2 underline-offset-4">
+                <div className="text-center my-3 text-black">
+                  <h3 className="text-base font-extrabold uppercase underline decoration-2 underline-offset-4 text-black">
                     LAPORAN KONSULTASI DENGAN ORANG TUA SISWA
                   </h3>
-                  <p className="text-xs font-bold uppercase mt-1">
+                  <p className="text-xs font-bold uppercase mt-1 text-black">
                     {currentItem.semester || `SEMESTER 1 (GANJIL) TAHUN PELAJARAN ${currentItem.tahun || '2025-2026'}`}
                   </p>
                 </div>
 
-                <table className="w-full text-left text-xs border-collapse border border-slate-900 my-4">
+                <table className="w-full text-left text-xs border-collapse border border-black my-4 text-black">
                   <tbody>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center w-8">1</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold w-52">Nama peserta didik/konseli</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center w-8">1</td>
+                      <td className="p-2.5 border-r border-black font-bold w-52">Nama peserta didik/konseli</td>
                       <td className="p-2.5 font-bold text-sm uppercase">{currentItem.nama_siswa}</td>
                     </tr>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">2</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">Kelas / Semester</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center">2</td>
+                      <td className="p-2.5 border-r border-black font-bold">Kelas / Semester</td>
                       <td className="p-2.5 font-bold">{currentItem.kelas} / GANJIL</td>
                     </tr>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">3</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">Hari/Tanggal</td>
-                      <td className="p-2.5 font-bold">{currentItem.hari} / {currentItem.tanggal} ({currentItem.bulan} {currentItem.tahun})</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center">3</td>
+                      <td className="p-2.5 border-r border-black font-bold">Hari/Tanggal</td>
+                      <td className="p-2.5 font-bold">{currentItem.hari} / {formatIndoDate(currentItem.tanggal)} ({currentItem.bulan} {currentItem.tahun})</td>
                     </tr>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">4</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">Waktu</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center">4</td>
+                      <td className="p-2.5 border-r border-black font-bold">Waktu</td>
                       <td className="p-2.5 font-bold">{currentItem.waktu || '08.00 WIB'}</td>
                     </tr>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">5</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">Topik pembahasan</td>
-                      <td className="p-2.5 font-semibold">{currentItem.perihal_undangan}</td>
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center">5</td>
+                      <td className="p-2.5 border-r border-black font-bold">Topik pembahasan</td>
+                      <td className="p-2.5 font-bold">{currentItem.perihal_undangan}</td>
                     </tr>
-                    <tr className="border-b border-slate-900">
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">6</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">Konsultan/Nara Sumber</td>
-                      <td className="p-2.5 leading-relaxed">
+                    <tr className="border-b border-black">
+                      <td className="p-2.5 border-r border-black font-bold text-center">6</td>
+                      <td className="p-2.5 border-r border-black font-bold">Konsultan/Nara Sumber</td>
+                      <td className="p-2.5 leading-relaxed font-semibold">
                         1. {( ( currentItem.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")} (Konselor)<br/>
                         2. {currentItem.nama_orang_tua} {currentItem.pekerjaan_orang_tua ? `(${currentItem.pekerjaan_orang_tua})` : ''}
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-2.5 border-r border-slate-900 font-bold text-center">7</td>
-                      <td className="p-2.5 border-r border-slate-900 font-bold">
+                      <td className="p-2.5 border-r border-black font-bold text-center">7</td>
+                      <td className="p-2.5 border-r border-black font-bold">
                         Peran Guru Bimbingan dan Konseling atau Konselor
                       </td>
-                      <td className="p-2.5 space-y-2 leading-relaxed text-justify">
+                      <td className="p-2.5 space-y-2 leading-relaxed text-justify font-medium text-black">
                         <p>
                           Peran konselor adalah untuk membina hubungan dengan orang tua, dalam kedudukannya sebagai konsultan. Konselor mengambil inisiatif memanggil orang tua ke sekolah.
                         </p>
@@ -581,15 +645,15 @@ export const PrintView: React.FC<PrintViewProps> = ({
                           Hal yang dibicarakan menyangkut kemajuan anak dalam belajar, kedisiplinan, sikap dan perilaku anak di rumah. Orang tua dapat memberikan informasi tentang perilaku anak di rumah.
                         </p>
                         {currentItem.uraian_permasalahan && (
-                          <div className="bg-slate-50 p-2 rounded border border-slate-300">
-                            <strong>Uraian Permasalahan Siswa:</strong>
-                            <p className="italic mt-0.5">&quot;{currentItem.uraian_permasalahan}&quot;</p>
+                          <div className="bg-slate-50 p-2.5 rounded border border-black text-black">
+                            <strong className="font-bold text-black">Uraian Permasalahan Siswa:</strong>
+                            <p className="italic mt-0.5 font-medium text-black">&quot;{currentItem.uraian_permasalahan}&quot;</p>
                           </div>
                         )}
                         {currentItem.tindak_lanjut && (
-                          <div className="bg-slate-50 p-2 rounded border border-slate-300">
-                            <strong>Hasil / Tindak Lanjut:</strong>
-                            <p className="mt-0.5">{currentItem.tindak_lanjut}</p>
+                          <div className="bg-slate-50 p-2.5 rounded border border-black text-black">
+                            <strong className="font-bold text-black">Hasil / Tindak Lanjut:</strong>
+                            <p className="mt-0.5 font-medium text-black">{currentItem.tindak_lanjut}</p>
                           </div>
                         )}
                         <p>
@@ -601,26 +665,26 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 </table>
 
                 {/* SIGNATURE 2 BAGIAN */}
-                <div className="pt-6 grid grid-cols-2 text-center text-xs font-semibold gap-4">
+                <div className="pt-6 grid grid-cols-2 text-center text-sm font-semibold gap-4 text-black">
                   <div>
-                    <p>Mengetahui,</p>
-                    <p className="font-bold">Kepala Sekolah SMPN 7 Pasuruan</p>
+                    <p className="font-medium text-black">Mengetahui,</p>
+                    <p className="font-bold text-black">Kepala Sekolah SMPN 7 Pasuruan</p>
                     <SignatureBox recordId={currentItem.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
-                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
+                    <p className="font-bold underline text-black text-sm">{formatKepalaSekolah(currentItem.nama_kepala_sekolah)}</p>
+                    <p className="text-xs font-semibold text-black">NIP. {currentItem.nip_kepala_sekolah || '19860410 201001 2 030'}</p>
                   </div>
 
                   <div>
-                    <p>{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
-                    <p>Guru BK/ Konselor</p>
+                    <p className="font-medium text-black">{currentItem.tempat_surat || 'Pasuruan'}, {formatIndoDate(currentItem.tanggal_surat)}</p>
+                    <p className="font-bold text-black">Guru BK / Konselor</p>
                     <SignatureBox recordId={currentItem.id} role="guru_bk" className="h-20 w-32 mx-auto" />
-                    <p className="font-bold underline">{( ( currentItem.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
-                    <p className="text-[11px] font-mono">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
+                    <p className="font-bold underline text-black text-sm">{( ( currentItem.nama_guru_bk || getActiveGuruBK().nama )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd") )?.toString().replace(/S\.PD/g, "S.Pd").replace(/S\.pd/g, "S.Pd")}</p>
+                    <p className="text-xs font-semibold text-black">NIP. {currentItem.nip_guru_bk || getActiveGuruBK().nip}</p>
                   </div>
                 </div>
               </>
             ) : (
-              <div className="p-8 text-center text-slate-500 italic">
+              <div className="p-8 text-center text-slate-600 italic font-semibold">
                 Tidak ada data konsultasi dipilih.
               </div>
             )}

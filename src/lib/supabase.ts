@@ -63,6 +63,48 @@ export const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_local';
 export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_local';
 export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_local';
 
+export function getTodayISO(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+export function getDayNameFromDate(dateString: string): string {
+  if (!dateString) return 'Senin';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return 'Senin';
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    return days[d.getDay()];
+  } catch {
+    return 'Senin';
+  }
+}
+
+export function getBulanFromDate(dateString: string): string {
+  if (!dateString) return 'September';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return 'September';
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[d.getMonth()];
+  } catch {
+    return 'September';
+  }
+}
+
+export function getTahunFromDate(dateString: string): string {
+  if (!dateString) return '2026';
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '2026';
+    return String(d.getFullYear());
+  } catch {
+    return '2026';
+  }
+}
+
 /**
  * Get Saved Supabase Config - Guaranteed permanent configuration for SMPN 7 Pasuruan
  */
@@ -503,6 +545,43 @@ export async function saveOrUpdateUndangan(
       return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info Cloud: ${error.message}` };
     }
 
+    // Sync into rekam_permasalahan_siswa if problem description exists
+    if (formattedObject.uraian_permasalahan || formattedObject.perihal_undangan) {
+      const rekamId = 'rekam-' + targetId.replace(/^undangan-/, '');
+      const validDate = formattedObject.tanggal || now.split('T')[0];
+      const rekamPayload: RekamPermasalahan = {
+        id: rekamId,
+        created_at: formattedObject.created_at,
+        updated_at: formattedObject.updated_at,
+        hari: formattedObject.hari || getDayNameFromDate(validDate),
+        tanggal: validDate,
+        bulan: formattedObject.bulan || getBulanFromDate(validDate),
+        tahun: formattedObject.tahun || getTahunFromDate(validDate),
+        waktu: formattedObject.waktu || '08:00 WIB',
+        kelas: formattedObject.kelas || '7-A',
+        nama_siswa: formattedObject.nama_siswa || 'Siswa',
+        nama_orang_tua: formattedObject.nama_orang_tua || '',
+        pekerjaan_orang_tua: formattedObject.pekerjaan_orang_tua || '',
+        alamat: formattedObject.alamat || 'Kota Pasuruan',
+        ringkasan_uraian_permasalahan: formattedObject.uraian_permasalahan || formattedObject.perihal_undangan || 'Penanganan permasalahan kedisiplinan siswa',
+        upaya_konselor_walikelas: formattedObject.tindak_lanjut || 'Pemanggilan orang tua/wali murid untuk koordinasi dan pembinaan konseling BK bersama wali kelas.',
+        hasil_dan_kesimpulan: 'Telah dikoordinasikan dengan orang tua/wali dan siswa berkomitmen memperbaiki sikap serta mentaati tata tertib sekolah.',
+        link_foto_kegiatan: formattedObject.link_foto_kegiatan || '',
+        keterangan: formattedObject.keterangan || 'Tindak Lanjut Undangan Orang Tua',
+        nama_guru_bk: formattedObject.nama_guru_bk || getActiveGuruBK().nama,
+        nip_guru_bk: formattedObject.nip_guru_bk || getActiveGuruBK().nip,
+        nama_kepala_sekolah: formattedObject.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+        nip_kepala_sekolah: formattedObject.nip_kepala_sekolah || '19860410 201001 2 030',
+        tanggal_surat: formattedObject.tanggal_surat || validDate,
+        tempat_surat: formattedObject.tempat_surat || 'Pasuruan'
+      };
+      try {
+        await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).upsert(rekamPayload, { onConflict: 'id' });
+      } catch {
+        // silent sync
+      }
+    }
+
     return {
       success: true,
       data: (data || formattedObject) as UndanganOrangTua,
@@ -845,19 +924,87 @@ export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasal
   if (!client) return { data: localData, isFromSupabase: false };
 
   try {
-    const { data, error } = await client
+    let { data, error } = await client
       .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
       .select('*')
       .order('tanggal', { ascending: false });
+
+    // If query timed out or had network issue, try with limit
+    if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
+      const fallbackRes = await client
+        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+        .select('*')
+        .order('tanggal', { ascending: false })
+        .limit(100);
+      if (!fallbackRes.error && fallbackRes.data) {
+        data = fallbackRes.data;
+        error = null;
+      }
+    }
 
     if (error) {
       console.warn('Supabase fetchAllRekamPermasalahan warning, using local:', error.message);
       return { data: localData, isFromSupabase: false, error: error.message };
     }
 
-    const fetched = (data || []) as RekamPermasalahan[];
-    safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, fetched);
-    return { data: fetched, isFromSupabase: true };
+    let fetched = (data || []) as RekamPermasalahan[];
+
+    // If rekam_permasalahan_siswa has 0 items, check if undangan_orang_tua has student problem records
+    if (fetched.length === 0) {
+      try {
+        const { data: undanganList } = await client
+          .from(DEFAULT_UNDANGAN_TABLE_NAME)
+          .select('*')
+          .order('tanggal', { ascending: false });
+
+        if (undanganList && undanganList.length > 0) {
+          const autoMapped: RekamPermasalahan[] = undanganList.map((u) => {
+            const dateStr = u.tanggal || (u.created_at ? u.created_at.split('T')[0] : getTodayISO());
+            return {
+              id: 'rekam-' + (u.id || '').replace(/^undangan-/, ''),
+              created_at: u.created_at || new Date().toISOString(),
+              updated_at: u.updated_at || new Date().toISOString(),
+              hari: u.hari || getDayNameFromDate(dateStr),
+              tanggal: dateStr,
+              bulan: u.bulan || getBulanFromDate(dateStr),
+              tahun: u.tahun || getTahunFromDate(dateStr),
+              waktu: u.waktu || '08:00 WIB',
+              kelas: u.kelas || '7-A',
+              nama_siswa: u.nama_siswa || 'Siswa',
+              nama_orang_tua: u.nama_orang_tua || '',
+              pekerjaan_orang_tua: u.pekerjaan_orang_tua || '',
+              alamat: u.alamat || 'Kota Pasuruan',
+              ringkasan_uraian_permasalahan: u.uraian_permasalahan || u.perihal_undangan || 'Penanganan permasalahan kedisiplinan siswa',
+              upaya_konselor_walikelas: u.tindak_lanjut || 'Pemanggilan orang tua/wali murid untuk koordinasi dan pembinaan konseling BK bersama wali kelas.',
+              hasil_dan_kesimpulan: 'Telah dikoordinasikan dengan orang tua/wali dan siswa berkomitmen memperbaiki sikap serta mentaati tata tertib sekolah.',
+              link_foto_kegiatan: u.link_foto_kegiatan || '',
+              keterangan: u.keterangan || 'Tindak Lanjut Undangan Orang Tua',
+              nama_guru_bk: u.nama_guru_bk || getActiveGuruBK().nama,
+              nip_guru_bk: u.nip_guru_bk || getActiveGuruBK().nip,
+              nama_kepala_sekolah: u.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+              nip_kepala_sekolah: u.nip_kepala_sekolah || '19860410 201001 2 030',
+              tanggal_surat: u.tanggal_surat || dateStr,
+              tempat_surat: u.tempat_surat || 'Pasuruan'
+            };
+          });
+
+          // Background upsert so Supabase persists them
+          try {
+            await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).upsert(autoMapped, { onConflict: 'id' });
+          } catch {
+            // silent sync
+          }
+          fetched = autoMapped;
+        }
+      } catch (hydrationErr) {
+        console.warn('Hydration from undangan warning:', hydrationErr);
+      }
+    }
+
+    if (fetched.length > 0) {
+      safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, fetched);
+    }
+    return { data: fetched.length > 0 ? fetched : localData, isFromSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal mengambil data Rekam Permasalahan';
     return { data: localData, isFromSupabase: false, error: msg };
@@ -870,21 +1017,22 @@ export async function saveOrUpdateRekamPermasalahan(
 ): Promise<{ success: boolean; data?: RekamPermasalahan; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `rekam-${Date.now()}`;
+  const validTanggal = item.tanggal && /^\d{4}-\d{2}-\d{2}$/.test(item.tanggal) ? item.tanggal : now.split('T')[0];
 
   const formattedObject: RekamPermasalahan = {
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || '',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    waktu: item.waktu || '',
-    kelas: item.kelas || '',
-    nama_siswa: item.nama_siswa || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    waktu: item.waktu || '08:00 WIB',
+    kelas: item.kelas || '7-A',
+    nama_siswa: item.nama_siswa || 'Siswa',
     nama_orang_tua: item.nama_orang_tua || '',
     pekerjaan_orang_tua: item.pekerjaan_orang_tua || '',
-    alamat: item.alamat || '',
+    alamat: item.alamat || 'Kota Pasuruan',
     ringkasan_uraian_permasalahan: item.ringkasan_uraian_permasalahan || '',
     upaya_konselor_walikelas: item.upaya_konselor_walikelas || '',
     hasil_dan_kesimpulan: item.hasil_dan_kesimpulan || '',
@@ -894,7 +1042,7 @@ export async function saveOrUpdateRekamPermasalahan(
     nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
     nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
-    tanggal_surat: item.tanggal_surat || item.tanggal || now.split('T')[0],
+    tanggal_surat: item.tanggal_surat || validTanggal,
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 

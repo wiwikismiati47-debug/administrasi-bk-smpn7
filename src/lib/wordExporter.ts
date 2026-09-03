@@ -52,6 +52,8 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
   const nomorSurat = item.nomor_surat || `400/  /423.102.54/${item.tahun || '2026'}`;
   const guruBk = item.nama_guru_bk || DEFAULT_GURU_BK;
   const nipGuruBk = item.nip_guru_bk || DEFAULT_NIP_GURU_BK;
+  const kepalaSekolah = item.nama_kepala_sekolah || DEFAULT_KEPALA_SEKOLAH;
+  const nipKepalaSekolah = item.nip_kepala_sekolah || DEFAULT_NIP_KEPALA_SEKOLAH;
 
   return `
   <html xmlns:o='urn:schemas-microsoft-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
@@ -66,39 +68,49 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
       body {
         font-family: 'Times New Roman', Times, serif;
         font-size: 12pt;
-        line-height: 1.3;
+        line-height: 1.35;
         color: #000000;
       }
       .date-right {
         text-align: right;
         margin-bottom: 15px;
+        font-weight: 600;
+        color: #000000;
       }
       .meta-table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 15px;
+        color: #000000;
       }
       .meta-table td {
         padding: 2px 0;
         vertical-align: top;
+        color: #000000;
       }
       .content {
         margin-top: 15px;
         margin-bottom: 15px;
         text-align: justify;
+        color: #000000;
+        font-size: 12pt;
       }
       .detail-table {
         margin: 15px 0 15px 30px;
         border-collapse: collapse;
+        color: #000000;
+        font-size: 12pt;
       }
       .detail-table td {
         padding: 4px 8px 4px 0;
         vertical-align: top;
+        color: #000000;
       }
       .nb-box {
         clear: both;
-        margin-top: 40px;
+        margin-top: 30px;
         font-weight: bold;
+        color: #000000;
       }
     </style>
   </head>
@@ -114,24 +126,24 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
     <!-- METADATA SURAT -->
     <table class="meta-table">
       <tr>
-        <td style="width: 80px;">No</td>
-        <td style="width: 15px;">:</td>
-        <td>${nomorSurat}</td>
+        <td style="width: 80px; font-weight: bold;">No</td>
+        <td style="width: 15px; font-weight: bold;">:</td>
+        <td style="font-weight: bold;">${nomorSurat}</td>
       </tr>
       <tr>
-        <td>Lamp</td>
-        <td>:</td>
+        <td style="font-weight: bold;">Lamp</td>
+        <td style="font-weight: bold;">:</td>
         <td>-</td>
       </tr>
       <tr>
-        <td>Hal</td>
-        <td>:</td>
-        <td><b>Undangan Orang Tua</b></td>
+        <td style="font-weight: bold;">Hal</td>
+        <td style="font-weight: bold;">:</td>
+        <td><b><u>Undangan Orang Tua</u></b></td>
       </tr>
     </table>
 
     <br/>
-    <div>
+    <div style="color: #000000; font-size: 12pt;">
       Kepada<br/>
       Yth. Bapak /Ibu /Wali Siswa <b>${item.nama_siswa.toUpperCase()}</b> &nbsp;&nbsp; <b>KELAS ${item.kelas}</b><br/>
       Di-<br/>
@@ -146,44 +158,50 @@ export function generateSuratUndanganHTML(item: UndanganOrangTua): string {
 
     <table class="detail-table">
       <tr>
-        <td style="width: 90px;">Hari</td>
-        <td style="width: 15px;">:</td>
+        <td style="width: 90px;"><b>Hari</b></td>
+        <td style="width: 15px;"><b>:</b></td>
         <td><b>${item.hari}</b></td>
       </tr>
       <tr>
-        <td>Tanggal</td>
-        <td>:</td>
+        <td><b>Tanggal</b></td>
+        <td><b>:</b></td>
         <td><b>${tanggalIndo}</b></td>
       </tr>
       <tr>
-        <td>Jam</td>
-        <td>:</td>
-        <td><b>${item.waktu || '07.30 WIB'}</b></td>
+        <td><b>Jam</b></td>
+        <td><b>:</b></td>
+        <td><b>${item.waktu || '08:00 WIB'}</b></td>
       </tr>
       <tr>
-        <td>Tempat</td>
-        <td>:</td>
-        <td>${item.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan'}</td>
+        <td><b>Tempat</b></td>
+        <td><b>:</b></td>
+        <td><b>${item.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan'}</b></td>
       </tr>
       <tr>
-        <td>Perihal</td>
-        <td>:</td>
-        <td>${item.perihal_undangan}</td>
+        <td><b>Perihal</b></td>
+        <td><b>:</b></td>
+        <td><b>${item.perihal_undangan}</b></td>
       </tr>
     </table>
 
     <div class="content">
-      Kehadiran Bapak /Ibu /Wali Siswa <b>mohon tidak diwakilkan</b> sangat kami harapkan demi pendidikan putra Bapak /Ibu.<br/>
-      Demikian Surat panggilan ini, atas perhatian dan kerja sama yang baik kami ucapkan terima kasih.<br/>
-      Wassalamu'alaikum wr. wb.
+      Kehadiran Bapak /Ibu /Wali Siswa <b><u>mohon tidak diwakilkan</u></b> sangat kami harapkan demi pendidikan putra Bapak /Ibu.<br/><br/>
+      Demikian Surat panggilan ini, atas perhatian dan kerja sama yang baik kami ucapkan terima kasih.<br/><br/>
+      <b>Wassalamu'alaikum wr. wb.</b>
     </div>
 
     <!-- TANDA TANGAN -->
-    <table style="width: 100%; margin-top: 30px;">
+    <table style="width: 100%; margin-top: 30px; font-family: 'Times New Roman', Times, serif; color: #000000;">
       <tr>
-        <td style="width: 50%;"></td>
-        <td style="width: 50%; text-align: center;">
-          Guru BK<br/><br/><br/><br/><br/>
+        <td style="width: 50%; text-align: center; vertical-align: top;">
+          Mengetahui,<br/>
+          <b>Kepala SMP Negeri 7 Pasuruan</b><br/><br/><br/><br/><br/>
+          <b><u>${kepalaSekolah}</u></b><br/>
+          NIP. ${nipKepalaSekolah}
+        </td>
+        <td style="width: 50%; text-align: center; vertical-align: top;">
+          ${item.tempat_surat || 'Pasuruan'}, ${item.tanggal_surat ? formatTanggalIndo(item.tanggal_surat) : todayIndo}<br/>
+          <b>Guru BK / Konselor</b><br/><br/><br/><br/><br/>
           <b><u>${guruBk}</u></b><br/>
           NIP. ${nipGuruBk}
         </td>

@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Ensure all text inside printable sheet is crisp, high-contrast pure black (#000000) */
+.printable-sheet,
+.printable-sheet *:not(button):not(svg):not(path):not([class*="bg-amber-"]):not([class*="bg-emerald-"]):not([class*="bg-purple-"]) {
+  color: #000000 !important;
+  border-color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  text-rendering: geometricPrecision;
+}
+
+.printable-sheet table,
+.printable-sheet th,
+.printable-sheet td,
+.printable-sheet tr {
+  border-color: #000000 !important;
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.printable-sheet th {
+  background-color: #e2e8f0 !important;
+  color: #000000 !important;
+  font-weight: 700 !important;
+}
+
 @media print {
   @page {
     size: A4 portrait;
@@ -12,17 +36,27 @@
   }
 
   /* Force white background and black text on body and all containers */
-  html, body, #root, main, section {
+  html, body, #root, main, section, .printable-sheet {
     background-color: #ffffff !important;
     background: #ffffff !important;
     color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
     margin: 0 !important;
     padding: 0 !important;
     box-shadow: none !important;
     border: none !important;
     width: 100% !important;
-    max-width: none !important;
+    max-width: 100% !important;
     overflow: visible !important;
+  }
+
+  /* Universal high-contrast black text for print */
+  * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    text-rendering: geometricPrecision !important;
   }
 
   /* Ensure printable sheet is full width without card margins or rounded corners */
@@ -73,12 +107,15 @@
   th, td {
     color: #000000 !important;
     border-color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
   }
 
   /* Keep titles with tables immediately following */
   h1, h2, h3, h4, h5, h6 {
     break-after: avoid !important;
     page-break-after: avoid !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
   }
 
   .keep-together, .signature-block, [class*="print:break-inside-avoid"] {
