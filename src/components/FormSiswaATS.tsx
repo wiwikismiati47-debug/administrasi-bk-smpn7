@@ -22,7 +22,9 @@ import {
   GraduationCap,
   Building,
   Check,
-  Award
+  Award,
+  Link as LinkIcon,
+  ImageIcon
 } from 'lucide-react';
 
 interface FormSiswaATSProps {
@@ -140,6 +142,8 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
   const [fotoBuktiFisik2, setFotoBuktiFisik2] = useState<string>('');
   const [isUploading1, setIsUploading1] = useState<boolean>(false);
   const [isUploading2, setIsUploading2] = useState<boolean>(false);
+  const [previewError1, setPreviewError1] = useState<boolean>(false);
+  const [previewError2, setPreviewError2] = useState<boolean>(false);
 
   // Laporan & Guru Kunjungan
   const [tempatLaporan, setTempatLaporan] = useState<string>('Pasuruan');
@@ -549,107 +553,163 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* FOTO 1: Kunjungan Rumah 1 */}
-            <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/60 flex flex-col justify-between">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Foto Kunjungan 1 (Manual / Kamera)
-                  </label>
-                  {fotoKunjungan1 && (
-                    <button
-                      type="button"
-                      onClick={() => setFotoKunjungan1('')}
-                      className="text-[11px] text-rose-600 hover:text-rose-800 font-medium"
-                    >
-                      Hapus Foto
-                    </button>
-                  )}
-                </div>
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-amber-700" />
+                    FOTO KUNJUNGAN 1 (MANUAL / KAMERA)
+                  </span>
+                  <span className="text-[11px] font-normal text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+                </label>
 
-                {fotoKunjungan1 ? (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-black/5 flex items-center justify-center mb-3">
-                    <img
-                      src={fotoKunjungan1}
-                      alt="Foto Kunjungan 1"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
-                      Foto Kunjungan 1
+                <div className="space-y-2">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <LinkIcon className="w-4 h-4 text-slate-400" />
                     </div>
+                    <input
+                      type="url"
+                      value={fotoKunjungan1}
+                      onChange={(e) => {
+                        setFotoKunjungan1(e.target.value);
+                        setPreviewError1(false);
+                      }}
+                      placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-medium focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all placeholder:text-slate-400"
+                    />
                   </div>
-                ) : (
-                  <div className="rounded-xl border-2 border-dashed border-slate-300 p-6 text-center mb-3 bg-white">
-                    <Camera className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-xs font-medium text-slate-700">Belum ada Foto Kunjungan 1</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Ambil dari kamera HP atau upload file foto</p>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-sm transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-amber-700" />
+                      <span>{isUploading1 ? 'Mengompres...' : 'Upload Foto dari Perangkat'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFileUpload1}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      {fotoKunjungan1.startsWith('data:image') ? '✓ Terunggah' : 'Format JPG, PNG, WEBP'}
+                    </span>
+                    {fotoKunjungan1 && (
+                      <button
+                        type="button"
+                        onClick={() => setFotoKunjungan1('')}
+                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold"
+                      >
+                        Hapus
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
-              <div>
-                <label className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition shadow-sm">
-                  <Upload className="w-4 h-4 text-amber-700" />
-                  <span>{isUploading1 ? 'Mengompres Foto...' : (fotoKunjungan1 ? 'Ganti Foto Kunjungan 1' : 'Pilih / Ambil Foto Kunjungan 1')}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileUpload1}
-                    className="hidden"
-                  />
-                </label>
+              {/* Preview Thumbnail Box */}
+              <div className="mt-3">
+                <div className="flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 min-h-[90px]">
+                  {fotoKunjungan1 && !previewError1 ? (
+                    <div className="relative group w-full h-24 overflow-hidden rounded-lg border border-slate-200 flex items-center justify-center bg-slate-900/5">
+                      <img
+                        src={fotoKunjungan1}
+                        alt="Preview Foto Kunjungan 1"
+                        onError={() => setPreviewError1(true)}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
+                        Preview Kunjungan 1
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-2">
+                      <Camera className="w-6 h-6 text-slate-400 mx-auto mb-1" />
+                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* FOTO 2: Bukti Fisik 2 */}
-            <div className="border border-slate-200 rounded-2xl p-4 bg-slate-50/60 flex flex-col justify-between">
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                    Foto Bukti Fisik 2 (Manual / Dokumen)
-                  </label>
-                  {fotoBuktiFisik2 && (
-                    <button
-                      type="button"
-                      onClick={() => setFotoBuktiFisik2('')}
-                      className="text-[11px] text-rose-600 hover:text-rose-800 font-medium"
-                    >
-                      Hapus Foto
-                    </button>
-                  )}
-                </div>
+                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-rose-700" />
+                    FOTO BUKTI FISIK 2 (MANUAL / DOKUMEN)
+                  </span>
+                  <span className="text-[11px] font-normal text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+                </label>
 
-                {fotoBuktiFisik2 ? (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-black/5 flex items-center justify-center mb-3">
-                    <img
-                      src={fotoBuktiFisik2}
-                      alt="Foto Bukti Fisik 2"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded backdrop-blur-sm">
-                      Foto Bukti Fisik 2
+                <div className="space-y-2">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <LinkIcon className="w-4 h-4 text-slate-400" />
                     </div>
+                    <input
+                      type="url"
+                      value={fotoBuktiFisik2}
+                      onChange={(e) => {
+                        setFotoBuktiFisik2(e.target.value);
+                        setPreviewError2(false);
+                      }}
+                      placeholder="https://... (URL foto Google Drive / Imgur / web)"
+                      className="w-full pl-9 pr-3 py-2 text-sm bg-white border border-slate-300 rounded-lg text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-rose-500 transition-all placeholder:text-slate-400"
+                    />
                   </div>
-                ) : (
-                  <div className="rounded-xl border-2 border-dashed border-slate-300 p-6 text-center mb-3 bg-white">
-                    <FileText className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                    <p className="text-xs font-medium text-slate-700">Belum ada Foto Bukti Fisik 2</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Surat pernyataan, KK, KIP, lingkungan rumah</p>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-sm transition-colors">
+                      <Upload className="w-3.5 h-3.5 text-rose-700" />
+                      <span>{isUploading2 ? 'Mengompres...' : 'Upload Foto dari Perangkat'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload2}
+                        className="hidden"
+                      />
+                    </label>
+                    <span className="text-[11px] text-slate-500">
+                      {fotoBuktiFisik2.startsWith('data:image') ? '✓ Terunggah' : 'Format JPG, PNG, WEBP'}
+                    </span>
+                    {fotoBuktiFisik2 && (
+                      <button
+                        type="button"
+                        onClick={() => setFotoBuktiFisik2('')}
+                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold"
+                      >
+                        Hapus
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
-              <div>
-                <label className="w-full py-2.5 px-3 bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition shadow-sm">
-                  <Upload className="w-4 h-4 text-rose-700" />
-                  <span>{isUploading2 ? 'Mengompres Foto...' : (fotoBuktiFisik2 ? 'Ganti Foto Bukti Fisik 2' : 'Pilih / Ambil Foto Bukti Fisik 2')}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload2}
-                    className="hidden"
-                  />
-                </label>
+              {/* Preview Thumbnail Box */}
+              <div className="mt-3">
+                <div className="flex flex-col items-center justify-center p-2 bg-white rounded-xl border border-slate-200 min-h-[90px]">
+                  {fotoBuktiFisik2 && !previewError2 ? (
+                    <div className="relative group w-full h-24 overflow-hidden rounded-lg border border-slate-200 flex items-center justify-center bg-slate-900/5">
+                      <img
+                        src={fotoBuktiFisik2}
+                        alt="Preview Foto Bukti Fisik 2"
+                        onError={() => setPreviewError2(true)}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
+                        Preview Bukti Fisik 2
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-2">
+                      <FileText className="w-6 h-6 text-slate-400 mx-auto mb-1" />
+                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
