@@ -129,6 +129,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
   const [namaSiswa, setNamaSiswa] = useState<string>('');
   const [kategoriATS, setKategoriATS] = useState<'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | string>('DO (Drop Out)');
   const [kelas, setKelas] = useState<string>('');
+  const [namaOrangTua, setNamaOrangTua] = useState<string>('');
   const [alamat, setAlamat] = useState<string>('');
 
   // Alasan ATS (Popup & isian manual)
@@ -165,6 +166,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
       setNamaSiswa(initialData.nama_siswa || '');
       setKategoriATS(initialData.kategori_ats || 'DO (Drop Out)');
       setKelas(initialData.kelas || '');
+      setNamaOrangTua(initialData.nama_orang_tua || '');
       setAlamat(initialData.alamat || '');
 
       setAlasanATS(initialData.alasan_ats || ALASAN_ATS_OPTIONS[0].deskripsi);
@@ -258,6 +260,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
       nama_siswa: namaSiswa.trim(),
       kategori_ats: kategoriATS,
       kelas: kelas.trim(),
+      nama_orang_tua: namaOrangTua.trim(),
       alamat: alamat.trim(),
       alasan_ats: alasanATS,
       alasan_manual: alasanManual.trim(),
@@ -472,6 +475,21 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                 value={kelas}
                 onChange={(e) => setKelas(e.target.value)}
                 placeholder="Contoh: VIII A / IX B"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+            </div>
+
+            {/* Nama Orang Tua / Wali */}
+            <div className="md:col-span-12">
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5 text-amber-600" />
+                <span>Nama Orang Tua / Wali Siswa ATS</span>
+              </label>
+              <input
+                type="text"
+                value={namaOrangTua}
+                onChange={(e) => setNamaOrangTua(e.target.value)}
+                placeholder="Contoh: Bapak Sutrisno / Ibu Siti Aminah / Wali Siswa"
                 className="w-full px-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -1064,6 +1082,8 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
           </div>
         </div>
       )}
+
+
     </div>
   );
 };

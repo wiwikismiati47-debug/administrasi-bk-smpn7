@@ -3300,7 +3300,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
                 <div>Orang Tua / Wali Siswa,</div>
                 <SignatureBox recordId={currentSiswaATS.id} role="orang_tua" className="h-20 w-32 mx-auto" />
                 <div className="font-bold underline mt-1">
-                  ( .................................................... )
+                  ( {currentSiswaATS.nama_orang_tua || '....................................'} )
                 </div>
                 <div>Wali dari: {currentSiswaATS.nama_siswa}</div>
               </div>

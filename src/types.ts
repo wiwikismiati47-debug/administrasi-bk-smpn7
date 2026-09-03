@@ -342,6 +342,7 @@ export interface SiswaATS {
   nama_siswa: string; // Nama siswa ATS
   kategori_ats: 'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | string;
   kelas?: string; // e.g. "VIII A"
+  nama_orang_tua?: string; // Nama Orang Tua / Wali Siswa ATS
   alamat: string; // Alamat siswa ATS
   alasan_ats: string; // Popup pilihan kategori alasan ATS
   alasan_manual: string; // Isian manual / uraian tambahan

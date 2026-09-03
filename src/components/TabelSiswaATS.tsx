@@ -641,6 +641,16 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                 </div>
               </div>
 
+              {/* Nama Orang Tua */}
+              <div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Nama Orang Tua / Wali:
+                </span>
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs font-bold text-slate-900">
+                  {selectedDetailItem.nama_orang_tua || '-'}
+                </div>
+              </div>
+
               {/* Alasan ATS */}
               <div>
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">
