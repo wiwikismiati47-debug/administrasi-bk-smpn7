@@ -576,7 +576,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                 <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <Camera className="w-4 h-4 text-amber-700" />
-                    FOTO KUNJUNGAN 1 (MANUAL / KAMERA)
+                    FOTO KUNJUNGAN 1 (DOKUMENTASI FOTO)
                   </span>
                   <span className="text-[11px] font-normal text-slate-500">Bisa Input Link URL atau Upload Foto</span>
                 </label>
@@ -605,7 +605,6 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                       <input
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         onChange={handleFileUpload1}
                         className="hidden"
                       />

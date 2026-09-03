@@ -2744,6 +2744,8 @@ export async function saveOrUpdateSiswaATS(
           waktu: formattedObject.waktu,
           nama_siswa: formattedObject.nama_siswa,
           kategori_ats: formattedObject.kategori_ats,
+          kelas: formattedObject.kelas,
+          nama_orang_tua: formattedObject.nama_orang_tua,
           alamat: formattedObject.alamat,
           alasan_ats: formattedObject.alasan_ats,
           alasan_manual: formattedObject.alasan_manual,
@@ -3318,6 +3320,7 @@ create table if not exists public.${siswaATSTableName} (
   nama_siswa text not null,
   kategori_ats text default 'DO (Drop Out)',
   kelas text default '',
+  nama_orang_tua text default '',
   alamat text default '',
   alasan_ats text not null,
   alasan_manual text default '',
@@ -3417,6 +3420,8 @@ alter table public.${jurnalBKTableName} add column if not exists nama_guru_bk te
 alter table public.${jurnalBKTableName} add column if not exists nip_guru_bk text default '';
 alter table public.${jurnalBKTableName} add column if not exists nama_kepala_sekolah text default '';
 alter table public.${jurnalBKTableName} add column if not exists nip_kepala_sekolah text default '';
+
+alter table public.${siswaATSTableName} add column if not exists nama_orang_tua text default '';
 
 -- Indexes for performance
 create index if not exists idx_${tableName}_tanggal on public.${tableName}(tanggal);
