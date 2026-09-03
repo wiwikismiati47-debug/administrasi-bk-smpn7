@@ -54,6 +54,7 @@ interface SidebarMenuProps {
     suratPernyataan?: number;
     konferensiKasus?: number;
     siswa?: number;
+    siswaats?: number;
   };
 }
 

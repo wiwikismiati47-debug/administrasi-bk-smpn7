@@ -20,7 +20,9 @@ import {
   Siswa,
   FormSiswaData,
   JurnalBK,
-  FormJurnalBKData
+  FormJurnalBKData,
+  SiswaATS,
+  FormSiswaATSData
 } from './types';
 import {
   fetchAllAgenda,
@@ -54,10 +56,14 @@ import {
   fetchAllJurnalBK,
   saveOrUpdateJurnalBK,
   deleteJurnalBKItem,
+  fetchAllSiswaATS,
+  saveOrUpdateSiswaATS,
+  deleteSiswaATSItem,
   getSavedSupabaseConfig,
   getSupabaseClient,
   STORAGE_KEY_CONFIG,
-  STORAGE_KEY_JURNAL_BK
+  STORAGE_KEY_JURNAL_BK,
+  STORAGE_KEY_SISWA_ATS
 } from './lib/supabase';
 import {
   getSavedAppLinks,
@@ -137,6 +143,11 @@ export default function App() {
   const [jurnalBKItems, setJurnalBKItems] = useState<JurnalBK[]>([]);
   const [isLoadingJurnalBK, setIsLoadingJurnalBK] = useState<boolean>(true);
   const [isSubmittingJurnalBK, setIsSubmittingJurnalBK] = useState<boolean>(false);
+
+  // Siswa ATS state
+  const [siswaATSItems, setSiswaATSItems] = useState<SiswaATS[]>([]);
+  const [isLoadingSiswaATS, setIsLoadingSiswaATS] = useState<boolean>(true);
+  const [isSubmittingSiswaATS, setIsSubmittingSiswaATS] = useState<boolean>(false);
 
   // Connection state (Default true with permanent SMPN 7 Supabase connection)
   const [isSupabaseConnected, setIsSupabaseConnected] = useState<boolean>(true);
@@ -306,6 +317,20 @@ export default function App() {
     }
   }, []);
 
+  const loadSiswaATSData = useCallback(async () => {
+    setIsLoadingSiswaATS(true);
+    try {
+      const res = await fetchAllSiswaATS();
+      setSiswaATSItems(res.data);
+      return res.isFromSupabase;
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data Siswa ATS.', 'error');
+    } finally {
+      setIsLoadingSiswaATS(false);
+    }
+  }, []);
+
   const refreshAllData = useCallback(async () => {
     const results = await Promise.all([
       loadAgendaData(),
@@ -317,7 +342,8 @@ export default function App() {
       loadSuratPernyataanData(),
       loadKonferensiKasusData(),
       loadSiswaData(),
-      loadJurnalBKData()
+      loadJurnalBKData(),
+      loadSiswaATSData()
     ]);
     
     // Check if any load was successful from Supabase
@@ -340,7 +366,8 @@ export default function App() {
     loadSuratPernyataanData,
     loadKonferensiKasusData,
     loadSiswaData,
-    loadJurnalBKData
+    loadJurnalBKData,
+    loadSiswaATSData
   ]);
 
   useEffect(() => {
@@ -348,7 +375,8 @@ export default function App() {
       await initStorageKeys([
         STORAGE_KEY_CONFIG,
         STORAGE_KEY_APP_LINKS,
-        STORAGE_KEY_JURNAL_BK
+        STORAGE_KEY_JURNAL_BK,
+        STORAGE_KEY_SISWA_ATS
       ]);
       const saved = getSavedAppLinks();
       setLinks(saved);
@@ -930,6 +958,60 @@ export default function App() {
     }
   };
 
+  // Handle Siswa ATS submit
+  const handleSubmitSiswaATS = async (data: Partial<SiswaATS> & FormSiswaATSData) => {
+    setIsSubmittingSiswaATS(true);
+    try {
+      const res = await saveOrUpdateSiswaATS(data);
+      if (res.success) {
+        if (res.data) {
+          const item = res.data;
+          setSiswaATSItems((prev) => {
+            const idx = prev.findIndex((i) => i.id === item.id);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = item;
+              return next;
+            }
+            return [item, ...prev];
+          });
+        }
+        await loadSiswaATSData();
+        showToast(
+          data.id
+            ? 'Data Siswa ATS berhasil diperbarui di Supabase!'
+            : 'Data Siswa ATS berhasil disimpan di Supabase!',
+          'success'
+        );
+      } else {
+        showToast(res.error || 'Gagal menyimpan Siswa ATS ke Supabase.', 'error');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Terjadi kesalahan';
+      showToast(`Gagal menyimpan ke Supabase: ${msg}`, 'error');
+    } finally {
+      setIsSubmittingSiswaATS(false);
+    }
+  };
+
+  // Handle Siswa ATS delete
+  const handleDeleteSiswaATS = async (id: string) => {
+    try {
+      setSiswaATSItems((prev) => prev.filter((i) => i.id !== id));
+      const res = await deleteSiswaATSItem(id);
+      if (res.success) {
+        await loadSiswaATSData();
+        showToast('Data Siswa ATS berhasil dihapus dari Supabase.', 'success');
+      } else {
+        await loadSiswaATSData();
+        showToast(res.error || 'Gagal menghapus data Siswa ATS dari Supabase.', 'error');
+      }
+    } catch {
+      await loadSiswaATSData();
+      showToast('Gagal menghapus data Siswa ATS dari Supabase.', 'error');
+    }
+  };
+
   // --- APP LINK MANAGER HANDLERS ---
   const handleSaveLink = (linkToSave: AppLink) => {
     const existingIndex = links.findIndex((l) => l.id === linkToSave.id);
@@ -1209,6 +1291,7 @@ export default function App() {
                   suratPernyataan: suratPernyataanItems.length,
                   konferensiKasus: konferensiKasusItems.length,
                   siswa: siswaItems.length,
+                  siswaats: siswaATSItems.length,
                 }}
               />
             </div>
@@ -1249,6 +1332,7 @@ export default function App() {
               suratPernyataan: suratPernyataanItems.length,
               konferensiKasus: konferensiKasusItems.length,
               siswa: siswaItems.length,
+              siswaats: siswaATSItems.length,
             }}
           />
         </div>
@@ -1307,6 +1391,11 @@ export default function App() {
           isSubmittingJurnalBK={isSubmittingJurnalBK}
           onSubmitJurnalBK={handleSubmitJurnalBK}
           onDeleteJurnalBK={handleDeleteJurnalBK}
+          siswaATSItems={siswaATSItems}
+          isLoadingSiswaATS={isLoadingSiswaATS}
+          isSubmittingSiswaATS={isSubmittingSiswaATS}
+          onSubmitSiswaATS={handleSubmitSiswaATS}
+          onDeleteSiswaATS={handleDeleteSiswaATS}
           isSupabaseConnected={isSupabaseConnected}
           onRefreshData={refreshAllData}
           onOpenSupabaseConfig={() => setIsSettingsOpen(true)}

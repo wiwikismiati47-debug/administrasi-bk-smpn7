@@ -1,7 +1,7 @@
 import { getActiveGuruBK } from '../lib/guruBk';
 import React from 'react';
 import { SignatureBox } from './SignatureBox';
-import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow, JurnalBK } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow, JurnalBK, SiswaATS } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
 import {
   downloadSuratUndanganWord,
@@ -50,7 +50,9 @@ interface PrintViewProps {
     | 'konferensi_kasus_daftar_hadir'
     | 'konferensi_kasus_gabungan'
     | 'jurnal_bk_tabel'
-    | 'jurnal_bk_dokumen';
+    | 'jurnal_bk_dokumen'
+    | 'siswa_ats_tabel'
+    | 'siswa_ats_laporan';
   agendaItems?: AgendaKerja[];
   undanganItems?: UndanganOrangTua[];
   selectedUndangan?: UndanganOrangTua | null;
@@ -68,6 +70,8 @@ interface PrintViewProps {
   selectedKonferensiKasus?: KonferensiKasus | null;
   jurnalBKItems?: JurnalBK[];
   selectedJurnalBK?: JurnalBK | null;
+  siswaATSItems?: SiswaATS[];
+  selectedSiswaATS?: SiswaATS | null;
   onBack: () => void;
 }
 
@@ -90,6 +94,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
   selectedKonferensiKasus = null,
   jurnalBKItems = [],
   selectedJurnalBK = null,
+  siswaATSItems = [],
+  selectedSiswaATS = null,
   onBack,
 }) => {
   const todayStr = new Date().toLocaleDateString('id-ID', {
@@ -125,6 +131,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
   const currentSuratPernyataan = selectedSuratPernyataan || (suratPernyataanItems.length > 0 ? suratPernyataanItems[0] : null);
   const currentKonferensiKasus = selectedKonferensiKasus || (konferensiKasusItems.length > 0 ? konferensiKasusItems[0] : null);
   const currentJurnalBK = selectedJurnalBK || (jurnalBKItems.length > 0 ? jurnalBKItems[0] : null);
+  const currentSiswaATS = selectedSiswaATS || (siswaATSItems.length > 0 ? siswaATSItems[0] : null);
 
   const handleTriggerPrint = () => {
     try {
@@ -3172,6 +3179,236 @@ export const PrintView: React.FC<PrintViewProps> = ({
                   {getActiveGuruBK().nama}
                 </div>
                 <div>NIP. {getActiveGuruBK().nip}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 13. LAPORAN KUNJUNGAN SISWA ATS (ANAK TIDAK SEKOLAH) */}
+        {docType === 'siswa_ats_laporan' && currentSiswaATS && (
+          <div className="space-y-4 text-xs leading-relaxed text-black font-serif">
+            <div className="text-center my-3">
+              <h2 className="text-base sm:text-lg font-bold uppercase underline tracking-wider">
+                LAPORAN HASIL KUNJUNGAN SISWA ATS (ANAK TIDAK SEKOLAH)
+              </h2>
+              <p className="text-xs font-semibold mt-1">
+                TAHUN AJARAN {currentSiswaATS.tahun_ajaran || '2025/2026'}
+              </p>
+            </div>
+
+            {/* Tabel Biodata dan Masalah ATS */}
+            <table className="w-full border-collapse text-xs my-3 border border-black">
+              <tbody>
+                <tr className="border-b border-black">
+                  <td className="p-2 w-44 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Hari / Tanggal Kunjungan</td>
+                  <td className="p-2">: {currentSiswaATS.hari}, {formatIndoDate(currentSiswaATS.tanggal)}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Jam / Waktu Pelaksanaan</td>
+                  <td className="p-2">: {currentSiswaATS.waktu}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Tahun Ajaran</td>
+                  <td className="p-2">: {currentSiswaATS.tahun_ajaran || '2025/2026'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Nama Siswa ATS</td>
+                  <td className="p-2 font-bold uppercase">: {currentSiswaATS.nama_siswa}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Kategori ATS</td>
+                  <td className="p-2 font-bold">: {currentSiswaATS.kategori_ats}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Kelas Terakhir Terdaftar</td>
+                  <td className="p-2">: {currentSiswaATS.kelas || '-'}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent">Alamat Lengkap Siswa</td>
+                  <td className="p-2">: {currentSiswaATS.alamat}</td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent align-top">
+                    Faktor / Alasan Siswa ATS
+                  </td>
+                  <td className="p-2 leading-relaxed">
+                    : <strong>{currentSiswaATS.alasan_ats}</strong>
+                  </td>
+                </tr>
+                <tr className="border-b border-black">
+                  <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent align-top">
+                    Uraian Fakta Lapangan
+                  </td>
+                  <td className="p-2 italic">
+                    : {currentSiswaATS.alasan_manual || '-'}
+                  </td>
+                </tr>
+                {currentSiswaATS.keterangan && (
+                  <tr className="border-b border-black">
+                    <td className="p-2 font-semibold border-r border-black bg-slate-50 print:bg-transparent align-top">
+                      Rencana Tindak Lanjut
+                    </td>
+                    <td className="p-2">
+                      : {currentSiswaATS.keterangan}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Dokumentasi Foto Kunjungan & Bukti Fisik */}
+            {(currentSiswaATS.foto_kunjungan_1 || currentSiswaATS.foto_bukti_fisik_2) && (
+              <div className="my-4 pt-2 border-t border-black">
+                <div className="font-bold text-xs uppercase mb-2">Dokumentasi Foto Kunjungan & Bukti Fisik Lapangan:</div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  {currentSiswaATS.foto_kunjungan_1 ? (
+                    <div className="border border-black p-2 rounded">
+                      <img
+                        src={currentSiswaATS.foto_kunjungan_1}
+                        alt="Foto Kunjungan 1"
+                        className="w-full max-h-56 object-contain mx-auto"
+                      />
+                      <div className="text-[10px] font-semibold mt-1">Foto Kunjungan 1 (Kunjungan Rumah ATS)</div>
+                    </div>
+                  ) : (
+                    <div className="border border-dashed border-black p-6 text-center text-xs italic">
+                      [Foto Kunjungan 1 Tidak Dilampirkan]
+                    </div>
+                  )}
+
+                  {currentSiswaATS.foto_bukti_fisik_2 ? (
+                    <div className="border border-black p-2 rounded">
+                      <img
+                        src={currentSiswaATS.foto_bukti_fisik_2}
+                        alt="Foto Bukti Fisik 2"
+                        className="w-full max-h-56 object-contain mx-auto"
+                      />
+                      <div className="text-[10px] font-semibold mt-1">Foto Bukti Fisik 2 (Dokumen / Lingkungan)</div>
+                    </div>
+                  ) : (
+                    <div className="border border-dashed border-black p-6 text-center text-xs italic">
+                      [Foto Bukti Fisik 2 Tidak Dilampirkan]
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tanda Tangan Resmi (Orang Tua, Guru Kunjungan, Kepala Sekolah) */}
+            <div className="grid grid-cols-2 text-center text-xs pt-6 gap-4 font-serif">
+              <div>
+                <div>Orang Tua / Wali Siswa,</div>
+                <SignatureBox recordId={currentSiswaATS.id} role="orang_tua" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline mt-1">
+                  ( .................................................... )
+                </div>
+                <div>Wali dari: {currentSiswaATS.nama_siswa}</div>
+              </div>
+
+              <div>
+                <div>{currentSiswaATS.tempat_laporan || 'Pasuruan'}, {formatIndoDate(currentSiswaATS.tanggal_laporan || currentSiswaATS.tanggal)}</div>
+                <div className="font-semibold">Guru / Petugas Kunjungan,</div>
+                <SignatureBox recordId={currentSiswaATS.id} role="guru_bk" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline mt-1">
+                  {currentSiswaATS.nama_guru_kunjungan}
+                </div>
+                <div>NIP. {currentSiswaATS.nip_guru_kunjungan}</div>
+              </div>
+
+              <div className="col-span-2 pt-4">
+                <div>Mengetahui,</div>
+                <div className="font-semibold">Kepala UPT SMP Negeri 7 Pasuruan</div>
+                <SignatureBox recordId={currentSiswaATS.id} role="kepala_sekolah" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline mt-1">
+                  {formatKepalaSekolah(currentSiswaATS.nama_kepala_sekolah)}
+                </div>
+                <div>NIP. {currentSiswaATS.nip_kepala_sekolah || '19860410 201001 2 030'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 14. REKAPITULASI TABEL SISWA ATS */}
+        {docType === 'siswa_ats_tabel' && (
+          <div className="space-y-4 text-xs leading-relaxed text-black font-serif">
+            <div className="text-center my-3">
+              <h2 className="text-base sm:text-lg font-bold uppercase underline tracking-wider">
+                REKAPITULASI DATA SISWA ATS (ANAK TIDAK SEKOLAH)
+              </h2>
+              <p className="text-xs font-semibold mt-1">
+                UPT SMP NEGERI 7 PASURUAN • LAYANAN KHUSUS BIMBINGAN DAN KONSELING
+              </p>
+            </div>
+
+            <table className="w-full border-collapse text-[11px] my-3 border border-black">
+              <thead>
+                <tr className="bg-slate-100 print:bg-transparent font-bold text-center border-b border-black">
+                  <th className="p-1.5 border border-black w-8">No</th>
+                  <th className="p-1.5 border border-black w-24">Hari / Tanggal</th>
+                  <th className="p-1.5 border border-black w-16">TA</th>
+                  <th className="p-1.5 border border-black">Nama Siswa ATS</th>
+                  <th className="p-1.5 border border-black w-20">Kategori</th>
+                  <th className="p-1.5 border border-black w-12">Kelas</th>
+                  <th className="p-1.5 border border-black">Alamat Siswa</th>
+                  <th className="p-1.5 border border-black">Faktor / Alasan ATS</th>
+                  <th className="p-1.5 border border-black w-32">Guru Kunjungan</th>
+                </tr>
+              </thead>
+              <tbody>
+                {siswaATSItems.length > 0 ? (
+                  siswaATSItems.map((item, idx) => (
+                    <tr key={item.id || idx} className="border-b border-black">
+                      <td className="p-1.5 border border-black text-center font-bold">{idx + 1}</td>
+                      <td className="p-1.5 border border-black">
+                        <div>{item.hari}</div>
+                        <div className="text-[10px] text-slate-600">{item.tanggal}</div>
+                      </td>
+                      <td className="p-1.5 border border-black text-center">{item.tahun_ajaran || '-'}</td>
+                      <td className="p-1.5 border border-black font-bold uppercase">{item.nama_siswa}</td>
+                      <td className="p-1.5 border border-black text-center font-semibold">{item.kategori_ats}</td>
+                      <td className="p-1.5 border border-black text-center">{item.kelas || '-'}</td>
+                      <td className="p-1.5 border border-black text-[10px]">{item.alamat}</td>
+                      <td className="p-1.5 border border-black text-[10px]">
+                        <div>{item.alasan_ats}</div>
+                        {item.alasan_manual && (
+                          <div className="italic text-slate-700 mt-0.5">&quot;{item.alasan_manual}&quot;</div>
+                        )}
+                      </td>
+                      <td className="p-1.5 border border-black text-[10px]">
+                        <div className="font-semibold">{item.nama_guru_kunjungan}</div>
+                        <div className="text-[9px]">NIP. {item.nip_guru_kunjungan}</div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={9} className="p-4 text-center italic text-slate-500 border border-black">
+                      Belum ada data Siswa ATS (Anak Tidak Sekolah).
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Signatures */}
+            <div className="grid grid-cols-2 text-center pt-8 text-xs gap-4 font-serif">
+              <div>
+                <div>Mengetahui,</div>
+                <div>Kepala UPT SMP Negeri 7 Pasuruan</div>
+                <SignatureBox recordId="siswa_ats_rekap" role="kepala_sekolah" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline mt-1">
+                  NUR FADILAH, S.Pd,. M.Pd
+                </div>
+                <div>NIP. 19860410 201001 2 030</div>
+              </div>
+              <div>
+                <div>Pasuruan, {todayStr}</div>
+                <div>Guru Bimbingan dan Konseling</div>
+                <SignatureBox recordId="siswa_ats_rekap" role="guru_bk" className="h-20 w-32 mx-auto" />
+                <div className="font-bold underline mt-1">
+                  WIWIK ISMIATI, S.Pd
+                </div>
+                <div>NIP. 19831116 200904 2 003</div>
               </div>
             </div>
           </div>

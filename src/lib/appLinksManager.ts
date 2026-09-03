@@ -114,6 +114,17 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     badge: 'SISWA',
     colorGradient: 'from-cyan-600 via-teal-600 to-blue-800',
   },
+  {
+    id: 'link-internal-siswa-ats',
+    title: 'Siswa ATS (Anak Tidak Sekolah)',
+    url: 'internal:siswa_ats',
+    iconName: 'UserX',
+    category: 'Administrasi Utama',
+    description: 'Form, Kunjungan & Tabel Data Siswa ATS (Drop Out / Lulus Tidak Melanjutkan) UPT SMPN 7 Pasuruan (Terhubung Supabase)',
+    isInternal: true,
+    badge: 'ATS',
+    colorGradient: 'from-amber-600 via-red-600 to-rose-800',
+  },
 ];
 
 export function getSavedAppLinks(): AppLink[] {

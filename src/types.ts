@@ -331,6 +331,33 @@ export interface JurnalBK {
 
 export type FormJurnalBKData = Omit<JurnalBK, 'id' | 'created_at' | 'updated_at'>;
 
+export interface SiswaATS {
+  id: string;
+  created_at?: string;
+  updated_at?: string;
+  hari: string; // e.g. "Senin", "Selasa"
+  tanggal: string; // YYYY-MM-DD
+  tahun_ajaran: string; // e.g. "2025/2026"
+  waktu: string; // e.g. "08:00 WIB"
+  nama_siswa: string; // Nama siswa ATS
+  kategori_ats: 'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | string;
+  kelas?: string; // e.g. "VIII A"
+  alamat: string; // Alamat siswa ATS
+  alasan_ats: string; // Popup pilihan kategori alasan ATS
+  alasan_manual: string; // Isian manual / uraian tambahan
+  foto_kunjungan_1: string; // Foto Kunjungan 1 (URL / Base64)
+  foto_bukti_fisik_2: string; // Foto Bukti Fisik 2 (URL / Base64)
+  tempat_laporan: string; // e.g. "Pasuruan"
+  tanggal_laporan: string; // YYYY-MM-DD
+  nama_guru_kunjungan: string; // Pilihan: WIWIK ISMIATI, S.Pd / EKI FEBRIANI, S.Pd
+  nip_guru_kunjungan: string; // NIP Guru Kunjungan
+  nama_kepala_sekolah?: string;
+  nip_kepala_sekolah?: string;
+  keterangan?: string;
+}
+
+export type FormSiswaATSData = Omit<SiswaATS, 'id' | 'created_at' | 'updated_at'>;
+
 
 
 

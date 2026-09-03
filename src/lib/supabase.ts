@@ -20,6 +20,8 @@ import {
   FormSiswaData,
   JurnalBK,
   FormJurnalBKData,
+  SiswaATS,
+  FormSiswaATSData,
   SiswaTidakHadir,
   SupabaseConfig
 } from '../types';
@@ -53,6 +55,12 @@ export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
 export const DEFAULT_KONFERENSI_KASUS_TABLE_NAME = 'konferensi_kasus_siswa';
 export const DEFAULT_SISWA_TABLE_NAME = 'siswa_bk';
 export const DEFAULT_JURNAL_BK_TABLE_NAME = 'jurnal_bk_siswa';
+export const DEFAULT_SISWA_ATS_TABLE_NAME = 'siswa_ats_bk';
+export const SISWA_ATS_TABLE_CANDIDATES = [
+  'siswa_ats_bk',
+  'siswa_ats',
+  'bk_siswa_ats'
+];
 export const DEFAULT_SIGNATURES_TABLE_NAME = 'signatures_bk';
 
 // Storage Keys (Kept for config persistence)
@@ -67,6 +75,7 @@ export const STORAGE_KEY_SURAT_PERNYATAAN = 'bk_smpn7_surat_pernyataan_local';
 export const STORAGE_KEY_KONFERENSI_KASUS = 'bk_smpn7_konferensi_kasus_local';
 export const STORAGE_KEY_SISWA = 'bk_smpn7_siswa_local';
 export const STORAGE_KEY_JURNAL_BK = 'bk_smpn7_jurnal_bk_local';
+export const STORAGE_KEY_SISWA_ATS = 'bk_smpn7_siswa_ats_local';
 
 export function getTodayISO(): string {
   return new Date().toISOString().split('T')[0];
@@ -2434,6 +2443,291 @@ export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean
 }
 
 /* ==========================================================================
+   Siswa ATS (Anak Tidak Sekolah) Operations
+   ========================================================================== */
+
+let activeSiswaATSTableName = DEFAULT_SISWA_ATS_TABLE_NAME;
+
+export function getActiveSiswaATSTableName(): string {
+  return activeSiswaATSTableName;
+}
+
+export function setActiveSiswaATSTableName(name: string): void {
+  activeSiswaATSTableName = name;
+}
+
+export function mapSupabaseRowToSiswaATS(row: any): SiswaATS {
+  return {
+    id: row.id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    hari: row.hari || getDayNameFromDate(row.tanggal || getTodayISO()),
+    tanggal: row.tanggal || getTodayISO(),
+    tahun_ajaran: row.tahun_ajaran || '2025/2026',
+    waktu: row.waktu || '08:00 WIB',
+    nama_siswa: row.nama_siswa || '',
+    kategori_ats: row.kategori_ats || 'DO (Drop Out)',
+    kelas: row.kelas || '',
+    alamat: row.alamat || '',
+    alasan_ats: row.alasan_ats || '',
+    alasan_manual: row.alasan_manual || '',
+    foto_kunjungan_1: row.foto_kunjungan_1 || '',
+    foto_bukti_fisik_2: row.foto_bukti_fisik_2 || '',
+    tempat_laporan: row.tempat_laporan || 'Pasuruan',
+    tanggal_laporan: row.tanggal_laporan || row.tanggal || getTodayISO(),
+    nama_guru_kunjungan: row.nama_guru_kunjungan || 'WIWIK ISMIATI, S.Pd',
+    nip_guru_kunjungan: row.nip_guru_kunjungan || '19831116 200904 2 003',
+    nama_kepala_sekolah: row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: row.nip_kepala_sekolah || '19860410 201001 2 030',
+    keterangan: row.keterangan || ''
+  };
+}
+
+export async function fetchAllSiswaATS(): Promise<{
+  data: SiswaATS[];
+  isFromSupabase: boolean;
+  error?: string;
+}> {
+  const localData = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (!client) return { data: localData, isFromSupabase: false };
+
+  const candidateTables = Array.from(new Set([
+    getActiveSiswaATSTableName(),
+    ...SISWA_ATS_TABLE_CANDIDATES
+  ]));
+
+  let fetched: SiswaATS[] = [];
+  let isFromSupabase = false;
+  let lastError: string | undefined = undefined;
+
+  for (const tableName of candidateTables) {
+    try {
+      let { data, error } = await client
+        .from(tableName)
+        .select('*')
+        .order('tanggal', { ascending: false });
+
+      if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
+        const fallbackRes = await client
+          .from(tableName)
+          .select('*')
+          .order('tanggal', { ascending: false })
+          .limit(100);
+        if (!fallbackRes.error && fallbackRes.data) {
+          data = fallbackRes.data;
+          error = null;
+        }
+      }
+
+      if (!error && data) {
+        setActiveSiswaATSTableName(tableName);
+        fetched = data.map(mapSupabaseRowToSiswaATS);
+        isFromSupabase = true;
+        break;
+      } else if (error) {
+        lastError = error.message;
+      }
+    } catch (err: any) {
+      lastError = err?.message || 'Error query';
+    }
+  }
+
+  if (isFromSupabase) {
+    const mergedMap = new Map<string, SiswaATS>();
+    (localData || []).forEach((item) => {
+      if (item && item.id) mergedMap.set(item.id, item);
+    });
+    fetched.forEach((item) => {
+      if (item && item.id) {
+        const localItem = mergedMap.get(item.id);
+        if (localItem && localItem.updated_at && item.updated_at) {
+          if (new Date(localItem.updated_at).getTime() > new Date(item.updated_at).getTime()) {
+            return;
+          }
+        }
+        mergedMap.set(item.id, item);
+      }
+    });
+    const mergedList = Array.from(mergedMap.values()).sort((a, b) =>
+      (b.tanggal || '').localeCompare(a.tanggal || '')
+    );
+    safeSetStorage(STORAGE_KEY_SISWA_ATS, mergedList);
+    return { data: mergedList, isFromSupabase: true };
+  }
+
+  return { data: localData, isFromSupabase: false, error: lastError };
+}
+
+export async function saveOrUpdateSiswaATS(
+  item: FormSiswaATSData & { id?: string }
+): Promise<{
+  success: boolean;
+  data: SiswaATS;
+  isSupabase: boolean;
+  error?: string;
+}> {
+  const targetId = item.id || `ats_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const now = new Date().toISOString();
+
+  const formattedObject: SiswaATS = {
+    id: targetId,
+    created_at: now,
+    updated_at: now,
+    hari: item.hari || getDayNameFromDate(item.tanggal || getTodayISO()),
+    tanggal: item.tanggal || getTodayISO(),
+    tahun_ajaran: item.tahun_ajaran || '2025/2026',
+    waktu: item.waktu || '08:00 WIB',
+    nama_siswa: item.nama_siswa || '',
+    kategori_ats: item.kategori_ats || 'DO (Drop Out)',
+    kelas: item.kelas || '',
+    alamat: item.alamat || '',
+    alasan_ats: item.alasan_ats || '',
+    alasan_manual: item.alasan_manual || '',
+    foto_kunjungan_1: item.foto_kunjungan_1 || '',
+    foto_bukti_fisik_2: item.foto_bukti_fisik_2 || '',
+    tempat_laporan: item.tempat_laporan || 'Pasuruan',
+    tanggal_laporan: item.tanggal_laporan || item.tanggal || getTodayISO(),
+    nama_guru_kunjungan: item.nama_guru_kunjungan || 'WIWIK ISMIATI, S.Pd',
+    nip_guru_kunjungan: item.nip_guru_kunjungan || '19831116 200904 2 003',
+    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
+    keterangan: item.keterangan || ''
+  };
+
+  // 1. ALWAYS persist locally first so data is 100% safe
+  const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+  const existingIdx = localList.findIndex((i) => i.id === targetId);
+  let updatedLocal: SiswaATS[];
+  if (existingIdx >= 0) {
+    updatedLocal = [...localList];
+    updatedLocal[existingIdx] = {
+      ...formattedObject,
+      created_at: localList[existingIdx].created_at || now,
+    };
+  } else {
+    updatedLocal = [formattedObject, ...localList];
+  }
+  safeSetStorage(STORAGE_KEY_SISWA_ATS, updatedLocal);
+
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (!client) {
+    return {
+      success: true,
+      data: formattedObject,
+      isSupabase: false,
+      error: 'Tersimpan di perangkat lokal.'
+    };
+  }
+
+  const candidateTables = Array.from(new Set([
+    getActiveSiswaATSTableName(),
+    ...SISWA_ATS_TABLE_CANDIDATES
+  ]));
+
+  let lastError = '';
+
+  for (const tableName of candidateTables) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .upsert(formattedObject, { onConflict: 'id' })
+        .select();
+
+      if (!error) {
+        setActiveSiswaATSTableName(tableName);
+        const returnedItem = data && data.length > 0 ? (data[0] as SiswaATS) : formattedObject;
+        return {
+          success: true,
+          data: returnedItem,
+          isSupabase: true
+        };
+      }
+      lastError = error.message;
+
+      // Fallback with core columns in case of table variations
+      try {
+        const corePayload: any = {
+          id: targetId,
+          updated_at: now,
+          hari: formattedObject.hari,
+          tanggal: formattedObject.tanggal,
+          tahun_ajaran: formattedObject.tahun_ajaran,
+          waktu: formattedObject.waktu,
+          nama_siswa: formattedObject.nama_siswa,
+          kategori_ats: formattedObject.kategori_ats,
+          alamat: formattedObject.alamat,
+          alasan_ats: formattedObject.alasan_ats,
+          alasan_manual: formattedObject.alasan_manual,
+          foto_kunjungan_1: formattedObject.foto_kunjungan_1,
+          foto_bukti_fisik_2: formattedObject.foto_bukti_fisik_2,
+          tempat_laporan: formattedObject.tempat_laporan,
+          tanggal_laporan: formattedObject.tanggal_laporan,
+          nama_guru_kunjungan: formattedObject.nama_guru_kunjungan,
+          nip_guru_kunjungan: formattedObject.nip_guru_kunjungan
+        };
+        const retryRes = await client
+          .from(tableName)
+          .upsert(corePayload, { onConflict: 'id' })
+          .select();
+        if (!retryRes.error) {
+          setActiveSiswaATSTableName(tableName);
+          return {
+            success: true,
+            data: formattedObject,
+            isSupabase: true
+          };
+        }
+      } catch {}
+    } catch (err: any) {
+      lastError = err?.message || 'Error koneksi Supabase';
+    }
+  }
+
+  console.warn('Supabase saveOrUpdateSiswaATS warning (saved locally):', lastError);
+  return {
+    success: true,
+    data: formattedObject,
+    isSupabase: false,
+    error: lastError ? `Tersimpan di lokal. Info Cloud: ${lastError}` : undefined
+  };
+}
+
+export async function deleteSiswaATSItem(
+  id: string
+): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
+  const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+  const filtered = localList.filter((i) => i.id !== id);
+  safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
+
+  const config = getSavedSupabaseConfig();
+  const client = getSupabaseClient(config);
+
+  if (!client) return { success: true, isSupabase: false };
+
+  const candidateTables = Array.from(new Set([
+    getActiveSiswaATSTableName(),
+    ...SISWA_ATS_TABLE_CANDIDATES
+  ]));
+
+  for (const tableName of candidateTables) {
+    try {
+      const { error } = await client.from(tableName).delete().eq('id', id);
+      if (!error) {
+        setActiveSiswaATSTableName(tableName);
+        return { success: true, isSupabase: true };
+      }
+    } catch {}
+  }
+
+  return { success: true, isSupabase: false };
+}
+
+/* ==========================================================================
    SQL Script Generator & Multi-Table Diagnostic Tool
    ========================================================================== */
 
@@ -2447,7 +2741,8 @@ export function getSupabaseSqlSetup(
   suratPernyataanTableName: string = DEFAULT_SURAT_PERNYATAAN_TABLE_NAME,
   konferensiKasusTableName: string = DEFAULT_KONFERENSI_KASUS_TABLE_NAME,
   siswaTableName: string = DEFAULT_SISWA_TABLE_NAME,
-  jurnalBKTableName: string = DEFAULT_JURNAL_BK_TABLE_NAME
+  jurnalBKTableName: string = DEFAULT_JURNAL_BK_TABLE_NAME,
+  siswaATSTableName: string = DEFAULT_SISWA_ATS_TABLE_NAME
 ): string {
   return `-- SQL Script Setup Database Supabase untuk ADMINISTRASI BK SMPN 7 Pasuruan (ADM_BK_SMPN7)
 -- Jalankan seluruh script ini di Supabase Studio -> SQL Editor -> Run
@@ -2885,6 +3180,45 @@ create policy "Akses Update Publik Jurnal BK" on public.${jurnalBKTableName} for
 create policy "Akses Hapus Publik Jurnal BK" on public.${jurnalBKTableName} for delete using (true);
 
 --------------------------------------------------------------------------------
+-- 12. TABEL SISWA ATS (ANAK TIDAK SEKOLAH) (${siswaATSTableName})
+--------------------------------------------------------------------------------
+create table if not exists public.${siswaATSTableName} (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  tahun_ajaran text default '2025/2026',
+  waktu text not null,
+  nama_siswa text not null,
+  kategori_ats text default 'DO (Drop Out)',
+  kelas text default '',
+  alamat text default '',
+  alasan_ats text not null,
+  alasan_manual text default '',
+  foto_kunjungan_1 text default '',
+  foto_bukti_fisik_2 text default '',
+  tempat_laporan text default 'Pasuruan',
+  tanggal_laporan date not null,
+  nama_guru_kunjungan text default 'WIWIK ISMIATI, S.Pd',
+  nip_guru_kunjungan text default '19831116 200904 2 003',
+  nama_kepala_sekolah text default 'NUR FADILAH, S.Pd,. M.Pd',
+  nip_kepala_sekolah text default '19860410 201001 2 030',
+  keterangan text default ''
+);
+
+alter table public.${siswaATSTableName} enable row level security;
+drop policy if exists "Akses Baca Publik Siswa ATS" on public.${siswaATSTableName};
+drop policy if exists "Akses Tambah Publik Siswa ATS" on public.${siswaATSTableName};
+drop policy if exists "Akses Update Publik Siswa ATS" on public.${siswaATSTableName};
+drop policy if exists "Akses Hapus Publik Siswa ATS" on public.${siswaATSTableName};
+
+create policy "Akses Baca Publik Siswa ATS" on public.${siswaATSTableName} for select using (true);
+create policy "Akses Tambah Publik Siswa ATS" on public.${siswaATSTableName} for insert with check (true);
+create policy "Akses Update Publik Siswa ATS" on public.${siswaATSTableName} for update using (true);
+create policy "Akses Hapus Publik Siswa ATS" on public.${siswaATSTableName} for delete using (true);
+
+--------------------------------------------------------------------------------
 -- MIGRATION SAFE: Tambahkan kolom baru jika tabel sudah pernah dibuat sebelumnya
 --------------------------------------------------------------------------------
 alter table public.${tableName} add column if not exists link_foto_kegiatan text default '';
@@ -2970,6 +3304,8 @@ create index if not exists idx_${suratPernyataanTableName}_siswa on public.${sur
 create index if not exists idx_${konferensiKasusTableName}_konseli on public.${konferensiKasusTableName}(nama_konseli);
 create index if not exists idx_${siswaTableName}_kelas on public.${siswaTableName}(kelas);
 create index if not exists idx_${jurnalBKTableName}_tanggal on public.${jurnalBKTableName}(tanggal);
+create index if not exists idx_${siswaATSTableName}_tanggal on public.${siswaATSTableName}(tanggal);
+create index if not exists idx_${siswaATSTableName}_siswa on public.${siswaATSTableName}(nama_siswa);
 create index if not exists idx_signatures_bk_record on public.signatures_bk(record_id);
 `;
 }
@@ -3016,6 +3352,7 @@ export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Prom
     { title: 'Konferensi Kasus Siswa', tableName: DEFAULT_KONFERENSI_KASUS_TABLE_NAME },
     { title: 'Data Manajemen Siswa', tableName: DEFAULT_SISWA_TABLE_NAME },
     { title: 'Jurnal Layanan BK', tableName: DEFAULT_JURNAL_BK_TABLE_NAME },
+    { title: 'Siswa ATS (Anak Tidak Sekolah)', tableName: DEFAULT_SISWA_ATS_TABLE_NAME },
     { title: 'Tanda Tangan Digital (Signatures)', tableName: DEFAULT_SIGNATURES_TABLE_NAME },
   ];
 
@@ -3058,6 +3395,23 @@ export async function testAllSupabaseTables(customConfig?: SupabaseConfig): Prom
           if (!error) {
             isFound = true;
             detectedTableName = candidate;
+            break;
+          } else {
+            lastErrMsg = error.message;
+          }
+        }
+      } else if (item.title === 'Siswa ATS (Anak Tidak Sekolah)') {
+        const candidateATSTables = [
+          item.tableName,
+          ...SISWA_ATS_TABLE_CANDIDATES
+        ];
+        const uniqueCandidates = Array.from(new Set(candidateATSTables));
+        for (const candidate of uniqueCandidates) {
+          const { error } = await client.from(candidate).select('*').limit(1);
+          if (!error) {
+            isFound = true;
+            detectedTableName = candidate;
+            setActiveSiswaATSTableName(candidate);
             break;
           } else {
             lastErrMsg = error.message;
