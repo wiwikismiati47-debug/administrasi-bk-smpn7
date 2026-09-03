@@ -246,6 +246,48 @@ export async function testSupabaseConnection(customConfig?: SupabaseConfig): Pro
   }
 }
 
+/**
+ * Shared Realtime Sync Channel for Multi-User Sync (Laptop & Handphone)
+ */
+let sharedSyncChannel: any = null;
+
+export function getOrCreateSyncChannel(client: any) {
+  if (!client) return null;
+  if (!sharedSyncChannel) {
+    sharedSyncChannel = client.channel('bk-multiuser-sync', {
+      config: { broadcast: { self: false } }
+    });
+    sharedSyncChannel.subscribe((status: string) => {
+      if (status === 'SUBSCRIBED') {
+        console.log('Multiuser sync channel subscribed successfully');
+      }
+    });
+  }
+  return sharedSyncChannel;
+}
+
+/**
+ * Broadcast realtime change to all connected clients (laptop & handphone)
+ */
+export async function broadcastDatabaseChange(table: string, action: 'upsert' | 'delete', recordId?: string) {
+  try {
+    const config = getSavedSupabaseConfig();
+    const client = getSupabaseClient(config);
+    if (!client) return;
+
+    const channel = getOrCreateSyncChannel(client);
+    if (channel) {
+      await channel.send({
+        type: 'broadcast',
+        event: 'db_update',
+        payload: { table, action, recordId, timestamp: Date.now() }
+      });
+    }
+  } catch {
+    // Non-blocking broadcast
+  }
+}
+
 /* ==========================================================================
    1. AGENDA KERJA BK (Hybrid Supabase & Local)
    ========================================================================== */
@@ -358,43 +400,32 @@ export async function saveOrUpdateAgenda(
 ): Promise<{ success: boolean; data?: AgendaKerja; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `agenda-${Date.now()}`;
+  const validTanggal = item.tanggal || now.split('T')[0];
   
   const formattedObject: AgendaKerja = {
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || '',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    waktu: item.waktu || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    waktu: item.waktu || '08:00 WIB',
     uraian_kegiatan: item.uraian_kegiatan || '',
     sasaran: item.sasaran || '',
     link_foto_kegiatan: item.link_foto_kegiatan || '',
     keterangan: item.keterangan || ''
   };
 
-  // 1. Always update local storage first
-  const localList = safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: AgendaKerja[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_DATA, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
     return {
-      success: true,
+      success: false,
       data: formattedObject,
       isSupabase: false,
-      error: 'Tersimpan di penyimpanan lokal.'
+      error: 'Database Supabase belum terhubung. Hubungkan Supabase agar data tersimpan permanen di Cloud.'
     };
   }
 
@@ -408,53 +439,72 @@ export async function saveOrUpdateAgenda(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateAgenda error (saved locally):', error.message);
+      console.error('Supabase saveOrUpdateAgenda error:', error.message);
       return {
-        success: true,
+        success: false,
         data: formattedObject,
         isSupabase: false,
-        error: `Tersimpan di lokal. Catatan Cloud: ${error.message}`
+        error: `Gagal menyimpan ke Supabase Cloud: ${error.message}`
       };
     }
 
+    const savedItem = (data || formattedObject) as AgendaKerja;
+    // Update local cache ONLY after successful cloud upsert
+    const localList = safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: AgendaKerja[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_DATA, updatedLocal);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(targetTable, 'upsert', savedItem.id);
+
     return {
       success: true,
-      data: (data || formattedObject) as AgendaKerja,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Koneksi ke Supabase terputus';
     return {
-      success: true,
+      success: false,
       data: formattedObject,
       isSupabase: false,
-      error: `Tersimpan di lokal. Error jaringan: ${msg}`
+      error: `Gagal menyimpan ke Supabase Cloud: ${msg}`
     };
   }
 }
 
 export async function deleteAgendaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_DATA, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, isSupabase: false };
+    return { success: false, isSupabase: false, error: 'Supabase belum terhubung.' };
   }
 
   const targetTable = config.tableName || DEFAULT_TABLE_NAME;
   try {
     const { error } = await client.from(targetTable).delete().eq('id', id);
     if (error) {
-      return { success: true, isSupabase: false, error: error.message };
+      return { success: false, isSupabase: false, error: error.message };
     }
+    // Remove from local cache ONLY after successful deletion from Supabase
+    const localList = safeGetStorage<AgendaKerja[]>(STORAGE_KEY_DATA, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_DATA, filtered);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(targetTable, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data dari Supabase';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -497,16 +547,17 @@ export async function saveOrUpdateUndangan(
 ): Promise<{ success: boolean; data?: UndanganOrangTua; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `undangan-${Date.now()}`;
+  const validTanggal = item.tanggal || now.split('T')[0];
 
   const formattedObject: UndanganOrangTua = {
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || '',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    waktu: item.waktu || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    waktu: item.waktu || '08:00 WIB',
     tempat_pelaksanaan: item.tempat_pelaksanaan || 'SMP Negeri 7 Pasuruan',
     kelas: item.kelas || '',
     nama_siswa: item.nama_siswa || '',
@@ -519,7 +570,7 @@ export async function saveOrUpdateUndangan(
     link_foto_kegiatan: item.link_foto_kegiatan || '',
     keterangan: item.keterangan || '',
     nomor_surat: item.nomor_surat || '',
-    tanggal_surat: item.tanggal_surat || item.tanggal || now.split('T')[0],
+    tanggal_surat: item.tanggal_surat || item.tanggal || validTanggal,
     tempat_surat: item.tempat_surat || 'Pasuruan',
     semester: item.semester || '',
     nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
@@ -528,23 +579,11 @@ export async function saveOrUpdateUndangan(
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  // 1. Always update local storage first
-  const localList = safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: UndanganOrangTua[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_UNDANGAN, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   try {
@@ -555,9 +594,22 @@ export async function saveOrUpdateUndangan(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateUndangan error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info Cloud: ${error.message}` };
+      console.error('Supabase saveOrUpdateUndangan error:', error.message);
+      return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${error.message}` };
     }
+
+    const savedItem = (data || formattedObject) as UndanganOrangTua;
+    // Update local cache ONLY after successful cloud upsert
+    const localList = safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: UndanganOrangTua[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_UNDANGAN, updatedLocal);
 
     // Sync into rekam_permasalahan_siswa if problem description exists
     if (formattedObject.uraian_permasalahan || formattedObject.perihal_undangan) {
@@ -596,34 +648,41 @@ export async function saveOrUpdateUndangan(
       }
     }
 
+    // Broadcast change
+    broadcastDatabaseChange(DEFAULT_UNDANGAN_TABLE_NAME, 'upsert', savedItem.id);
+
     return {
       success: true,
-      data: (data || formattedObject) as UndanganOrangTua,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
+    return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${msg}` };
   }
 }
 
 export async function deleteUndanganItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_UNDANGAN, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   try {
     const { error } = await client.from(DEFAULT_UNDANGAN_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
+    if (error) return { success: false, isSupabase: false, error: error.message };
+
+    // Remove from local cache ONLY after successful deletion from Supabase
+    const localList = safeGetStorage<UndanganOrangTua[]>(STORAGE_KEY_UNDANGAN, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_UNDANGAN, filtered);
+
+    // Broadcast change
+    broadcastDatabaseChange(DEFAULT_UNDANGAN_TABLE_NAME, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -734,17 +793,8 @@ export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSu
       if (!error && Array.isArray(data)) {
         if (data.length > 0 || tableName === DEFAULT_HOME_VISIT_TABLE_NAME) {
           const mapped = data.map(mapSupabaseRowToHomeVisit);
-          // Merge local un-synced items with mapped data
-          const mergedMap = new Map<string, HomeVisit>();
-          mapped.forEach((item) => mergedMap.set(item.id, item));
-          localData.forEach((item) => {
-            if (!mergedMap.has(item.id)) {
-              mergedMap.set(item.id, item);
-            }
-          });
-          const mergedList = Array.from(mergedMap.values()).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
-          safeSetStorage(STORAGE_KEY_HOME_VISIT, mergedList);
-          return { data: mergedList, isFromSupabase: true };
+          safeSetStorage(STORAGE_KEY_HOME_VISIT, mapped);
+          return { data: mapped, isFromSupabase: true };
         }
       } else if (error) {
         lastError = error.message;
@@ -812,31 +862,19 @@ export async function saveOrUpdateHomeVisit(
     tanggal_pernyataan_ortu: item.tanggal_pernyataan_ortu || item.tanggal || now.split('T')[0]
   };
 
-  // 1. ALWAYS persist locally first so data is guaranteed to be saved
-  const localList = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: HomeVisit[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_HOME_VISIT, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
     return {
-      success: true,
+      success: false,
       data: formattedObject,
       isSupabase: false,
-      error: 'Tersimpan di penyimpanan lokal.'
+      error: 'Database Supabase belum terhubung.'
     };
   }
 
-  // 2. Try Supabase upsert on candidates
+  let lastError = '';
   const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
   for (const tableName of candidates) {
     try {
@@ -847,11 +885,31 @@ export async function saveOrUpdateHomeVisit(
         .single();
 
       if (!error) {
+        const savedItem = data ? mapSupabaseRowToHomeVisit(data) : formattedObject;
+        // Update local cache
+        const localList = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
+        const existingIdx = localList.findIndex((i) => i.id === targetId);
+        let updatedLocal: HomeVisit[];
+        if (existingIdx >= 0) {
+          updatedLocal = [...localList];
+          updatedLocal[existingIdx] = savedItem;
+        } else {
+          updatedLocal = [savedItem, ...localList];
+        }
+        safeSetStorage(STORAGE_KEY_HOME_VISIT, updatedLocal);
+
+        // Broadcast to all connected clients
+        broadcastDatabaseChange(tableName, 'upsert', savedItem.id);
+
         return {
           success: true,
-          data: (data ? mapSupabaseRowToHomeVisit(data) : formattedObject),
+          data: savedItem,
           isSupabase: true
         };
+      }
+
+      if (error) {
+        lastError = error.message;
       }
 
       // If full object failed, attempt simplified payload
@@ -887,43 +945,64 @@ export async function saveOrUpdateHomeVisit(
           .select()
           .single();
         if (!retryRes.error) {
+          const savedItem = retryRes.data ? mapSupabaseRowToHomeVisit(retryRes.data) : formattedObject;
+          const localList = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
+          const existingIdx = localList.findIndex((i) => i.id === targetId);
+          let updatedLocal: HomeVisit[];
+          if (existingIdx >= 0) {
+            updatedLocal = [...localList];
+            updatedLocal[existingIdx] = savedItem;
+          } else {
+            updatedLocal = [savedItem, ...localList];
+          }
+          safeSetStorage(STORAGE_KEY_HOME_VISIT, updatedLocal);
+
+          // Broadcast to all connected clients
+          broadcastDatabaseChange(tableName, 'upsert', savedItem.id);
+
           return {
             success: true,
-            data: formattedObject,
+            data: savedItem,
             isSupabase: true
           };
         }
       } catch {}
-    } catch {}
+    } catch (err: any) {
+      lastError = err?.message || 'Error connection';
+    }
   }
 
   return {
-    success: true,
+    success: false,
     data: formattedObject,
     isSupabase: false,
-    error: 'Tersimpan di penyimpanan lokal.'
+    error: `Gagal menyimpan ke Supabase Cloud: ${lastError || 'Tabel home visit tidak dapat diakses'}`
   };
 }
 
 export async function deleteHomeVisitItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_HOME_VISIT, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
   for (const tableName of candidates) {
     try {
       const { error } = await client.from(tableName).delete().eq('id', id);
-      if (!error) return { success: true, isSupabase: true };
+      if (!error) {
+        // Remove from local cache ONLY after successful Supabase deletion
+        const localList = safeGetStorage<HomeVisit[]>(STORAGE_KEY_HOME_VISIT, []);
+        const filtered = localList.filter((i) => i.id !== id);
+        safeSetStorage(STORAGE_KEY_HOME_VISIT, filtered);
+
+        broadcastDatabaseChange(tableName, 'delete', id);
+        return { success: true, isSupabase: true };
+      }
     } catch {}
   }
 
-  return { success: true, isSupabase: false };
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data Home Visit dari Supabase' };
 }
 
 /* ==========================================================================
@@ -1027,25 +1106,9 @@ export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasal
       }
     }
 
-    // Merge with localData preserving any newer local updates
-    const mergedMap = new Map<string, RekamPermasalahan>();
-    (localData || []).forEach(item => {
-      if (item && item.id) mergedMap.set(item.id, item);
-    });
-    fetched.forEach(item => {
-      if (item && item.id) {
-        const localItem = mergedMap.get(item.id);
-        if (localItem && localItem.updated_at && item.updated_at) {
-          if (new Date(localItem.updated_at).getTime() > new Date(item.updated_at).getTime()) {
-            return; // keep existing newer local data
-          }
-        }
-        mergedMap.set(item.id, item);
-      }
-    });
-    const mergedList = Array.from(mergedMap.values()).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
-    safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, mergedList);
-    return { data: mergedList, isFromSupabase: true };
+    const fetchedList = fetched.sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+    safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, fetchedList);
+    return { data: fetchedList, isFromSupabase: true };
   }
 
   return { data: localData, isFromSupabase: false, error: lastError };
@@ -1086,26 +1149,14 @@ export async function saveOrUpdateRekamPermasalahan(
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 
-  // 1. ALWAYS persist locally first so data is never lost
-  const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: RekamPermasalahan[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
-  // 2. Try candidate tables in Supabase
+  // 1. Direct Supabase save
   const candidates = Array.from(new Set([DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME, ...REKAM_PERMASALAHAN_TABLE_CANDIDATES]));
   let lastError = '';
 
@@ -1118,6 +1169,22 @@ export async function saveOrUpdateRekamPermasalahan(
 
       if (!error) {
         const returnedItem = data && data.length > 0 ? (data[0] as RekamPermasalahan) : formattedObject;
+        
+        // Update local cache ONLY on success
+        const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
+        const existingIdx = localList.findIndex((i) => i.id === targetId);
+        let updatedLocal: RekamPermasalahan[];
+        if (existingIdx >= 0) {
+          updatedLocal = [...localList];
+          updatedLocal[existingIdx] = returnedItem;
+        } else {
+          updatedLocal = [returnedItem, ...localList];
+        }
+        safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, updatedLocal);
+
+        // Broadcast to other devices
+        broadcastDatabaseChange(tableName, 'upsert', returnedItem.id);
+
         return {
           success: true,
           data: returnedItem,
@@ -1129,7 +1196,7 @@ export async function saveOrUpdateRekamPermasalahan(
         lastError = error.message;
       }
 
-      // If full object failed (e.g. unknown new columns in postgres), try core payload
+      // If full object failed, try core payload
       try {
         const corePayload: any = {
           id: targetId,
@@ -1157,6 +1224,19 @@ export async function saveOrUpdateRekamPermasalahan(
           .upsert(corePayload, { onConflict: 'id' })
           .select();
         if (!retryRes.error) {
+          const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
+          const existingIdx = localList.findIndex((i) => i.id === targetId);
+          let updatedLocal: RekamPermasalahan[];
+          if (existingIdx >= 0) {
+            updatedLocal = [...localList];
+            updatedLocal[existingIdx] = formattedObject;
+          } else {
+            updatedLocal = [formattedObject, ...localList];
+          }
+          safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, updatedLocal);
+
+          broadcastDatabaseChange(tableName, 'upsert', targetId);
+
           return {
             success: true,
             data: formattedObject,
@@ -1169,35 +1249,37 @@ export async function saveOrUpdateRekamPermasalahan(
     }
   }
 
-  // Graceful fallback: local save is already confirmed
-  console.warn('Supabase saveOrUpdateRekamPermasalahan error (saved locally):', lastError);
   return {
-    success: true,
+    success: false,
     data: formattedObject,
     isSupabase: false,
-    error: lastError ? `Tersimpan di lokal. Info Cloud: ${lastError}` : undefined
+    error: `Gagal menyimpan ke Supabase Cloud: ${lastError || 'Tabel rekam permasalahan tidak dapat diakses'}`
   };
 }
 
 export async function deleteRekamPermasalahanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   const candidates = Array.from(new Set([DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME, ...REKAM_PERMASALAHAN_TABLE_CANDIDATES]));
   for (const tableName of candidates) {
     try {
       const { error } = await client.from(tableName).delete().eq('id', id);
-      if (!error) return { success: true, isSupabase: true };
+      if (!error) {
+        // Remove from local cache ONLY after successful cloud deletion
+        const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
+        const filtered = localList.filter((i) => i.id !== id);
+        safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, filtered);
+
+        broadcastDatabaseChange(tableName, 'delete', id);
+        return { success: true, isSupabase: true };
+      }
     } catch {}
   }
 
-  return { success: true, isSupabase: false };
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data dari Supabase' };
 }
 
 /* ==========================================================================
@@ -1237,16 +1319,17 @@ export async function saveOrUpdateKonselingIndividu(
 ): Promise<{ success: boolean; data?: KonselingIndividu; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `konseling-ind-${Date.now()}`;
+  const validTanggal = item.tanggal || now.split('T')[0];
 
   const formattedObject: KonselingIndividu = {
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || '',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    waktu: item.waktu || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    waktu: item.waktu || '08:00 WIB',
     kelas: item.kelas || '',
     nama_siswa: item.nama_siswa || '',
     topik_permasalahan: item.topik_permasalahan || '',
@@ -1262,22 +1345,11 @@ export async function saveOrUpdateKonselingIndividu(
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  const localList = safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: KonselingIndividu[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   try {
@@ -1288,38 +1360,55 @@ export async function saveOrUpdateKonselingIndividu(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateKonselingIndividu error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info: ${error.message}` };
+      console.warn('Supabase saveOrUpdateKonselingIndividu error:', error.message);
+      return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${error.message}` };
     }
+
+    const savedItem = (data || formattedObject) as KonselingIndividu;
+    const localList = safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: KonselingIndividu[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, updatedLocal);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME, 'upsert', savedItem.id);
 
     return {
       success: true,
-      data: (data || formattedObject) as KonselingIndividu,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
+    return { success: false, data: formattedObject, isSupabase: false, error: msg };
   }
 }
 
 export async function deleteKonselingIndividuItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   try {
     const { error } = await client.from(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
+    if (error) return { success: false, isSupabase: false, error: error.message };
+
+    const localList = safeGetStorage<KonselingIndividu[]>(STORAGE_KEY_KONSELING_INDIVIDU, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_KONSELING_INDIVIDU, filtered);
+
+    broadcastDatabaseChange(DEFAULT_KONSELING_INDIVIDU_TABLE_NAME, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -1360,16 +1449,17 @@ export async function saveOrUpdateKonselingKelompok(
 ): Promise<{ success: boolean; data?: KonselingKelompok; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `konseling-kel-${Date.now()}`;
+  const validTanggal = item.tanggal || now.split('T')[0];
 
   const formattedObject: KonselingKelompok = {
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || '',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    waktu: item.waktu || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    waktu: item.waktu || '08:00 WIB',
     kelas: item.kelas || '',
     nama_siswa: item.nama_siswa || '',
     topik_permasalahan: item.topik_permasalahan || '',
@@ -1385,22 +1475,11 @@ export async function saveOrUpdateKonselingKelompok(
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  const localList = safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: KonselingKelompok[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   try {
@@ -1411,38 +1490,55 @@ export async function saveOrUpdateKonselingKelompok(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateKonselingKelompok error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info: ${error.message}` };
+      console.warn('Supabase saveOrUpdateKonselingKelompok error:', error.message);
+      return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${error.message}` };
     }
+
+    const savedItem = (data || formattedObject) as KonselingKelompok;
+    const localList = safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: KonselingKelompok[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, updatedLocal);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME, 'upsert', savedItem.id);
 
     return {
       success: true,
-      data: (data || formattedObject) as KonselingKelompok,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
+    return { success: false, data: formattedObject, isSupabase: false, error: msg };
   }
 }
 
 export async function deleteKonselingKelompokItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   try {
     const { error } = await client.from(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
+    if (error) return { success: false, isSupabase: false, error: error.message };
+
+    const localList = safeGetStorage<KonselingKelompok[]>(STORAGE_KEY_KONSELING_KELOMPOK, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_KONSELING_KELOMPOK, filtered);
+
+    broadcastDatabaseChange(DEFAULT_KONSELING_KELOMPOK_TABLE_NAME, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -1511,22 +1607,11 @@ export async function saveOrUpdateSuratPernyataan(
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030'
   };
 
-  const localList = safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: SuratPernyataan[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   try {
@@ -1537,38 +1622,55 @@ export async function saveOrUpdateSuratPernyataan(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateSuratPernyataan error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info: ${error.message}` };
+      console.warn('Supabase saveOrUpdateSuratPernyataan error:', error.message);
+      return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${error.message}` };
     }
+
+    const savedItem = (data || formattedObject) as SuratPernyataan;
+    const localList = safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: SuratPernyataan[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, updatedLocal);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME, 'upsert', savedItem.id);
 
     return {
       success: true,
-      data: (data || formattedObject) as SuratPernyataan,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
+    return { success: false, data: formattedObject, isSupabase: false, error: msg };
   }
 }
 
 export async function deleteSuratPernyataanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   try {
     const { error } = await client.from(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
+    if (error) return { success: false, isSupabase: false, error: error.message };
+
+    const localList = safeGetStorage<SuratPernyataan[]>(STORAGE_KEY_SURAT_PERNYATAAN, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_SURAT_PERNYATAAN, filtered);
+
+    broadcastDatabaseChange(DEFAULT_SURAT_PERNYATAAN_TABLE_NAME, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -1645,22 +1747,11 @@ export async function saveOrUpdateKonferensiKasus(
     keterangan: item.keterangan || ''
   };
 
-  const localList = safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: KonferensiKasus[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   try {
@@ -1671,38 +1762,55 @@ export async function saveOrUpdateKonferensiKasus(
       .single();
 
     if (error) {
-      console.warn('Supabase saveOrUpdateKonferensiKasus error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info: ${error.message}` };
+      console.warn('Supabase saveOrUpdateKonferensiKasus error:', error.message);
+      return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan ke Supabase Cloud: ${error.message}` };
     }
+
+    const savedItem = (data || formattedObject) as KonferensiKasus;
+    const localList = safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, []);
+    const existingIdx = localList.findIndex((i) => i.id === targetId);
+    let updatedLocal: KonferensiKasus[];
+    if (existingIdx >= 0) {
+      updatedLocal = [...localList];
+      updatedLocal[existingIdx] = savedItem;
+    } else {
+      updatedLocal = [savedItem, ...localList];
+    }
+    safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, updatedLocal);
+
+    // Multi-device broadcast
+    broadcastDatabaseChange(DEFAULT_KONFERENSI_KASUS_TABLE_NAME, 'upsert', savedItem.id);
 
     return {
       success: true,
-      data: (data || formattedObject) as KonferensiKasus,
+      data: savedItem,
       isSupabase: true
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
+    return { success: false, data: formattedObject, isSupabase: false, error: msg };
   }
 }
 
 export async function deleteKonferensiKasusItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   try {
     const { error } = await client.from(DEFAULT_KONFERENSI_KASUS_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
+    if (error) return { success: false, isSupabase: false, error: error.message };
+
+    const localList = safeGetStorage<KonferensiKasus[]>(STORAGE_KEY_KONFERENSI_KASUS, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_KONFERENSI_KASUS, filtered);
+
+    broadcastDatabaseChange(DEFAULT_KONFERENSI_KASUS_TABLE_NAME, 'delete', id);
     return { success: true, isSupabase: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+    return { success: false, isSupabase: false, error: msg };
   }
 }
 
@@ -1932,23 +2040,11 @@ export async function saveOrUpdateSiswa(
     keterangan: item.keterangan || ''
   };
 
-  // 1. Always update local storage first
-  const localList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: Siswa[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_SISWA, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung (tersimpan di lokal).' };
+    return { success: false, data: formattedObject, isSupabase: false, error: 'Database Supabase belum terhubung.' };
   }
 
   const payload: any = {
@@ -1970,6 +2066,7 @@ export async function saveOrUpdateSiswa(
   ];
 
   const uniqueTables = Array.from(new Set(targetTables));
+  let lastError = '';
 
   for (const tableName of uniqueTables) {
     try {
@@ -1981,18 +2078,38 @@ export async function saveOrUpdateSiswa(
 
       if (!error) {
         setActiveSiswaTableName(tableName);
+        const savedItem = (data ? mapSupabaseRowToSiswa(data) : formattedObject) as Siswa;
+
+        // Update local storage ONLY on success
+        const localList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
+        const existingIdx = localList.findIndex((i) => i.id === targetId);
+        let updatedLocal: Siswa[];
+        if (existingIdx >= 0) {
+          updatedLocal = [...localList];
+          updatedLocal[existingIdx] = savedItem;
+        } else {
+          updatedLocal = [savedItem, ...localList];
+        }
+        safeSetStorage(STORAGE_KEY_SISWA, updatedLocal);
+
+        // Broadcast to other devices
+        broadcastDatabaseChange(tableName, 'upsert', savedItem.id);
+
         return {
           success: true,
-          data: (data ? mapSupabaseRowToSiswa(data) : formattedObject) as Siswa,
+          data: savedItem,
           isSupabase: true
         };
       }
-    } catch {
-      // try next candidate
+      if (error) {
+        lastError = error.message;
+      }
+    } catch (err: any) {
+      lastError = err?.message || 'Error connection';
     }
   }
 
-  return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di lokal. Gagal sinkron ke tabel siswa_BK di Supabase' };
+  return { success: false, data: formattedObject, isSupabase: false, error: `Gagal menyimpan data siswa ke Supabase: ${lastError}` };
 }
 
 export async function bulkSaveOrUpdateSiswa(
@@ -2010,15 +2127,11 @@ export async function bulkSaveOrUpdateSiswa(
     keterangan: s.keterangan || ''
   }));
 
-  // Update local storage
-  const currentList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
-  safeSetStorage(STORAGE_KEY_SISWA, [...newStudents, ...currentList]);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
-    return { success: true, count: newStudents.length, error: 'Tersimpan di database lokal (Supabase belum terhubung).' };
+    return { success: false, count: 0, error: 'Database Supabase belum terhubung.' };
   }
 
   const payloadRows = newStudents.map((s) => ({
@@ -2041,30 +2154,37 @@ export async function bulkSaveOrUpdateSiswa(
   ];
 
   const uniqueTables = Array.from(new Set(targetTables));
+  let lastError = '';
 
   for (const tableName of uniqueTables) {
     try {
       const { error } = await client.from(tableName).upsert(payloadRows, { onConflict: 'id' });
       if (!error) {
         setActiveSiswaTableName(tableName);
+
+        // Update local storage ONLY on success
+        const currentList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
+        safeSetStorage(STORAGE_KEY_SISWA, [...newStudents, ...currentList]);
+
+        broadcastDatabaseChange(tableName, 'upsert');
         return { success: true, count: payloadRows.length };
       }
-    } catch {
-      // try next
+      if (error) {
+        lastError = error.message;
+      }
+    } catch (err: any) {
+      lastError = err?.message || 'Error connection';
     }
   }
 
-  return { success: true, count: payloadRows.length, error: 'Tersimpan di lokal. Gagal sinkron massal ke Supabase' };
+  return { success: false, count: 0, error: `Gagal sinkron massal ke Supabase: ${lastError}` };
 }
 
 export async function deleteSiswaItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
-  safeSetStorage(STORAGE_KEY_SISWA, localList.filter((i) => i.id !== id));
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   const targetTables = [
     getActiveSiswaTableName(),
@@ -2081,6 +2201,12 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
       const { error } = await client.from(tableName).delete().eq('id', id);
       if (!error) {
         setActiveSiswaTableName(tableName);
+
+        // Remove from local storage ONLY after cloud success
+        const localList = safeGetStorage<Siswa[]>(STORAGE_KEY_SISWA, []);
+        safeSetStorage(STORAGE_KEY_SISWA, localList.filter((i) => i.id !== id));
+
+        broadcastDatabaseChange(tableName, 'delete', id);
         return { success: true, isSupabase: true };
       }
     } catch {
@@ -2088,7 +2214,7 @@ export async function deleteSiswaItem(id: string): Promise<{ success: boolean; i
     }
   }
 
-  return { success: true, isSupabase: false, error: 'Gagal menghapus data siswa dari Supabase' };
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data siswa dari Supabase' };
 }
 
 /* ==========================================================================
@@ -2291,21 +2417,22 @@ export async function saveOrUpdateJurnalBK(
 ): Promise<{ success: boolean; data?: JurnalBK; isSupabase: boolean; error?: string }> {
   const now = new Date().toISOString();
   const targetId = existingId || item.id || `jurnal-${Date.now()}`;
+  const validTanggal = item.tanggal || now.split('T')[0];
 
   const formattedObject: JurnalBK = {
     ...item,
     id: targetId,
     created_at: item.created_at || now,
     updated_at: now,
-    hari: item.hari || 'Senin',
-    tanggal: item.tanggal || now.split('T')[0],
-    bulan: item.bulan || '',
-    tahun: item.tahun || '',
-    jam_ke: item.jam_ke || '',
+    hari: item.hari || getDayNameFromDate(validTanggal),
+    tanggal: validTanggal,
+    bulan: item.bulan || getBulanFromDate(validTanggal),
+    tahun: item.tahun || getTahunFromDate(validTanggal),
+    jam_ke: item.jam_ke || '1',
     materi_layanan: item.materi_layanan || '',
     bidang_layanan: item.bidang_layanan || 'Pribadi',
     jenis_layanan: item.jenis_layanan || 'Bimbingan Klasikal / Lintas Kelas',
-    fungsi_layanan: item.fungsi_layanan || '',
+    fungsi_layanan: item.fungsi_layanan || 'Pemahaman & Pengembangan',
     hasil_layanan_bmb3: item.hasil_layanan_bmb3 || '',
     siswa_tidak_mengikuti: item.siswa_tidak_mengikuti || [],
     kelas: item.kelas || '',
@@ -2316,58 +2443,46 @@ export async function saveOrUpdateJurnalBK(
     nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
     nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
     nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
-    tanggal_surat: item.tanggal_surat || item.tanggal || now.split('T')[0],
+    tanggal_surat: item.tanggal_surat || validTanggal,
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
-
-  // 1. Always update local storage first so user edits are instantly retained
-  const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: JurnalBK[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = formattedObject;
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_JURNAL_BK, updatedLocal);
 
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
     return {
-      success: true,
+      success: false,
       data: formattedObject,
       isSupabase: false,
-      error: 'Tersimpan di database lokal (Supabase belum terhubung).'
+      error: 'Database Supabase belum terhubung.'
     };
   }
 
   const payloadRow: any = {
     id: targetId,
     updated_at: now,
-    hari: item.hari,
-    tanggal: item.tanggal,
-    bulan: item.bulan,
-    tahun: item.tahun,
-    jam_ke: item.jam_ke || '',
-    materi_layanan: item.materi_layanan,
-    bidang_layanan: item.bidang_layanan,
-    jenis_layanan: item.jenis_layanan,
-    fungsi_layanan: item.fungsi_layanan,
-    hasil_layanan_bmb3: item.hasil_layanan_bmb3 || '',
-    siswa_tidak_mengikuti_json: JSON.stringify(item.siswa_tidak_mengikuti || []),
-    kelas: item.kelas || '',
-    sasaran_peserta: item.sasaran_peserta || '',
-    link_foto_kegiatan: item.link_foto_kegiatan || '',
-    keterangan: item.keterangan || '',
-    nama_guru_bk: item.nama_guru_bk || getActiveGuruBK().nama,
-    nip_guru_bk: item.nip_guru_bk || getActiveGuruBK().nip,
-    nama_kepala_sekolah: item.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
-    nip_kepala_sekolah: item.nip_kepala_sekolah || '19860410 201001 2 030',
-    tanggal_surat: item.tanggal_surat || item.tanggal,
-    tempat_surat: item.tempat_surat || 'Pasuruan'
+    hari: formattedObject.hari,
+    tanggal: formattedObject.tanggal,
+    bulan: formattedObject.bulan,
+    tahun: formattedObject.tahun,
+    jam_ke: formattedObject.jam_ke,
+    materi_layanan: formattedObject.materi_layanan,
+    bidang_layanan: formattedObject.bidang_layanan,
+    jenis_layanan: formattedObject.jenis_layanan,
+    fungsi_layanan: formattedObject.fungsi_layanan,
+    hasil_layanan_bmb3: formattedObject.hasil_layanan_bmb3,
+    siswa_tidak_mengikuti_json: JSON.stringify(formattedObject.siswa_tidak_mengikuti || []),
+    kelas: formattedObject.kelas,
+    sasaran_peserta: formattedObject.sasaran_peserta,
+    link_foto_kegiatan: formattedObject.link_foto_kegiatan,
+    keterangan: formattedObject.keterangan,
+    nama_guru_bk: formattedObject.nama_guru_bk,
+    nip_guru_bk: formattedObject.nip_guru_bk,
+    nama_kepala_sekolah: formattedObject.nama_kepala_sekolah,
+    nip_kepala_sekolah: formattedObject.nip_kepala_sekolah,
+    tanggal_surat: formattedObject.tanggal_surat,
+    tempat_surat: formattedObject.tempat_surat
   };
 
   const candidateTables = Array.from(new Set([
@@ -2388,6 +2503,22 @@ export async function saveOrUpdateJurnalBK(
       if (!error) {
         setActiveJurnalBKTableName(tableName);
         const mappedResult = data ? mapSupabaseRowToJurnalBK(data) : formattedObject;
+
+        // Update local storage ONLY on cloud success
+        const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+        const existingIdx = localList.findIndex((i) => i.id === targetId);
+        let updatedLocal: JurnalBK[];
+        if (existingIdx >= 0) {
+          updatedLocal = [...localList];
+          updatedLocal[existingIdx] = mappedResult;
+        } else {
+          updatedLocal = [mappedResult, ...localList];
+        }
+        safeSetStorage(STORAGE_KEY_JURNAL_BK, updatedLocal);
+
+        // Broadcast to other devices
+        broadcastDatabaseChange(tableName, 'upsert', mappedResult.id);
+
         return {
           success: true,
           data: mappedResult,
@@ -2401,26 +2532,19 @@ export async function saveOrUpdateJurnalBK(
     }
   }
 
-  console.warn('Supabase saveOrUpdateJurnalBK remote warning:', lastErrorMsg);
-  // Still return success with local data so user UI does not break
   return {
-    success: true,
+    success: false,
     data: formattedObject,
     isSupabase: false,
-    error: `Data tersimpan di perangkat lokal. Gagal sinkron ke Supabase Cloud: ${lastErrorMsg}`
+    error: `Gagal menyimpan ke Supabase Cloud: ${lastErrorMsg}`
   };
 }
 
 export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  // 1. Delete from local storage
-  const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_JURNAL_BK, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   const candidateTables = Array.from(new Set([
     getActiveJurnalBKTableName(),
@@ -2432,6 +2556,13 @@ export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean
       const { error } = await client.from(tableName).delete().eq('id', id);
       if (!error) {
         setActiveJurnalBKTableName(tableName);
+
+        // Delete from local storage ONLY after cloud success
+        const localList = safeGetStorage<JurnalBK[]>(STORAGE_KEY_JURNAL_BK, []);
+        const filtered = localList.filter((i) => i.id !== id);
+        safeSetStorage(STORAGE_KEY_JURNAL_BK, filtered);
+
+        broadcastDatabaseChange(tableName, 'delete', id);
         return { success: true, isSupabase: true };
       }
     } catch {
@@ -2439,7 +2570,7 @@ export async function deleteJurnalBKItem(id: string): Promise<{ success: boolean
     }
   }
 
-  return { success: true, isSupabase: false };
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data dari Supabase' };
 }
 
 /* ==========================================================================
@@ -2653,30 +2784,15 @@ export async function saveOrUpdateSiswaATS(
     keterangan: item.keterangan || ''
   };
 
-  // 1. ALWAYS persist locally first so data is 100% safe
-  const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
-  const existingIdx = localList.findIndex((i) => i.id === targetId);
-  let updatedLocal: SiswaATS[];
-  if (existingIdx >= 0) {
-    updatedLocal = [...localList];
-    updatedLocal[existingIdx] = {
-      ...formattedObject,
-      created_at: localList[existingIdx].created_at || now,
-    };
-  } else {
-    updatedLocal = [formattedObject, ...localList];
-  }
-  safeSetStorage(STORAGE_KEY_SISWA_ATS, updatedLocal);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
   if (!client) {
     return {
-      success: true,
+      success: false,
       data: formattedObject,
       isSupabase: false,
-      error: 'Tersimpan di perangkat lokal.'
+      error: 'Database Supabase belum terhubung.'
     };
   }
 
@@ -2698,32 +2814,20 @@ export async function saveOrUpdateSiswaATS(
         setActiveSiswaATSTableName(tableName);
         const returnedItem = data && data.length > 0 ? (data[0] as SiswaATS) : formattedObject;
         
-        // Also mirror to home_visit_bk in background for guaranteed mobile/cross-device access
-        try {
-          await client.from('home_visit_bk').upsert({
-            id: targetId,
-            created_at: formattedObject.created_at,
-            updated_at: now,
-            hari: formattedObject.hari,
-            tanggal: formattedObject.tanggal,
-            bulan: '',
-            tahun: '',
-            waktu: formattedObject.waktu,
-            kelas: formattedObject.kelas,
-            nama_siswa: formattedObject.nama_siswa,
-            nama_orang_tua: formattedObject.nama_orang_tua || 'Orang Tua / Wali',
-            alamat: formattedObject.alamat,
-            perihal_home_visit: `[ATS] ${formattedObject.kategori_ats}`,
-            uraian_permasalahan: formattedObject.alasan_ats + (formattedObject.alasan_manual ? ` - ${formattedObject.alasan_manual}` : ''),
-            tindak_lanjut: formattedObject.keterangan || '',
-            link_foto_kegiatan: formattedObject.foto_kunjungan_1,
-            keterangan: JSON.stringify(formattedObject),
-            nama_guru_kunjungan: formattedObject.nama_guru_kunjungan,
-            nip_guru_kunjungan: formattedObject.nip_guru_kunjungan,
-            nama_kepala_sekolah: formattedObject.nama_kepala_sekolah,
-            nip_kepala_sekolah: formattedObject.nip_kepala_sekolah
-          }, { onConflict: 'id' });
-        } catch {}
+        // Update local cache ONLY on success
+        const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+        const existingIdx = localList.findIndex((i) => i.id === targetId);
+        let updatedLocal: SiswaATS[];
+        if (existingIdx >= 0) {
+          updatedLocal = [...localList];
+          updatedLocal[existingIdx] = returnedItem;
+        } else {
+          updatedLocal = [returnedItem, ...localList];
+        }
+        safeSetStorage(STORAGE_KEY_SISWA_ATS, updatedLocal);
+
+        // Multi-device broadcast
+        broadcastDatabaseChange(tableName, 'upsert', returnedItem.id);
 
         return {
           success: true,
@@ -2762,6 +2866,19 @@ export async function saveOrUpdateSiswaATS(
           .select();
         if (!retryRes.error) {
           setActiveSiswaATSTableName(tableName);
+          const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+          const existingIdx = localList.findIndex((i) => i.id === targetId);
+          let updatedLocal: SiswaATS[];
+          if (existingIdx >= 0) {
+            updatedLocal = [...localList];
+            updatedLocal[existingIdx] = formattedObject;
+          } else {
+            updatedLocal = [formattedObject, ...localList];
+          }
+          safeSetStorage(STORAGE_KEY_SISWA_ATS, updatedLocal);
+
+          broadcastDatabaseChange(tableName, 'upsert', targetId);
+
           return {
             success: true,
             data: formattedObject,
@@ -2774,63 +2891,21 @@ export async function saveOrUpdateSiswaATS(
     }
   }
 
-  // Universal Fallback to home_visit_bk table which is guaranteed to exist in Supabase
-  try {
-    const fallbackPayload = {
-      id: targetId,
-      created_at: formattedObject.created_at,
-      updated_at: now,
-      hari: formattedObject.hari,
-      tanggal: formattedObject.tanggal,
-      bulan: '',
-      tahun: '',
-      waktu: formattedObject.waktu,
-      kelas: formattedObject.kelas,
-      nama_siswa: formattedObject.nama_siswa,
-      nama_orang_tua: 'Orang Tua / Wali',
-      alamat: formattedObject.alamat,
-      perihal_home_visit: `[ATS] ${formattedObject.kategori_ats}`,
-      uraian_permasalahan: formattedObject.alasan_ats + (formattedObject.alasan_manual ? ` - ${formattedObject.alasan_manual}` : ''),
-      tindak_lanjut: formattedObject.keterangan || '',
-      link_foto_kegiatan: formattedObject.foto_kunjungan_1,
-      keterangan: JSON.stringify(formattedObject),
-      nama_guru_kunjungan: formattedObject.nama_guru_kunjungan,
-      nip_guru_kunjungan: formattedObject.nip_guru_kunjungan,
-      nama_kepala_sekolah: formattedObject.nama_kepala_sekolah,
-      nip_kepala_sekolah: formattedObject.nip_kepala_sekolah
-    };
-    const { error: fallbackErr } = await client
-      .from('home_visit_bk')
-      .upsert(fallbackPayload, { onConflict: 'id' });
-    if (!fallbackErr) {
-      return {
-        success: true,
-        data: formattedObject,
-        isSupabase: true
-      };
-    }
-  } catch {}
-
-  console.warn('Supabase saveOrUpdateSiswaATS warning (saved locally):', lastError);
   return {
-    success: true,
+    success: false,
     data: formattedObject,
     isSupabase: false,
-    error: lastError ? `Tersimpan di lokal. Info Cloud: ${lastError}` : undefined
+    error: `Gagal menyimpan ke Supabase Cloud: ${lastError || 'Tabel Siswa ATS tidak dapat diakses'}`
   };
 }
 
 export async function deleteSiswaATSItem(
   id: string
 ): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
-  const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
-  const filtered = localList.filter((i) => i.id !== id);
-  safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
-
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: true, isSupabase: false };
+  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
 
   const candidateTables = Array.from(new Set([
     getActiveSiswaATSTableName(),
@@ -2842,16 +2917,19 @@ export async function deleteSiswaATSItem(
       const { error } = await client.from(tableName).delete().eq('id', id);
       if (!error) {
         setActiveSiswaATSTableName(tableName);
+
+        // Delete from local cache ONLY after cloud deletion success
+        const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+        const filtered = localList.filter((i) => i.id !== id);
+        safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
+
+        broadcastDatabaseChange(tableName, 'delete', id);
         return { success: true, isSupabase: true };
       }
     } catch {}
   }
 
-  try {
-    await client.from('home_visit_bk').delete().eq('id', id);
-  } catch {}
-
-  return { success: true, isSupabase: false };
+  return { success: false, isSupabase: false, error: 'Gagal menghapus data dari Supabase' };
 }
 
 /* ==========================================================================

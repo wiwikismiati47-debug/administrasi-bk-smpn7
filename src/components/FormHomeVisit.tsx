@@ -20,6 +20,7 @@ import {
   Link as LinkIcon,
   Upload,
   Eye,
+  Camera,
   RotateCcw,
   CheckCircle2,
   Pencil,
@@ -709,20 +710,31 @@ export const FormHomeVisit: React.FC<FormHomeVisitProps> = ({
                 </div>
 
                 {/* Local File Upload Button */}
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 shadow-sm transition-colors">
                     <Upload className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Upload Foto dari Perangkat</span>
+                    <span>Pilih Foto Dokumentasi (Galeri / File)</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/jpg"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg border border-slate-700 shadow-sm transition-colors">
+                    <Camera className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Kamera Langsung</span>
                     <input
                       type="file"
                       accept="image/*"
+                      capture="environment"
                       onChange={handleFileUpload}
                       className="hidden"
                     />
                   </label>
                   <span className="text-[11px] text-slate-400">
                     {linkFotoKegiatan.startsWith('data:image')
-                      ? '✓ Foto berhasil diunggah'
+                      ? '✓ Foto dokumentasi berhasil diunggah'
                       : 'Format JPG, PNG, WEBP'}
                   </span>
                 </div>

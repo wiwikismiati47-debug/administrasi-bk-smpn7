@@ -61,6 +61,7 @@ import {
   deleteSiswaATSItem,
   getSavedSupabaseConfig,
   getSupabaseClient,
+  getOrCreateSyncChannel,
   STORAGE_KEY_CONFIG,
   STORAGE_KEY_JURNAL_BK,
   STORAGE_KEY_SISWA_ATS
@@ -387,13 +388,15 @@ export default function App() {
     }
     initApp();
 
-    // Set up realtime subscription
+    // Multi-User Realtime Subscription (Handphone & Laptop instant sync)
     const config = getSavedSupabaseConfig();
     const client = getSupabaseClient(config);
-    let channel: any = null;
+    let dbChannel: any = null;
+    let syncChannel: any = null;
 
     if (client) {
-      channel = client
+      // 1. Listen for schema changes via Postgres Changes
+      dbChannel = client
         .channel('schema-db-changes')
         .on(
           'postgres_changes',
@@ -401,18 +404,53 @@ export default function App() {
             event: '*',
             schema: 'public',
           },
-          (payload) => {
-            console.log('Realtime update received!', payload);
+          (payload: any) => {
+            console.log('Realtime DB update received!', payload);
             refreshAllData();
           }
         )
         .subscribe();
+
+      // 2. Listen for Client-to-Client Broadcast (instant notification across mobile & laptop)
+      syncChannel = getOrCreateSyncChannel(client);
+      if (syncChannel) {
+        syncChannel.on(
+          'broadcast',
+          { event: 'db_update' },
+          (payload: any) => {
+            console.log('Multiuser broadcast update received from another device!', payload);
+            refreshAllData();
+          }
+        );
+      }
     }
 
-    return () => {
-      if (channel) {
-        client?.removeChannel(channel);
+    // 3. Auto-sync whenever user switches back to this tab or app on handphone/laptop
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshAllData();
       }
+    };
+    const handleFocus = () => {
+      refreshAllData();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    // 4. Background auto-sync interval (every 25 seconds if active)
+    const syncInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshAllData();
+      }
+    }, 25000);
+
+    return () => {
+      if (dbChannel) {
+        client?.removeChannel(dbChannel);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(syncInterval);
     };
   }, [refreshAllData]);
 

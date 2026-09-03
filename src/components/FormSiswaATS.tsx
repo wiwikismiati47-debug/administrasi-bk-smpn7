@@ -598,29 +598,42 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-sm transition-colors">
                       <Upload className="w-3.5 h-3.5 text-amber-700" />
-                      <span>{isUploading1 ? 'Mengompres...' : 'Upload Foto dari Perangkat'}</span>
+                      <span>{isUploading1 ? 'Mengompres...' : 'Pilih Foto Dokumentasi (Galeri / File)'}</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/jpg"
                         onChange={handleFileUpload1}
                         className="hidden"
                       />
                     </label>
-                    <span className="text-[11px] text-slate-500">
-                      {fotoKunjungan1.startsWith('data:image') ? '✓ Terunggah' : 'Format JPG, PNG, WEBP'}
-                    </span>
-                    {fotoKunjungan1 && (
-                      <button
-                        type="button"
-                        onClick={() => setFotoKunjungan1('')}
-                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold"
-                      >
-                        Hapus
-                      </button>
-                    )}
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">
+                      <Camera className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Kamera Langsung</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFileUpload1}
+                        className="hidden"
+                      />
+                    </label>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <span className="text-[11px] text-slate-500">
+                        {fotoKunjungan1.startsWith('data:image') ? '✓ Foto Terunggah' : 'Format JPG, PNG, WEBP'}
+                      </span>
+                      {fotoKunjungan1 && (
+                        <button
+                          type="button"
+                          onClick={() => setFotoKunjungan1('')}
+                          className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200"
+                        >
+                          Hapus
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -637,13 +650,13 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
-                        Preview Kunjungan 1
+                        Preview Dokumentasi Kunjungan 1
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-2">
                       <Camera className="w-6 h-6 text-slate-400 mx-auto mb-1" />
-                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto dokumentasi</p>
                     </div>
                   )}
                 </div>
@@ -658,7 +671,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                     <FileText className="w-4 h-4 text-rose-700" />
                     FOTO BUKTI FISIK 2 (MANUAL / DOKUMEN)
                   </span>
-                  <span className="text-[11px] font-normal text-slate-500">Bisa Input Link URL atau Upload Foto</span>
+                  <span className="text-[11px] font-normal text-slate-500">Input Link atau Upload Dokumen</span>
                 </label>
 
                 <div className="space-y-2">
@@ -678,29 +691,42 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                     />
                   </div>
 
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg border border-slate-300 shadow-sm transition-colors">
                       <Upload className="w-3.5 h-3.5 text-rose-700" />
-                      <span>{isUploading2 ? 'Mengompres...' : 'Upload Foto dari Perangkat'}</span>
+                      <span>{isUploading2 ? 'Mengompres...' : 'Pilih Foto Dokumentasi (Galeri / File)'}</span>
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/jpg"
                         onChange={handleFileUpload2}
                         className="hidden"
                       />
                     </label>
-                    <span className="text-[11px] text-slate-500">
-                      {fotoBuktiFisik2.startsWith('data:image') ? '✓ Terunggah' : 'Format JPG, PNG, WEBP'}
-                    </span>
-                    {fotoBuktiFisik2 && (
-                      <button
-                        type="button"
-                        onClick={() => setFotoBuktiFisik2('')}
-                        className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold"
-                      >
-                        Hapus
-                      </button>
-                    )}
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-600 text-xs font-medium rounded-lg border border-slate-200 transition-colors">
+                      <Camera className="w-3.5 h-3.5 text-slate-500" />
+                      <span>Kamera Langsung</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleFileUpload2}
+                        className="hidden"
+                      />
+                    </label>
+                    <div className="flex items-center gap-2 ml-auto">
+                      <span className="text-[11px] text-slate-500">
+                        {fotoBuktiFisik2.startsWith('data:image') ? '✓ Foto Terunggah' : 'Format JPG, PNG, WEBP'}
+                      </span>
+                      {fotoBuktiFisik2 && (
+                        <button
+                          type="button"
+                          onClick={() => setFotoBuktiFisik2('')}
+                          className="text-[11px] text-rose-600 hover:text-rose-800 font-semibold px-1.5 py-0.5 rounded bg-rose-50 border border-rose-200"
+                        >
+                          Hapus
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -717,13 +743,13 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
-                        Preview Bukti Fisik 2
+                        Preview Dokumentasi Bukti Fisik 2
                       </div>
                     </div>
                   ) : (
                     <div className="text-center py-2">
                       <FileText className="w-6 h-6 text-slate-400 mx-auto mb-1" />
-                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto</p>
+                      <p className="text-[11px] text-slate-500 font-medium">Belum ada foto dokumentasi</p>
                     </div>
                   )}
                 </div>
