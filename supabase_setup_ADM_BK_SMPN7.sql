@@ -433,6 +433,49 @@ create policy "Akses Update Publik Konferensi" on public.konferensi_kasus_siswa 
 create policy "Akses Hapus Publik Konferensi" on public.konferensi_kasus_siswa for delete using (true);
 
 
+--------------------------------------------------------------------------------
+-- 10. TABEL: SISWA ATS (Anak Tidak Sekolah) (siswa_ats_bk)
+--------------------------------------------------------------------------------
+create table if not exists public.siswa_ats_bk (
+  id text primary key default gen_random_uuid()::text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  hari text not null,
+  tanggal date not null,
+  tahun_ajaran text default '2025/2026',
+  waktu text not null,
+  nama_siswa text not null,
+  kategori_ats text not null, -- 'DO (Drop Out)' | 'LTM (Layanan Tidak Melanjutkan)'
+  kelas text not null,
+  alamat text default '',
+  alasan_ats text not null,
+  alasan_manual text default '',
+  foto_kunjungan_1 text default '',
+  foto_bukti_fisik_2 text default '',
+  tempat_laporan text default 'Pasuruan',
+  tanggal_laporan date default current_date,
+  nama_guru_kunjungan text default 'WIWIK ISMIATI, S.Pd',
+  nip_guru_kunjungan text default '19831116 200904 2 003',
+  nama_kepala_sekolah text default 'NUR FADILAH, S.Pd,. M.Pd',
+  nip_kepala_sekolah text default '19860410 201001 2 030',
+  keterangan text default ''
+);
+
+-- Mengaktifkan Row Level Security (RLS)
+alter table public.siswa_ats_bk enable row level security;
+
+-- Membuat Kebijakan RLS
+drop policy if exists "Akses Baca Publik Siswa ATS" on public.siswa_ats_bk;
+drop policy if exists "Akses Tambah Publik Siswa ATS" on public.siswa_ats_bk;
+drop policy if exists "Akses Update Publik Siswa ATS" on public.siswa_ats_bk;
+drop policy if exists "Akses Hapus Publik Siswa ATS" on public.siswa_ats_bk;
+
+create policy "Akses Baca Publik Siswa ATS" on public.siswa_ats_bk for select using (true);
+create policy "Akses Tambah Publik Siswa ATS" on public.siswa_ats_bk for insert with check (true);
+create policy "Akses Update Publik Siswa ATS" on public.siswa_ats_bk for update using (true);
+create policy "Akses Hapus Publik Siswa ATS" on public.siswa_ats_bk for delete using (true);
+
+
 -- ==============================================================================
 -- SEEDING DATA: MEMASUKKAN DATA DEMO AWAL SPESIFIK UNTUK SMPN 7 PASURUAN
 -- ==============================================================================
@@ -514,6 +557,14 @@ values
   ('kkk-1', 'Syahnaz (IXE)', '9E / 2016-2017', 'Berkelahi karena salah paham', 'Kamis, 8 September 2016 Jam 10.30 wib', 'Konselor Sekolah', 'Wiwik Ismiati, S.Pd', 'Konselor', 'Identifikasi permasalahan siswa', 'Untuk mengetahui tentang kejadian yang sebenarnya dari siswa yang terlibat permasalahan tersebut di sekolah, baik dari pihak sekolah dengan siswa yang berseteru. Dan mencari solusi yang terbaik diantara siswa dengan teman-temannya.', 'Dari informasi yang terkumpul bahwa Syahnaz terlibat perseteruan karena membela sahabatnya yaitu Aminah. Karena membela sahabatnya maka Syahnaz yang di bully oleh anak-anak kelas 7C. Karena merasa tersinggung dengan perlakuan siswa kelas 7C maka Syahnaz tidak terima dan terjadi perkelahian sampai akan melempar batu. Ketika mereka berseteru dan ditemukan penyelesaiannya maka persoalan bisa dengan mudah terselesaikan.', 'terpenuhi', 'Guru Mata Pelajaran, Wali Kelas, Konselor Sekolah', 'UPT SMPN 7 PASURUAN', 'Jl. Simpang Slamet Riadi No.2 Sebani Gadingrejo', 'UPT SMPN 7 PASURUAN', 'Konselor', '9 orang', '10.30 WIB', '11.00 WIB', 'A. Dari identifikasi permasalahan siswa, didapatkan permasalahan tersebut timbul karena anak kelas 7C yang bermasalah sering mengolok-olok Aminah.\nB. Dari peristiwa tersebut temannya Aminah tidak terima dan terjadi pertengkaran/adu mulut dengan Syahnaz.\nC. Syahnaz yang membela Aminah akhirnya kena tampar oleh M. Badru dan tidak terima sehingga membawa batu bata mau dilemparkan.\nD. Setelah terjadi konferensi kasus, maka masing-masing pihak mau menerima keputusan bersama dan saling memaafkan. Akhirnya permasalahan selesai dengan saling memaafkan.', '1. Konselor, 2. M. Badru T (VIIC), 3. M. Usman (VIIC), 4. M. Amyak (VIIC)', '[{"no":1,"nama":"Ibu Citra Dwi W","jabatan":"Konselor","kelas":"-","asal_sekolah":"UPT SMPN 7 Pas","ttd":"Ada"},{"no":2,"nama":"Ibu Wiwik Ismiati","jabatan":"Konselor","kelas":"-","asal_sekolah":"UPT SMPN 7 Pas","ttd":"Ada"}]', '2026-08-06', 'Pasuruan', 'WIWIK ISMIATI, S.Pd', '19831116 200904 2 003', 'Drs. H. AGUNG ARDI TIGO', '19621212 198712 1 002', 'Konferensi kasus perselisihan kelas 9E dengan kelas 7C.')
 on conflict (id) do nothing;
 
+--------------------------------------------------------------------------------
+-- Seeding Tabel: siswa_ats_bk
+--------------------------------------------------------------------------------
+insert into public.siswa_ats_bk (id, hari, tanggal, tahun_ajaran, waktu, nama_siswa, kategori_ats, kelas, alamat, alasan_ats, alasan_manual, foto_kunjungan_1, foto_bukti_fisik_2, tempat_laporan, tanggal_laporan, nama_guru_kunjungan, nip_guru_kunjungan, nama_kepala_sekolah, nip_kepala_sekolah, keterangan)
+values 
+  ('ats-1', 'Senin', '2026-08-10', '2025/2026', '09:00 WIB', 'Rian Adiputra', 'DO (Drop Out)', 'IX C', 'Jl. Bugul Kidul No. 12, Pasuruan', 'Ekonomi', 'Anak harus bekerja membantu keuangan keluarga berjualan keliling.', 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=800', 'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&q=80&w=800', 'Pasuruan', '2026-08-10', 'WIWIK ISMIATI, S.Pd', '19831116 200904 2 003', 'NUR FADILAH, S.Pd,. M.Pd', '19860410 201001 2 030', 'Kunjungan ATS pertama terlaksana dengan baik.')
+on conflict (id) do nothing;
+
 
 -- ==============================================================================
 -- MEMBUAT INDEX UNTUK KECEPATAN PENCARIAN (PERFORMANCE INDEXES)
@@ -527,6 +578,7 @@ create index if not exists idx_konseling_ind_siswa on public.rencana_konseling_i
 create index if not exists idx_konseling_kel_kelas on public.rencana_konseling_kelompok(kelas);
 create index if not exists idx_sp_siswa on public.surat_pernyataan_siswa(nama_siswa);
 create index if not exists idx_konferensi_konseli on public.konferensi_kasus_siswa(nama_konseli);
+create index if not exists idx_siswa_ats_nama on public.siswa_ats_bk(nama_siswa);
 
 -- SCRIPT SELESAI
 -- ==============================================================================
