@@ -250,18 +250,48 @@ export async function testSupabaseConnection(customConfig?: SupabaseConfig): Pro
  * Shared Realtime Sync Channel for Multi-User Sync (Laptop & Handphone)
  */
 let sharedSyncChannel: any = null;
+const syncListeners = new Set<(payload: any) => void>();
 
-export function getOrCreateSyncChannel(client: any) {
-  if (!client) return null;
+export function setupMultiuserSync(client: any, onUpdate: (payload: any) => void): () => void {
+  if (!client) return () => {};
+
+  syncListeners.add(onUpdate);
+
   if (!sharedSyncChannel) {
     sharedSyncChannel = client.channel('bk-multiuser-sync', {
       config: { broadcast: { self: false } }
     });
-    sharedSyncChannel.subscribe((status: string) => {
-      if (status === 'SUBSCRIBED') {
-        console.log('Multiuser sync channel subscribed successfully');
+
+    sharedSyncChannel.on(
+      'broadcast',
+      { event: 'db_update' },
+      (msg: any) => {
+        const payload = msg.payload || msg;
+        console.log('Realtime broadcast payload received from other device:', payload);
+        syncListeners.forEach((fn) => {
+          try {
+            fn(payload);
+          } catch (e) {
+            console.error('Error in sync listener:', e);
+          }
+        });
       }
+    );
+
+    sharedSyncChannel.subscribe((status: string) => {
+      console.log('Multiuser sync channel status:', status);
     });
+  }
+
+  return () => {
+    syncListeners.delete(onUpdate);
+  };
+}
+
+export function getOrCreateSyncChannel(client: any) {
+  if (!client) return null;
+  if (!sharedSyncChannel) {
+    setupMultiuserSync(client, () => {});
   }
   return sharedSyncChannel;
 }
@@ -275,9 +305,12 @@ export async function broadcastDatabaseChange(table: string, action: 'upsert' | 
     const client = getSupabaseClient(config);
     if (!client) return;
 
-    const channel = getOrCreateSyncChannel(client);
-    if (channel) {
-      await channel.send({
+    if (!sharedSyncChannel) {
+      setupMultiuserSync(client, () => {});
+    }
+
+    if (sharedSyncChannel) {
+      await sharedSyncChannel.send({
         type: 'broadcast',
         event: 'db_update',
         payload: { table, action, recordId, timestamp: Date.now() }
@@ -783,6 +816,8 @@ export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSu
   let lastError = '';
   const candidates = Array.from(new Set(HOME_VISIT_TABLE_CANDIDATES));
 
+  let validEmptyData: HomeVisit[] | null = null;
+
   for (const tableName of candidates) {
     try {
       const { data, error } = await client
@@ -791,10 +826,12 @@ export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSu
         .order('tanggal', { ascending: false });
 
       if (!error && Array.isArray(data)) {
-        if (data.length > 0 || tableName === DEFAULT_HOME_VISIT_TABLE_NAME) {
-          const mapped = data.map(mapSupabaseRowToHomeVisit);
+        const mapped = data.map(mapSupabaseRowToHomeVisit);
+        if (mapped.length > 0) {
           safeSetStorage(STORAGE_KEY_HOME_VISIT, mapped);
           return { data: mapped, isFromSupabase: true };
+        } else if (validEmptyData === null) {
+          validEmptyData = mapped;
         }
       } else if (error) {
         lastError = error.message;
@@ -802,6 +839,11 @@ export async function fetchAllHomeVisit(): Promise<{ data: HomeVisit[]; isFromSu
     } catch (err: any) {
       lastError = err?.message || 'Error query';
     }
+  }
+
+  if (validEmptyData !== null) {
+    safeSetStorage(STORAGE_KEY_HOME_VISIT, validEmptyData);
+    return { data: validEmptyData, isFromSupabase: true };
   }
 
   return { data: localData, isFromSupabase: false, error: lastError };
@@ -2631,8 +2673,6 @@ export async function fetchAllSiswaATS(): Promise<{
     ...SISWA_ATS_TABLE_CANDIDATES
   ]));
 
-  let fetched: SiswaATS[] = [];
-  let isFromSupabase = false;
   let lastError: string | undefined = undefined;
 
   for (const tableName of candidateTables) {
@@ -2654,11 +2694,14 @@ export async function fetchAllSiswaATS(): Promise<{
         }
       }
 
-      if (!error && data && data.length > 0) {
+      // If query was successful (even if data is an empty array 0 items):
+      if (!error && Array.isArray(data)) {
         setActiveSiswaATSTableName(tableName);
-        fetched = data.map(mapSupabaseRowToSiswaATS);
-        isFromSupabase = true;
-        break;
+        const mapped = data.map(mapSupabaseRowToSiswaATS);
+        // Supabase Cloud is the single authoritative source of truth.
+        // Overwrite local cache immediately so deletions from laptop are instantly reflected on mobile, and vice versa.
+        safeSetStorage(STORAGE_KEY_SISWA_ATS, mapped);
+        return { data: mapped, isFromSupabase: true };
       } else if (error) {
         lastError = error.message;
       }
@@ -2667,83 +2710,7 @@ export async function fetchAllSiswaATS(): Promise<{
     }
   }
 
-  // Fallback / Dual check to home_visit_bk table where perihal_home_visit starts with [ATS]
-  try {
-    const { data: hvData, error: hvErr } = await client
-      .from('home_visit_bk')
-      .select('*')
-      .ilike('perihal_home_visit', '[ATS]%')
-      .order('tanggal', { ascending: false });
-    if (!hvErr && hvData && hvData.length > 0) {
-      isFromSupabase = true;
-      const hvFetched = hvData.map((row: any) => {
-        if (row.keterangan && row.keterangan.startsWith('{')) {
-          try {
-            const parsed = JSON.parse(row.keterangan);
-            if (parsed && parsed.id) return parsed;
-          } catch {}
-        }
-        return {
-          id: row.id,
-          created_at: row.created_at,
-          updated_at: row.updated_at,
-          hari: row.hari,
-          tanggal: row.tanggal,
-          tahun_ajaran: '2025/2026',
-          waktu: row.waktu,
-          nama_siswa: row.nama_siswa,
-          kategori_ats: row.perihal_home_visit?.replace('[ATS]', '').trim() || 'DO (Drop Out)',
-          kelas: row.kelas,
-          nama_orang_tua: row.nama_orang_tua || '',
-          alamat: row.alamat,
-          alasan_ats: row.uraian_permasalahan,
-          alasan_manual: '',
-          foto_kunjungan_1: row.link_foto_kegiatan || '',
-          foto_bukti_fisik_2: '',
-          tempat_laporan: 'Pasuruan',
-          tanggal_laporan: row.tanggal,
-          nama_guru_kunjungan: row.nama_guru_kunjungan || 'WIWIK ISMIATI, S.Pd',
-          nip_guru_kunjungan: row.nip_guru_kunjungan || '19831116 200904 2 003',
-          nama_kepala_sekolah: row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
-          nip_kepala_sekolah: row.nip_kepala_sekolah || '19860410 201001 2 030',
-          keterangan: row.tindak_lanjut || ''
-        } as SiswaATS;
-      });
-
-      const map = new Map<string, SiswaATS>();
-      fetched.forEach(i => map.set(i.id, i));
-      hvFetched.forEach(i => {
-        if (!map.has(i.id)) {
-          map.set(i.id, i);
-        }
-      });
-      fetched = Array.from(map.values());
-    }
-  } catch {}
-
-  if (isFromSupabase) {
-    const mergedMap = new Map<string, SiswaATS>();
-    (localData || []).forEach((item) => {
-      if (item && item.id) mergedMap.set(item.id, item);
-    });
-    fetched.forEach((item) => {
-      if (item && item.id) {
-        const localItem = mergedMap.get(item.id);
-        if (localItem && localItem.updated_at && item.updated_at) {
-          if (new Date(localItem.updated_at).getTime() > new Date(item.updated_at).getTime()) {
-            return;
-          }
-        }
-        mergedMap.set(item.id, item);
-      }
-    });
-    const mergedList = Array.from(mergedMap.values()).sort((a, b) =>
-      (b.tanggal || '').localeCompare(a.tanggal || '')
-    );
-    safeSetStorage(STORAGE_KEY_SISWA_ATS, mergedList);
-    return { data: mergedList, isFromSupabase: true };
-  }
-
+  // Fallback to local storage ONLY if all Supabase tables could not be queried
   return { data: localData, isFromSupabase: false, error: lastError };
 }
 
@@ -2905,31 +2872,51 @@ export async function deleteSiswaATSItem(
   const config = getSavedSupabaseConfig();
   const client = getSupabaseClient(config);
 
-  if (!client) return { success: false, isSupabase: false, error: 'Database Supabase belum terhubung.' };
+  if (!client) {
+    const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+    const filtered = localList.filter((i) => i.id !== id);
+    safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
+    return { success: true, isSupabase: false };
+  }
 
   const candidateTables = Array.from(new Set([
     getActiveSiswaATSTableName(),
     ...SISWA_ATS_TABLE_CANDIDATES
   ]));
 
+  let anyDeleted = false;
+  let lastError = '';
+
   for (const tableName of candidateTables) {
     try {
       const { error } = await client.from(tableName).delete().eq('id', id);
       if (!error) {
+        anyDeleted = true;
         setActiveSiswaATSTableName(tableName);
-
-        // Delete from local cache ONLY after cloud deletion success
-        const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
-        const filtered = localList.filter((i) => i.id !== id);
-        safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
-
-        broadcastDatabaseChange(tableName, 'delete', id);
-        return { success: true, isSupabase: true };
+      } else {
+        lastError = error.message;
       }
-    } catch {}
+    } catch (err: any) {
+      lastError = err?.message || 'Error delete';
+    }
   }
 
-  return { success: false, isSupabase: false, error: 'Gagal menghapus data dari Supabase' };
+  // Also delete from home_visit_bk in case this record was mirrored or legacy
+  try {
+    const { error: hvErr } = await client.from('home_visit_bk').delete().eq('id', id);
+    if (!hvErr) anyDeleted = true;
+  } catch {}
+
+  // Delete from local cache immediately
+  const localList = safeGetStorage<SiswaATS[]>(STORAGE_KEY_SISWA_ATS, []);
+  const filtered = localList.filter((i) => i.id !== id);
+  safeSetStorage(STORAGE_KEY_SISWA_ATS, filtered);
+
+  // Broadcast deletion event to all devices (laptop & mobile)
+  broadcastDatabaseChange(getActiveSiswaATSTableName(), 'delete', id);
+  broadcastDatabaseChange('home_visit_bk', 'delete', id);
+
+  return { success: true, isSupabase: anyDeleted, error: anyDeleted ? undefined : lastError };
 }
 
 /* ==========================================================================

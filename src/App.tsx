@@ -61,6 +61,7 @@ import {
   deleteSiswaATSItem,
   getSavedSupabaseConfig,
   getSupabaseClient,
+  setupMultiuserSync,
   getOrCreateSyncChannel,
   STORAGE_KEY_CONFIG,
   STORAGE_KEY_JURNAL_BK,
@@ -392,10 +393,10 @@ export default function App() {
     const config = getSavedSupabaseConfig();
     const client = getSupabaseClient(config);
     let dbChannel: any = null;
-    let syncChannel: any = null;
+    let cleanupSync: (() => void) | null = null;
 
     if (client) {
-      // 1. Listen for schema changes via Postgres Changes
+      // 1. Listen for schema changes via Postgres Changes (if replication is enabled)
       dbChannel = client
         .channel('schema-db-changes')
         .on(
@@ -411,18 +412,11 @@ export default function App() {
         )
         .subscribe();
 
-      // 2. Listen for Client-to-Client Broadcast (instant notification across mobile & laptop)
-      syncChannel = getOrCreateSyncChannel(client);
-      if (syncChannel) {
-        syncChannel.on(
-          'broadcast',
-          { event: 'db_update' },
-          (payload: any) => {
-            console.log('Multiuser broadcast update received from another device!', payload);
-            refreshAllData();
-          }
-        );
-      }
+      // 2. Client-to-Client WebSocket Broadcast (instant deletion & update across mobile & laptop)
+      cleanupSync = setupMultiuserSync(client, (payload: any) => {
+        console.log('Multiuser broadcast update received from another device!', payload);
+        refreshAllData();
+      });
     }
 
     // 3. Auto-sync whenever user switches back to this tab or app on handphone/laptop
@@ -437,16 +431,19 @@ export default function App() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
-    // 4. Background auto-sync interval (every 25 seconds if active)
+    // 4. Background auto-sync interval (every 15 seconds if active)
     const syncInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         refreshAllData();
       }
-    }, 25000);
+    }, 15000);
 
     return () => {
       if (dbChannel) {
         client?.removeChannel(dbChannel);
+      }
+      if (cleanupSync) {
+        cleanupSync();
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', handleFocus);
