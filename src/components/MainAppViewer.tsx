@@ -905,11 +905,17 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                       setEditingRekamPermasalahan(null);
                       setInternalTab('table');
                     }}
+                    onSave={async (data) => {
+                      await onSubmitRekamPermasalahan(data);
+                      setEditingRekamPermasalahan(null);
+                      setInternalTab('table');
+                    }}
                     onCancelEdit={() => {
                       setEditingRekamPermasalahan(null);
                       setInternalTab('table');
                     }}
                     isSubmitting={isSubmittingRekamPermasalahan}
+                    isLoading={isLoadingRekamPermasalahan}
                     siswaItems={siswaItems}
                   />
                 )}

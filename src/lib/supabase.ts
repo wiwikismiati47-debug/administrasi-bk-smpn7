@@ -42,6 +42,11 @@ export const DEFAULT_TABLE_NAME = 'agenda_kerja_bk';
 export const DEFAULT_UNDANGAN_TABLE_NAME = 'undangan_orang_tua';
 export const DEFAULT_HOME_VISIT_TABLE_NAME = 'home_visit_bk';
 export const DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME = 'rekam_permasalahan_siswa';
+export const REKAM_PERMASALAHAN_TABLE_CANDIDATES = [
+  'rekam_permasalahan_siswa',
+  'rekam_permasalahan',
+  'bk_rekam_permasalahan'
+];
 export const DEFAULT_KONSELING_INDIVIDU_TABLE_NAME = 'rencana_konseling_individu';
 export const DEFAULT_KONSELING_KELOMPOK_TABLE_NAME = 'rencana_konseling_kelompok';
 export const DEFAULT_SURAT_PERNYATAAN_TABLE_NAME = 'surat_pernyataan_siswa';
@@ -923,32 +928,44 @@ export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasal
 
   if (!client) return { data: localData, isFromSupabase: false };
 
-  try {
-    let { data, error } = await client
-      .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
-      .select('*')
-      .order('tanggal', { ascending: false });
+  const candidates = Array.from(new Set([DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME, ...REKAM_PERMASALAHAN_TABLE_CANDIDATES]));
+  let fetched: RekamPermasalahan[] = [];
+  let isFromSupabase = false;
+  let lastError: string | undefined = undefined;
 
-    // If query timed out or had network issue, try with limit
-    if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
-      const fallbackRes = await client
-        .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
+  for (const tableName of candidates) {
+    try {
+      let { data, error } = await client
+        .from(tableName)
         .select('*')
-        .order('tanggal', { ascending: false })
-        .limit(100);
-      if (!fallbackRes.error && fallbackRes.data) {
-        data = fallbackRes.data;
-        error = null;
+        .order('tanggal', { ascending: false });
+
+      // If query timed out or had network issue, try with limit
+      if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
+        const fallbackRes = await client
+          .from(tableName)
+          .select('*')
+          .order('tanggal', { ascending: false })
+          .limit(100);
+        if (!fallbackRes.error && fallbackRes.data) {
+          data = fallbackRes.data;
+          error = null;
+        }
       }
+
+      if (!error && data) {
+        fetched = data as RekamPermasalahan[];
+        isFromSupabase = true;
+        break;
+      } else if (error) {
+        lastError = error.message;
+      }
+    } catch (err: any) {
+      lastError = err?.message || 'Error query';
     }
+  }
 
-    if (error) {
-      console.warn('Supabase fetchAllRekamPermasalahan warning, using local:', error.message);
-      return { data: localData, isFromSupabase: false, error: error.message };
-    }
-
-    let fetched = (data || []) as RekamPermasalahan[];
-
+  if (isFromSupabase) {
     // If rekam_permasalahan_siswa has 0 items, check if undangan_orang_tua has student problem records
     if (fetched.length === 0) {
       try {
@@ -1001,14 +1018,28 @@ export async function fetchAllRekamPermasalahan(): Promise<{ data: RekamPermasal
       }
     }
 
-    if (fetched.length > 0) {
-      safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, fetched);
-    }
-    return { data: fetched.length > 0 ? fetched : localData, isFromSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal mengambil data Rekam Permasalahan';
-    return { data: localData, isFromSupabase: false, error: msg };
+    // Merge with localData preserving any newer local updates
+    const mergedMap = new Map<string, RekamPermasalahan>();
+    (localData || []).forEach(item => {
+      if (item && item.id) mergedMap.set(item.id, item);
+    });
+    fetched.forEach(item => {
+      if (item && item.id) {
+        const localItem = mergedMap.get(item.id);
+        if (localItem && localItem.updated_at && item.updated_at) {
+          if (new Date(localItem.updated_at).getTime() > new Date(item.updated_at).getTime()) {
+            return; // keep existing newer local data
+          }
+        }
+        mergedMap.set(item.id, item);
+      }
+    });
+    const mergedList = Array.from(mergedMap.values()).sort((a, b) => (b.tanggal || '').localeCompare(a.tanggal || ''));
+    safeSetStorage(STORAGE_KEY_REKAM_PERMASALAHAN, mergedList);
+    return { data: mergedList, isFromSupabase: true };
   }
+
+  return { data: localData, isFromSupabase: false, error: lastError };
 }
 
 export async function saveOrUpdateRekamPermasalahan(
@@ -1046,6 +1077,7 @@ export async function saveOrUpdateRekamPermasalahan(
     tempat_surat: item.tempat_surat || 'Pasuruan'
   };
 
+  // 1. ALWAYS persist locally first so data is never lost
   const localList = safeGetStorage<RekamPermasalahan[]>(STORAGE_KEY_REKAM_PERMASALAHAN, []);
   const existingIdx = localList.findIndex((i) => i.id === targetId);
   let updatedLocal: RekamPermasalahan[];
@@ -1064,27 +1096,78 @@ export async function saveOrUpdateRekamPermasalahan(
     return { success: true, data: formattedObject, isSupabase: false, error: 'Tersimpan di penyimpanan lokal.' };
   }
 
-  try {
-    const { data, error } = await client
-      .from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME)
-      .upsert(formattedObject, { onConflict: 'id' })
-      .select()
-      .single();
+  // 2. Try candidate tables in Supabase
+  const candidates = Array.from(new Set([DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME, ...REKAM_PERMASALAHAN_TABLE_CANDIDATES]));
+  let lastError = '';
 
-    if (error) {
-      console.warn('Supabase saveOrUpdateRekamPermasalahan error (saved locally):', error.message);
-      return { success: true, data: formattedObject, isSupabase: false, error: `Tersimpan di lokal. Info: ${error.message}` };
+  for (const tableName of candidates) {
+    try {
+      const { data, error } = await client
+        .from(tableName)
+        .upsert(formattedObject, { onConflict: 'id' })
+        .select();
+
+      if (!error) {
+        const returnedItem = data && data.length > 0 ? (data[0] as RekamPermasalahan) : formattedObject;
+        return {
+          success: true,
+          data: returnedItem,
+          isSupabase: true
+        };
+      }
+
+      if (error) {
+        lastError = error.message;
+      }
+
+      // If full object failed (e.g. unknown new columns in postgres), try core payload
+      try {
+        const corePayload: any = {
+          id: targetId,
+          updated_at: now,
+          hari: formattedObject.hari,
+          tanggal: formattedObject.tanggal,
+          bulan: formattedObject.bulan,
+          tahun: formattedObject.tahun,
+          waktu: formattedObject.waktu,
+          kelas: formattedObject.kelas,
+          nama_siswa: formattedObject.nama_siswa,
+          nama_orang_tua: formattedObject.nama_orang_tua,
+          pekerjaan_orang_tua: formattedObject.pekerjaan_orang_tua,
+          alamat: formattedObject.alamat,
+          ringkasan_uraian_permasalahan: formattedObject.ringkasan_uraian_permasalahan,
+          upaya_konselor_walikelas: formattedObject.upaya_konselor_walikelas,
+          hasil_dan_kesimpulan: formattedObject.hasil_dan_kesimpulan,
+          link_foto_kegiatan: formattedObject.link_foto_kegiatan,
+          keterangan: formattedObject.keterangan,
+          nama_guru_bk: formattedObject.nama_guru_bk,
+          nip_guru_bk: formattedObject.nip_guru_bk,
+        };
+        const retryRes = await client
+          .from(tableName)
+          .upsert(corePayload, { onConflict: 'id' })
+          .select();
+        if (!retryRes.error) {
+          return {
+            success: true,
+            data: formattedObject,
+            isSupabase: true
+          };
+        }
+      } catch {}
+    } catch (err: any) {
+      lastError = err?.message || 'Error koneksi Supabase';
     }
-
-    return {
-      success: true,
-      data: (data || formattedObject) as RekamPermasalahan,
-      isSupabase: true
-    };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Error koneksi Supabase';
-    return { success: true, data: formattedObject, isSupabase: false, error: msg };
   }
+
+  // Graceful fallback: local save is already confirmed
+  console.warn('Supabase saveOrUpdateRekamPermasalahan error (saved locally):', lastError);
+  return {
+    success: true,
+    data: formattedObject,
+    isSupabase: false,
+    error: lastError ? `Tersimpan di lokal. Info Cloud: ${lastError}` : undefined
+  };
 }
 
 export async function deleteRekamPermasalahanItem(id: string): Promise<{ success: boolean; isSupabase: boolean; error?: string }> {
@@ -1097,14 +1180,15 @@ export async function deleteRekamPermasalahanItem(id: string): Promise<{ success
 
   if (!client) return { success: true, isSupabase: false };
 
-  try {
-    const { error } = await client.from(DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME).delete().eq('id', id);
-    if (error) return { success: true, isSupabase: false, error: error.message };
-    return { success: true, isSupabase: true };
-  } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Gagal menghapus data';
-    return { success: true, isSupabase: false, error: msg };
+  const candidates = Array.from(new Set([DEFAULT_REKAM_PERMASALAHAN_TABLE_NAME, ...REKAM_PERMASALAHAN_TABLE_CANDIDATES]));
+  for (const tableName of candidates) {
+    try {
+      const { error } = await client.from(tableName).delete().eq('id', id);
+      if (!error) return { success: true, isSupabase: true };
+    } catch {}
   }
+
+  return { success: true, isSupabase: false };
 }
 
 /* ==========================================================================

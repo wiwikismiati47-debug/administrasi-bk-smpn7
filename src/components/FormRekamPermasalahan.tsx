@@ -201,8 +201,14 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
       return;
     }
 
+    const submitFn = onSubmit || onSave;
+    if (!submitFn) {
+      setStatusMessage({ type: 'error', text: 'Handler penyimpanan formulir tidak ditemukan.' });
+      return;
+    }
+
     try {
-      await onSave({
+      await submitFn({
         ...formData,
         id: initialData?.id,
       });
@@ -217,8 +223,10 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
       if (!initialData) {
         handleReset();
       }
-    } catch {
-      setStatusMessage({ type: 'error', text: 'Gagal menyimpan data ke database. Silakan coba lagi.' });
+    } catch (err: unknown) {
+      console.error('Error menyimpan rekam permasalahan:', err);
+      const msg = err instanceof Error ? err.message : 'Gagal menyimpan data ke database. Silakan coba lagi.';
+      setStatusMessage({ type: 'error', text: msg });
     }
   };
 
@@ -677,10 +685,22 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            {initialData && onCancelEdit && (
+              <button
+                type="button"
+                onClick={onCancelEdit}
+                disabled={activeLoading}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
+              >
+                <XCircle className="w-4 h-4 text-slate-600" />
+                <span>Batal Edit</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleReset}
-              disabled={isLoading}
+              disabled={activeLoading}
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all"
             >
               <RotateCcw className="w-4 h-4" />
@@ -689,11 +709,19 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
+              disabled={activeLoading}
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50 cursor-pointer"
             >
-              <Save className="w-4 h-4" />
-              <span>{initialData ? 'Update Data Permasalahan' : 'Simpan Permasalahan Siswa'}</span>
+              {activeLoading ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              <span>
+                {activeLoading
+                  ? (initialData ? 'Memperbarui...' : 'Menyimpan...')
+                  : (initialData ? 'Update Data Permasalahan' : 'Simpan Permasalahan Siswa')}
+              </span>
             </button>
           </div>
         </div>
