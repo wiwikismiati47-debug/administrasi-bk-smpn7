@@ -2523,7 +2523,7 @@ export async function fetchAllSiswaATS(): Promise<{
         }
       }
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         setActiveSiswaATSTableName(tableName);
         fetched = data.map(mapSupabaseRowToSiswaATS);
         isFromSupabase = true;
@@ -2536,51 +2536,59 @@ export async function fetchAllSiswaATS(): Promise<{
     }
   }
 
-  // Fallback to home_visit_bk table where perihal_home_visit starts with [ATS]
-  if (!isFromSupabase || fetched.length === 0) {
-    try {
-      const { data: hvData, error: hvErr } = await client
-        .from('home_visit_bk')
-        .select('*')
-        .ilike('perihal_home_visit', '[ATS]%')
-        .order('tanggal', { ascending: false });
-      if (!hvErr && hvData && hvData.length > 0) {
-        isFromSupabase = true;
-        fetched = hvData.map((row: any) => {
-          if (row.keterangan && row.keterangan.startsWith('{')) {
-            try {
-              const parsed = JSON.parse(row.keterangan);
-              if (parsed && parsed.id) return parsed;
-            } catch {}
-          }
-          return {
-            id: row.id,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
-            hari: row.hari,
-            tanggal: row.tanggal,
-            tahun_ajaran: '2025/2026',
-            waktu: row.waktu,
-            nama_siswa: row.nama_siswa,
-            kategori_ats: row.perihal_home_visit?.replace('[ATS]', '').trim() || 'DO (Drop Out)',
-            kelas: row.kelas,
-            alamat: row.alamat,
-            alasan_ats: row.uraian_permasalahan,
-            alasan_manual: '',
-            foto_kunjungan_1: row.link_foto_kegiatan || '',
-            foto_bukti_fisik_2: '',
-            tempat_laporan: 'Pasuruan',
-            tanggal_laporan: row.tanggal,
-            nama_guru_kunjungan: row.nama_guru_kunjungan || 'WIWIK ISMIATI, S.Pd',
-            nip_guru_kunjungan: row.nip_guru_kunjungan || '19831116 200904 2 003',
-            nama_kepala_sekolah: row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
-            nip_kepala_sekolah: row.nip_kepala_sekolah || '19860410 201001 2 030',
-            keterangan: row.tindak_lanjut || ''
-          } as SiswaATS;
-        });
-      }
-    } catch {}
-  }
+  // Fallback / Dual check to home_visit_bk table where perihal_home_visit starts with [ATS]
+  try {
+    const { data: hvData, error: hvErr } = await client
+      .from('home_visit_bk')
+      .select('*')
+      .ilike('perihal_home_visit', '[ATS]%')
+      .order('tanggal', { ascending: false });
+    if (!hvErr && hvData && hvData.length > 0) {
+      isFromSupabase = true;
+      const hvFetched = hvData.map((row: any) => {
+        if (row.keterangan && row.keterangan.startsWith('{')) {
+          try {
+            const parsed = JSON.parse(row.keterangan);
+            if (parsed && parsed.id) return parsed;
+          } catch {}
+        }
+        return {
+          id: row.id,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          hari: row.hari,
+          tanggal: row.tanggal,
+          tahun_ajaran: '2025/2026',
+          waktu: row.waktu,
+          nama_siswa: row.nama_siswa,
+          kategori_ats: row.perihal_home_visit?.replace('[ATS]', '').trim() || 'DO (Drop Out)',
+          kelas: row.kelas,
+          nama_orang_tua: row.nama_orang_tua || '',
+          alamat: row.alamat,
+          alasan_ats: row.uraian_permasalahan,
+          alasan_manual: '',
+          foto_kunjungan_1: row.link_foto_kegiatan || '',
+          foto_bukti_fisik_2: '',
+          tempat_laporan: 'Pasuruan',
+          tanggal_laporan: row.tanggal,
+          nama_guru_kunjungan: row.nama_guru_kunjungan || 'WIWIK ISMIATI, S.Pd',
+          nip_guru_kunjungan: row.nip_guru_kunjungan || '19831116 200904 2 003',
+          nama_kepala_sekolah: row.nama_kepala_sekolah || 'NUR FADILAH, S.Pd,. M.Pd',
+          nip_kepala_sekolah: row.nip_kepala_sekolah || '19860410 201001 2 030',
+          keterangan: row.tindak_lanjut || ''
+        } as SiswaATS;
+      });
+
+      const map = new Map<string, SiswaATS>();
+      fetched.forEach(i => map.set(i.id, i));
+      hvFetched.forEach(i => {
+        if (!map.has(i.id)) {
+          map.set(i.id, i);
+        }
+      });
+      fetched = Array.from(map.values());
+    }
+  } catch {}
 
   if (isFromSupabase) {
     const mergedMap = new Map<string, SiswaATS>();
@@ -2689,6 +2697,34 @@ export async function saveOrUpdateSiswaATS(
       if (!error) {
         setActiveSiswaATSTableName(tableName);
         const returnedItem = data && data.length > 0 ? (data[0] as SiswaATS) : formattedObject;
+        
+        // Also mirror to home_visit_bk in background for guaranteed mobile/cross-device access
+        try {
+          await client.from('home_visit_bk').upsert({
+            id: targetId,
+            created_at: formattedObject.created_at,
+            updated_at: now,
+            hari: formattedObject.hari,
+            tanggal: formattedObject.tanggal,
+            bulan: '',
+            tahun: '',
+            waktu: formattedObject.waktu,
+            kelas: formattedObject.kelas,
+            nama_siswa: formattedObject.nama_siswa,
+            nama_orang_tua: formattedObject.nama_orang_tua || 'Orang Tua / Wali',
+            alamat: formattedObject.alamat,
+            perihal_home_visit: `[ATS] ${formattedObject.kategori_ats}`,
+            uraian_permasalahan: formattedObject.alasan_ats + (formattedObject.alasan_manual ? ` - ${formattedObject.alasan_manual}` : ''),
+            tindak_lanjut: formattedObject.keterangan || '',
+            link_foto_kegiatan: formattedObject.foto_kunjungan_1,
+            keterangan: JSON.stringify(formattedObject),
+            nama_guru_kunjungan: formattedObject.nama_guru_kunjungan,
+            nip_guru_kunjungan: formattedObject.nip_guru_kunjungan,
+            nama_kepala_sekolah: formattedObject.nama_kepala_sekolah,
+            nip_kepala_sekolah: formattedObject.nip_kepala_sekolah
+          }, { onConflict: 'id' });
+        } catch {}
+
         return {
           success: true,
           data: returnedItem,
