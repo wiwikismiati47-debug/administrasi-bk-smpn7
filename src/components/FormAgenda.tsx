@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Pencil
 } from 'lucide-react';
+import { compressImageFile } from '../lib/imageCompressor';
 
 interface FormAgendaProps {
   initialData?: AgendaKerja | null;
@@ -178,25 +179,21 @@ export const FormAgenda: React.FC<FormAgendaProps> = ({
     }
   };
 
-  // Image File upload preview converter
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Image File upload preview converter with automatic compression
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    try {
+      const dataUrl = await compressImageFile(file, 1024, 1024, 0.75);
       if (dataUrl) {
         setFormData((prev) => ({ ...prev, link_foto_kegiatan: dataUrl }));
         setPreviewError(false);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Gagal memproses foto:', err);
+      alert('Gagal memproses foto. Silakan coba pilih foto lain.');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

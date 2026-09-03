@@ -165,8 +165,11 @@ export default function App() {
       const res = await fetchAllAgenda();
       setAgendaItems(res.data);
       
-      if (res.error) {
-        showToast(res.error, 'info');
+      if (res.error && (!res.data || res.data.length === 0)) {
+        const friendlyMsg = res.error.toLowerCase().includes('timeout')
+          ? 'Koneksi database cloud sedang lambat. Menggunakan data cadangan perangkat.'
+          : res.error;
+        showToast(friendlyMsg, 'info');
       }
       return res.isFromSupabase;
     } catch (err) {

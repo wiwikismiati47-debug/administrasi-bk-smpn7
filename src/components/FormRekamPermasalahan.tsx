@@ -1,4 +1,5 @@
 import { getActiveGuruBK, PRESET_GURU_BK } from '../lib/guruBk';
+import { compressImageFile } from '../lib/imageCompressor';
 import React, { useState, useEffect } from 'react';
 import { RekamPermasalahan, FormRekamPermasalahanData, Siswa } from '../types';
 import { SiswaSelector } from './SiswaSelector';
@@ -152,22 +153,19 @@ export const FormRekamPermasalahan: React.FC<FormRekamPermasalahanProps> = ({
 
   const [previewError, setPreviewError] = useState<boolean>(false);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Ukuran foto terlalu besar. Maksimal 5 MB.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
+    try {
+      const dataUrl = await compressImageFile(file, 1024, 1024, 0.75);
       if (dataUrl) {
         setFormData(prev => ({ ...prev, link_foto_kegiatan: dataUrl }));
         setPreviewError(false);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Gagal memproses foto:', err);
+      alert('Gagal memproses foto. Silakan coba file gambar lain.');
+    }
   };
 
   const handleReset = () => {

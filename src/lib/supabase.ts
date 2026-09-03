@@ -224,6 +224,53 @@ export async function fetchAllAgenda(): Promise<{ data: AgendaKerja[]; isFromSup
       }
     }
 
+    // Auto-recovery if query times out or fails on heavy payloads
+    if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
+      console.warn('Supabase fetchAllAgenda timed out, attempting chunked pagination recovery...');
+      try {
+        const chunkSize = 40;
+        let allRows: AgendaKerja[] = [];
+        let from = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          const chunkRes = await client
+            .from(primaryTable)
+            .select('*')
+            .order('tanggal', { ascending: false })
+            .range(from, from + chunkSize - 1);
+
+          if (chunkRes.error || !chunkRes.data) {
+            hasMore = false;
+          } else {
+            allRows = allRows.concat(chunkRes.data as AgendaKerja[]);
+            if (chunkRes.data.length < chunkSize) {
+              hasMore = false;
+            } else {
+              from += chunkSize;
+            }
+          }
+        }
+
+        if (allRows.length > 0) {
+          data = allRows;
+          error = null;
+        } else {
+          // Last resort: fetch light columns so agenda is never empty
+          const lightRes = await client
+            .from(primaryTable)
+            .select('id, created_at, updated_at, hari, tanggal, bulan, tahun, waktu, uraian_kegiatan, sasaran, keterangan')
+            .order('tanggal', { ascending: false });
+          if (!lightRes.error && lightRes.data) {
+            data = lightRes.data as AgendaKerja[];
+            error = null;
+          }
+        }
+      } catch (recoveryErr) {
+        console.warn('Recovery attempt error:', recoveryErr);
+      }
+    }
+
     if (error) {
       console.warn('Supabase fetchAllAgenda warning, using local data:', error.message);
       return {
@@ -1957,10 +2004,22 @@ export async function fetchAllJurnalBK(): Promise<{ data: JurnalBK[]; isFromSupa
 
   for (const tableName of candidateTables) {
     try {
-      const { data, error } = await client
+      let { data, error } = await client
         .from(tableName)
         .select('*')
         .order('tanggal', { ascending: false });
+
+      if (error && (error.message?.toLowerCase().includes('timeout') || error.code === '57014')) {
+        const chunkRes = await client
+          .from(tableName)
+          .select('*')
+          .order('tanggal', { ascending: false })
+          .limit(100);
+        if (!chunkRes.error && chunkRes.data) {
+          data = chunkRes.data;
+          error = null;
+        }
+      }
 
       if (!error && Array.isArray(data)) {
         setActiveJurnalBKTableName(tableName);
