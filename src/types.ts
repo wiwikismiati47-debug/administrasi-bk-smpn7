@@ -340,7 +340,7 @@ export interface SiswaATS {
   tahun_ajaran: string; // e.g. "2025/2026"
   waktu: string; // e.g. "08:00 WIB"
   nama_siswa: string; // Nama siswa ATS
-  kategori_ats: 'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | string;
+  kategori_ats: 'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | 'Tidak DO / TLM' | string;
   kelas?: string; // e.g. "VIII A"
   nama_orang_tua?: string; // Nama Orang Tua / Wali Siswa ATS
   alamat: string; // Alamat siswa ATS

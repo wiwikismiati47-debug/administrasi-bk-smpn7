@@ -80,6 +80,12 @@ export const ALASAN_ATS_OPTIONS = [
     kategori: 'Internal & Lingkungan',
     deskripsi: 'Anak kehilangan minat belajar, menjadi korban perundungan (bullying), atau terpengaruh ajakan teman yang tidak sekolah.',
     badgeColor: 'bg-purple-100 text-purple-800 border-purple-300'
+  },
+  {
+    id: 'tidak_ats',
+    kategori: 'Status Aktif / Bukan ATS',
+    deskripsi: 'Siswa berstatus aktif, tidak mengalami putus sekolah (DO) maupun kendala kelulusan (TLM).',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300'
   }
 ];
 
@@ -127,7 +133,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
   const [isAutoTime, setIsAutoTime] = useState<boolean>(true);
 
   const [namaSiswa, setNamaSiswa] = useState<string>('');
-  const [kategoriATS, setKategoriATS] = useState<'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | string>('DO (Drop Out)');
+  const [kategoriATS, setKategoriATS] = useState<'DO (Drop Out)' | 'LTM (Lulus Tidak Melanjutkan)' | 'Tidak DO / TLM' | string>('DO (Drop Out)');
   const [kelas, setKelas] = useState<string>('');
   const [namaOrangTua, setNamaOrangTua] = useState<string>('');
   const [alamat, setAlamat] = useState<string>('');
@@ -409,44 +415,79 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
             2. Identitas & Status Siswa ATS
           </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* Kategori ATS (DO / LTM) */}
-            <div className="md:col-span-4">
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Kategori Siswa ATS <span className="text-rose-600">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setKategoriATS('DO (Drop Out)')}
-                  className={`p-2.5 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
-                    kategoriATS.includes('DO')
-                      ? 'bg-rose-50 border-rose-500 text-rose-800 ring-2 ring-rose-300'
-                      : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <span>DO (Drop Out)</span>
-                  <span className="text-[10px] font-normal text-slate-500">Putus Sekolah</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setKategoriATS('LTM (Lulus Tidak Melanjutkan)')}
-                  className={`p-2.5 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
-                    kategoriATS.includes('LTM')
-                      ? 'bg-amber-50 border-amber-500 text-amber-800 ring-2 ring-amber-300'
-                      : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <span>LTM</span>
-                  <span className="text-[10px] font-normal text-slate-500">Lulus Tdk Lanjut</span>
-                </button>
-              </div>
+          {/* Pilihan Kategori Siswa ATS (3 Tombol Luas & Jelas) */}
+          <div className="mb-4">
+            <label className="block text-xs font-semibold text-slate-700 mb-2">
+              Kategori Siswa ATS <span className="text-rose-600">*</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                id="btn-kategori-do"
+                onClick={() => {
+                  setKategoriATS('DO (Drop Out)');
+                  if (selectedAlasanKategori === 'Status Aktif / Bukan ATS') {
+                    setAlasanATS(ALASAN_ATS_OPTIONS[0].deskripsi);
+                    setSelectedAlasanKategori(ALASAN_ATS_OPTIONS[0].kategori);
+                  }
+                }}
+                className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                  kategoriATS.includes('DO') && !kategoriATS.toLowerCase().includes('tidak')
+                    ? 'bg-rose-50 border-rose-500 text-rose-800 ring-2 ring-rose-300 shadow-sm'
+                    : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span className="text-sm font-bold text-slate-900">DO (Drop Out)</span>
+                <span className="text-[11px] font-normal text-slate-500">Putus Sekolah</span>
+              </button>
+              <button
+                type="button"
+                id="btn-kategori-ltm"
+                onClick={() => {
+                  setKategoriATS('LTM (Lulus Tidak Melanjutkan)');
+                  if (selectedAlasanKategori === 'Status Aktif / Bukan ATS') {
+                    setAlasanATS(ALASAN_ATS_OPTIONS[0].deskripsi);
+                    setSelectedAlasanKategori(ALASAN_ATS_OPTIONS[0].kategori);
+                  }
+                }}
+                className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                  kategoriATS.includes('LTM') && !kategoriATS.toLowerCase().includes('tidak')
+                    ? 'bg-amber-50 border-amber-500 text-amber-800 ring-2 ring-amber-300 shadow-sm'
+                    : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span className="text-sm font-bold text-slate-900">LTM (Lulus Tdk Lanjut)</span>
+                <span className="text-[11px] font-normal text-slate-500">Lulus Tidak Melanjutkan</span>
+              </button>
+              <button
+                type="button"
+                id="btn-kategori-tidak-do-tlm"
+                onClick={() => {
+                  setKategoriATS('Tidak DO / TLM');
+                  const opt = ALASAN_ATS_OPTIONS.find(o => o.id === 'tidak_ats');
+                  if (opt) {
+                    setAlasanATS(opt.deskripsi);
+                    setSelectedAlasanKategori(opt.kategori);
+                  }
+                }}
+                className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                  kategoriATS.toLowerCase().includes('tidak') || kategoriATS.toLowerCase().includes('tlm')
+                    ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-300 shadow-sm'
+                    : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span className="text-sm font-bold text-emerald-800">Tidak DO / TLM</span>
+                <span className="text-[11px] font-normal text-emerald-600">Bukan Siswa ATS / Masih Aktif</span>
+              </button>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
 
             {/* Nama Siswa ATS */}
-            <div className="md:col-span-5">
+            <div className="md:col-span-8">
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                Nama Siswa ATS (DO / LTM) <span className="text-rose-600">*</span>
+                Nama Siswa ATS (DO / LTM / Tidak DO/TLM) <span className="text-rose-600">*</span>
               </label>
               <SiswaSelector
                 siswaItems={siswaItems}
@@ -466,7 +507,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
             </div>
 
             {/* Kelas Terakhir */}
-            <div className="md:col-span-3">
+            <div className="md:col-span-4">
               <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                 Kelas Terakhir / Terdaftar
               </label>

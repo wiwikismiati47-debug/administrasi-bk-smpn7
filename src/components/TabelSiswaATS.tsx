@@ -82,10 +82,15 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
       const matchTahun =
         filterTahunAjaran === 'ALL' || item.tahun_ajaran === filterTahunAjaran;
 
+      const isItemTidak = (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm');
+      const isItemDO = (item.kategori_ats || '').includes('DO') && !isItemTidak;
+      const isItemLTM = (item.kategori_ats || '').includes('LTM') && !isItemTidak;
+
       const matchKategori =
         filterKategori === 'ALL' ||
-        (filterKategori === 'DO' && (item.kategori_ats || '').includes('DO')) ||
-        (filterKategori === 'LTM' && (item.kategori_ats || '').includes('LTM'));
+        (filterKategori === 'DO' && isItemDO) ||
+        (filterKategori === 'LTM' && isItemLTM) ||
+        (filterKategori === 'TIDAK' && isItemTidak);
 
       return matchSearch && matchTahun && matchKategori;
     });
@@ -159,7 +164,7 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Total terdaftar: <strong>{items.length}</strong> siswa ATS ({items.filter(i => (i.kategori_ats || '').includes('DO')).length} DO, {items.filter(i => (i.kategori_ats || '').includes('LTM')).length} LTM)
+                Total: <strong>{items.length}</strong> siswa ({items.filter(i => (i.kategori_ats || '').includes('DO') && !(i.kategori_ats || '').toLowerCase().includes('tidak')).length} DO, {items.filter(i => (i.kategori_ats || '').includes('LTM') && !(i.kategori_ats || '').toLowerCase().includes('tidak')).length} LTM, {items.filter(i => (i.kategori_ats || '').toLowerCase().includes('tidak') || (i.kategori_ats || '').toLowerCase().includes('tlm')).length} Tidak DO/TLM)
               </p>
             </div>
           </div>
@@ -257,6 +262,7 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
               <option value="ALL">Semua Kategori</option>
               <option value="DO">DO (Drop Out)</option>
               <option value="LTM">LTM (Lulus Tdk Lanjut)</option>
+              <option value="TIDAK">Tidak DO / TLM</option>
             </select>
           </div>
 
@@ -365,7 +371,9 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                       </td>
                       <td className="py-3.5 px-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          (item.kategori_ats || '').includes('DO')
+                          (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm')
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : (item.kategori_ats || '').includes('DO')
                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
@@ -474,7 +482,9 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                 <div className="bg-gradient-to-r from-amber-700/10 via-rose-700/10 to-red-800/10 p-4 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      (item.kategori_ats || '').includes('DO')
+                      (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm')
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                        : (item.kategori_ats || '').includes('DO')
                         ? 'bg-rose-100 text-rose-800 border-rose-200'
                         : 'bg-amber-100 text-amber-800 border-amber-200'
                     }`}>
