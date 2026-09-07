@@ -359,6 +359,28 @@ export interface SiswaATS {
 
 export type FormSiswaATSData = Omit<SiswaATS, 'id' | 'created_at' | 'updated_at'>;
 
+export const isKategoriTidakATS = (k: string | undefined | null): boolean => {
+  if (!k) return false;
+  const lower = k.toLowerCase().trim();
+  return lower.includes('tidak do') || lower.includes('tlm') || lower.includes('bukan ats') || lower === 'tidak do / tlm';
+};
+
+export const isKategoriLTMATS = (k: string | undefined | null): boolean => {
+  if (!k) return false;
+  if (isKategoriTidakATS(k)) return false;
+  const upper = k.toUpperCase();
+  const lower = k.toLowerCase();
+  return upper.includes('LTM') || lower.includes('lulus tidak melanjutkan') || lower.includes('lulus tdk lanjut');
+};
+
+export const isKategoriDOATS = (k: string | undefined | null): boolean => {
+  if (!k) return false;
+  if (isKategoriTidakATS(k) || isKategoriLTMATS(k)) return false;
+  const upper = k.toUpperCase();
+  const lower = k.toLowerCase();
+  return upper.includes('DO') || lower.includes('drop out') || lower.includes('putus sekolah');
+};
+
 
 
 

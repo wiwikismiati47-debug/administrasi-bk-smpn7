@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import * as XLSX from 'xlsx';
-import { SiswaATS } from '../types';
+import { SiswaATS, isKategoriDOATS, isKategoriLTMATS, isKategoriTidakATS } from '../types';
 import {
   Search,
   Filter,
@@ -82,9 +82,9 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
       const matchTahun =
         filterTahunAjaran === 'ALL' || item.tahun_ajaran === filterTahunAjaran;
 
-      const isItemTidak = (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm');
-      const isItemDO = (item.kategori_ats || '').includes('DO') && !isItemTidak;
-      const isItemLTM = (item.kategori_ats || '').includes('LTM') && !isItemTidak;
+      const isItemTidak = isKategoriTidakATS(item.kategori_ats);
+      const isItemLTM = isKategoriLTMATS(item.kategori_ats);
+      const isItemDO = isKategoriDOATS(item.kategori_ats);
 
       const matchKategori =
         filterKategori === 'ALL' ||
@@ -164,7 +164,7 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Total: <strong>{items.length}</strong> siswa ({items.filter(i => (i.kategori_ats || '').includes('DO') && !(i.kategori_ats || '').toLowerCase().includes('tidak')).length} DO, {items.filter(i => (i.kategori_ats || '').includes('LTM') && !(i.kategori_ats || '').toLowerCase().includes('tidak')).length} LTM, {items.filter(i => (i.kategori_ats || '').toLowerCase().includes('tidak') || (i.kategori_ats || '').toLowerCase().includes('tlm')).length} Tidak DO/TLM)
+                Total: <strong>{items.length}</strong> siswa ({items.filter(i => isKategoriDOATS(i.kategori_ats)).length} DO, {items.filter(i => isKategoriLTMATS(i.kategori_ats)).length} LTM, {items.filter(i => isKategoriTidakATS(i.kategori_ats)).length} Tidak DO/TLM)
               </p>
             </div>
           </div>
@@ -371,9 +371,9 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                       </td>
                       <td className="py-3.5 px-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                          (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm')
+                          isKategoriTidakATS(item.kategori_ats)
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                            : (item.kategori_ats || '').includes('DO')
+                            : isKategoriDOATS(item.kategori_ats)
                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
@@ -482,9 +482,9 @@ export const TabelSiswaATS: React.FC<TabelSiswaATSProps> = ({
                 <div className="bg-gradient-to-r from-amber-700/10 via-rose-700/10 to-red-800/10 p-4 border-b border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                      (item.kategori_ats || '').toLowerCase().includes('tidak') || (item.kategori_ats || '').toLowerCase().includes('tlm')
+                      isKategoriTidakATS(item.kategori_ats)
                         ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                        : (item.kategori_ats || '').includes('DO')
+                        : isKategoriDOATS(item.kategori_ats)
                         ? 'bg-rose-100 text-rose-800 border-rose-200'
                         : 'bg-amber-100 text-amber-800 border-amber-200'
                     }`}>

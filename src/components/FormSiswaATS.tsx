@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SiswaATS, FormSiswaATSData, Siswa } from '../types';
+import { SiswaATS, FormSiswaATSData, Siswa, isKategoriDOATS, isKategoriLTMATS, isKategoriTidakATS } from '../types';
 import { compressImageFile } from '../lib/imageCompressor';
 import { SiswaSelector } from './SiswaSelector';
 import {
@@ -432,7 +432,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                   }
                 }}
                 className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                  kategoriATS.includes('DO') && !kategoriATS.toLowerCase().includes('tidak')
+                  isKategoriDOATS(kategoriATS)
                     ? 'bg-rose-50 border-rose-500 text-rose-800 ring-2 ring-rose-300 shadow-sm'
                     : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
@@ -451,7 +451,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                   }
                 }}
                 className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                  kategoriATS.includes('LTM') && !kategoriATS.toLowerCase().includes('tidak')
+                  isKategoriLTMATS(kategoriATS)
                     ? 'bg-amber-50 border-amber-500 text-amber-800 ring-2 ring-amber-300 shadow-sm'
                     : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
@@ -471,7 +471,7 @@ export const FormSiswaATS: React.FC<FormSiswaATSProps> = ({
                   }
                 }}
                 className={`p-3 text-xs font-bold rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
-                  kategoriATS.toLowerCase().includes('tidak') || kategoriATS.toLowerCase().includes('tlm')
+                  isKategoriTidakATS(kategoriATS)
                     ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-300 shadow-sm'
                     : 'bg-slate-50 border-slate-300 text-slate-700 hover:bg-slate-100'
                 }`}
