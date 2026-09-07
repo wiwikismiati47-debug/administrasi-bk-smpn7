@@ -1,5 +1,7 @@
 import { getActiveGuruBK } from './guruBk';
 import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JurnalBK } from '../types';
+import { LOGO_SMPN7_BASE64 } from './logoSMPN7';
+import { LOGO_PASURUAN_BASE64 } from './logoPasuruan';
 
 /**
  * Utility to generate Microsoft Word (.doc) document from HTML structure.
@@ -28,7 +30,7 @@ function getKopSuratWordHTML(): string {
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 5px; border: none;">
       <tr>
         <td style="width: 18%; text-align: left; vertical-align: middle; border: none;">
-          <img src="https://i.ibb.co.com/677QPVHY/logo.png" width="75" height="75" alt="Logo Kota Pasuruan" />
+          <img src="${LOGO_PASURUAN_BASE64}" width="75" height="75" alt="Logo Kota Pasuruan" />
         </td>
         <td style="width: 64%; text-align: center; vertical-align: middle; border: none;">
           <h4 style="margin: 0; font-size: 11pt; font-weight: bold; font-family: 'Times New Roman', Times, serif;">PEMERINTAH KOTA PASURAN</h4>
@@ -38,7 +40,7 @@ function getKopSuratWordHTML(): string {
           <p style="margin: 2px 0; font-size: 8pt; font-family: 'Times New Roman', Times, serif;">Pos-el <i>smp7pas@yahoo.co.id</i>, Laman <i>www.smpn7pasuruan.sch.id</i></p>
         </td>
         <td style="width: 18%; text-align: right; vertical-align: middle; border: none;">
-          <img src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png" width="75" height="75" alt="Logo SMPN 7 Pasuruan" />
+          <img src="${LOGO_SMPN7_BASE64}" width="75" height="75" alt="Logo SMPN 7 Pasuruan" />
         </td>
       </tr>
     </table>

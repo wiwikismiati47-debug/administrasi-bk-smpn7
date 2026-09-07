@@ -3,6 +3,8 @@ import React from 'react';
 import { SignatureBox } from './SignatureBox';
 import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, KonferensiKasus, DaftarHadirRow, JurnalBK, SiswaATS } from '../types';
 import { Printer, ArrowLeft, Download, ExternalLink } from 'lucide-react';
+import { LOGO_SMPN7_BASE64, LOGO_SMPN7_URL } from '../lib/logoSMPN7';
+import { LOGO_PASURUAN_BASE64, LOGO_PASURUAN_URL } from '../lib/logoPasuruan';
 import {
   downloadSuratUndanganWord,
   downloadLaporanKonsultasiWord,
@@ -442,12 +444,15 @@ export const PrintView: React.FC<PrintViewProps> = ({
           {/* Logo Kota Pasuruan (Kiri Atas) */}
           <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
             <img 
-              src="https://i.ibb.co.com/677QPVHY/logo.png" 
+              src={LOGO_PASURUAN_BASE64} 
               alt="Logo Kota Pasuruan"
               className="max-h-20 sm:max-h-28 max-w-full object-contain"
               onError={(e) => {
                 const img = e.target as HTMLImageElement;
-                if (!img.dataset.tried1) {
+                if (!img.dataset.triedLocal) {
+                  img.dataset.triedLocal = "true";
+                  img.src = LOGO_PASURUAN_URL;
+                } else if (!img.dataset.tried1) {
                   img.dataset.tried1 = "true";
                   img.src = "https://i.ibb.co.com/677QPVHY/logo.png";
                 } else if (!img.dataset.tried2) {
@@ -480,9 +485,19 @@ export const PrintView: React.FC<PrintViewProps> = ({
           {/* Logo SMPN 7 Pasuruan (Kanan Atas) */}
           <div className="w-20 sm:w-28 h-20 sm:h-28 flex items-center justify-center shrink-0">
             <img 
-              src="https://image2url.com/r2/default/images/1772189169508-8d8beaf3-1640-4a9f-bf4f-ebdeb6048a5b.png" 
+              src={LOGO_SMPN7_BASE64} 
               alt="Logo SMPN 7 Pasuruan"
               className="max-h-20 sm:max-h-28 max-w-full object-contain"
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                if (!img.dataset.triedLocal) {
+                  img.dataset.triedLocal = "true";
+                  img.src = LOGO_SMPN7_URL;
+                } else if (!img.dataset.triedExt) {
+                  img.dataset.triedExt = "true";
+                  img.src = "https://iili.io/KDFk4fI.png";
+                }
+              }}
             />
           </div>
         </div>
