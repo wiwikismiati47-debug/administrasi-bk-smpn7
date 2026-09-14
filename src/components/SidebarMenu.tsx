@@ -111,7 +111,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
   const getItemCount = (link: AppLink): number | undefined => {
     if (!counts) return undefined;
-    if (link.url === 'internal:jurnal_bk') return counts.jurnal;
     if (link.url === 'internal:agenda_bk') return counts.agenda;
     if (link.url === 'internal:undangan_ortu') return counts.undangan;
     if (link.url === 'internal:home_visit') return counts.homeVisit;
@@ -149,7 +148,6 @@ export const SidebarMenu: React.FC<SidebarMenuProps> = ({
 
     filteredLinks.forEach((link) => {
       if (
-        link.url === 'internal:jurnal_bk' ||
         link.url === 'internal:agenda_bk' ||
         link.url === 'internal:siswa'
       ) {

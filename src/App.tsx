@@ -383,7 +383,12 @@ export default function App() {
       const saved = getSavedAppLinks();
       setLinks(saved);
       if (saved.length > 0) {
-        setSelectedLink((prev) => prev || saved[0]);
+        setSelectedLink((prev) => {
+          if (!prev || !saved.some((l) => l.id === prev.id)) {
+            return saved[0];
+          }
+          return prev;
+        });
       }
       refreshAllData();
     }

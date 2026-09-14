@@ -93,17 +93,6 @@ export const INITIAL_DEFAULT_LINKS: AppLink[] = [
     colorGradient: 'from-rose-600 via-red-600 to-orange-800',
   },
   {
-    id: 'link-internal-jurnal-bk',
-    title: 'Jurnal Layanan BK',
-    url: 'internal:jurnal_bk',
-    iconName: 'BookOpen',
-    category: 'Administrasi Utama',
-    description: 'Jurnal Harian Layanan BK (Materi, Bidang, Jenis, Fungsi, Hasil BMB3 & Siswa Tidak Mengikuti)',
-    isInternal: true,
-    badge: 'JURNAL',
-    colorGradient: 'from-emerald-600 via-teal-600 to-indigo-800',
-  },
-  {
     id: 'link-internal-siswa',
     title: 'Management Siswa',
     url: 'internal:siswa',
@@ -136,8 +125,14 @@ export function getSavedAppLinks(): AppLink[] {
   try {
     let cleanList = parsed;
     // Exclude removed default links
-    const removedIds = new Set(['link-drive-bk', 'link-kemdikbud-smp', 'link-canva-bk', 'link-supabase-console']);
-    cleanList = cleanList.filter((item: AppLink) => !removedIds.has(item.id));
+    const removedIds = new Set([
+      'link-drive-bk',
+      'link-kemdikbud-smp',
+      'link-canva-bk',
+      'link-supabase-console',
+      'link-internal-jurnal-bk'
+    ]);
+    cleanList = cleanList.filter((item: AppLink) => !removedIds.has(item.id) && item.url !== 'internal:jurnal_bk');
 
     const existingMap = new Map<string, AppLink>(cleanList.map((item: AppLink) => [item.id, item]));
     let updated = false;
