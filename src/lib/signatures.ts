@@ -1,4 +1,4 @@
-import { getSupabaseClient, getSavedSupabaseConfig, DEFAULT_SIGNATURES_TABLE_NAME } from './supabase';
+import { getSupabaseClient, getSavedSupabaseConfig, DEFAULT_SIGNATURES_TABLE_NAME, broadcastDatabaseChange } from './supabase';
 
 export interface SignatureData {
   record_id: string;
@@ -77,6 +77,9 @@ export async function saveSignature(recordId: string, role: string, signatureDat
       console.error('Supabase saveSignature error:', error.message);
       return { success: false, error: error.message };
     }
+
+    // Broadcast realtime event to other devices
+    broadcastDatabaseChange(DEFAULT_SIGNATURES_TABLE_NAME, 'upsert', recordId);
 
     return { success: true };
   } catch (err: unknown) {

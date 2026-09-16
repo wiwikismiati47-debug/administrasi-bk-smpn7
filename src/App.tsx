@@ -172,191 +172,205 @@ export default function App() {
   };
 
   // 1. Load Agenda & Undangan Data
-  const loadAgendaData = useCallback(async () => {
-    setIsLoadingAgenda(true);
+  const loadAgendaData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingAgenda(true);
     try {
       const res = await fetchAllAgenda();
       setAgendaItems(res.data);
       
-      if (res.error && (!res.data || res.data.length === 0)) {
+      if (!isSilent && res.error && (!res.data || res.data.length === 0)) {
         const friendlyMsg = res.error.toLowerCase().includes('timeout')
-          ? 'Koneksi database cloud sedang lambat. Menggunakan data cadangan perangkat.'
+          ? 'Koneksi database cloud sedang lambat.'
           : res.error;
         showToast(friendlyMsg, 'info');
       }
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data agenda BK.', 'error');
+      if (!isSilent) showToast('Gagal memuat data agenda BK.', 'error');
     } finally {
-      setIsLoadingAgenda(false);
+      if (!isSilent) setIsLoadingAgenda(false);
     }
   }, []);
 
-  const loadUndanganData = useCallback(async () => {
-    setIsLoadingUndangan(true);
+  const loadUndanganData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingUndangan(true);
     try {
       const res = await fetchAllUndangan();
       setUndanganItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data undangan orang tua.', 'error');
+      if (!isSilent) showToast('Gagal memuat data undangan orang tua.', 'error');
     } finally {
-      setIsLoadingUndangan(false);
+      if (!isSilent) setIsLoadingUndangan(false);
     }
   }, []);
 
-  const loadHomeVisitData = useCallback(async () => {
-    setIsLoadingHomeVisit(true);
+  const loadHomeVisitData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingHomeVisit(true);
     try {
       const res = await fetchAllHomeVisit();
       setHomeVisitItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data home visit.', 'error');
+      if (!isSilent) showToast('Gagal memuat data home visit.', 'error');
     } finally {
-      setIsLoadingHomeVisit(false);
+      if (!isSilent) setIsLoadingHomeVisit(false);
     }
   }, []);
 
-  const loadRekamPermasalahanData = useCallback(async () => {
-    setIsLoadingRekamPermasalahan(true);
+  const loadRekamPermasalahanData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingRekamPermasalahan(true);
     try {
       const res = await fetchAllRekamPermasalahan();
       setRekamPermasalahanItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data rekam permasalahan siswa.', 'error');
+      if (!isSilent) showToast('Gagal memuat data rekam permasalahan siswa.', 'error');
     } finally {
-      setIsLoadingRekamPermasalahan(false);
+      if (!isSilent) setIsLoadingRekamPermasalahan(false);
     }
   }, []);
 
-  const loadKonselingIndividuData = useCallback(async () => {
-    setIsLoadingKonselingIndividu(true);
+  const loadKonselingIndividuData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingKonselingIndividu(true);
     try {
       const res = await fetchAllKonselingIndividu();
       setKonselingIndividuItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data konseling individu.', 'error');
+      if (!isSilent) showToast('Gagal memuat data konseling individu.', 'error');
     } finally {
-      setIsLoadingKonselingIndividu(false);
+      if (!isSilent) setIsLoadingKonselingIndividu(false);
     }
   }, []);
 
-  const loadKonselingKelompokData = useCallback(async () => {
-    setIsLoadingKonselingKelompok(true);
+  const loadKonselingKelompokData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingKonselingKelompok(true);
     try {
       const res = await fetchAllKonselingKelompok();
       setKonselingKelompokItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data konseling kelompok.', 'error');
+      if (!isSilent) showToast('Gagal memuat data konseling kelompok.', 'error');
     } finally {
-      setIsLoadingKonselingKelompok(false);
+      if (!isSilent) setIsLoadingKonselingKelompok(false);
     }
   }, []);
 
-  const loadSuratPernyataanData = useCallback(async () => {
-    setIsLoadingSuratPernyataan(true);
+  const loadSuratPernyataanData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingSuratPernyataan(true);
     try {
       const res = await fetchAllSuratPernyataan();
       setSuratPernyataanItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data surat pernyataan siswa.', 'error');
+      if (!isSilent) showToast('Gagal memuat data surat pernyataan siswa.', 'error');
     } finally {
-      setIsLoadingSuratPernyataan(false);
+      if (!isSilent) setIsLoadingSuratPernyataan(false);
     }
   }, []);
 
-  const loadKonferensiKasusData = useCallback(async () => {
-    setIsLoadingKonferensiKasus(true);
+  const loadKonferensiKasusData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingKonferensiKasus(true);
     try {
       const res = await fetchAllKonferensiKasus();
       setKonferensiKasusItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data konferensi kasus siswa.', 'error');
+      if (!isSilent) showToast('Gagal memuat data konferensi kasus siswa.', 'error');
     } finally {
-      setIsLoadingKonferensiKasus(false);
+      if (!isSilent) setIsLoadingKonferensiKasus(false);
     }
   }, []);
 
-  const loadSiswaData = useCallback(async () => {
-    setIsLoadingSiswa(true);
+  const loadSiswaData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingSiswa(true);
     try {
       const res = await fetchSiswaList();
       setSiswaItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data manajemen siswa.', 'error');
+      if (!isSilent) showToast('Gagal memuat data manajemen siswa.', 'error');
     } finally {
-      setIsLoadingSiswa(false);
+      if (!isSilent) setIsLoadingSiswa(false);
     }
   }, []);
 
-  const loadJurnalBKData = useCallback(async () => {
-    setIsLoadingJurnalBK(true);
+  const loadJurnalBKData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingJurnalBK(true);
     try {
       const res = await fetchAllJurnalBK();
       setJurnalBKItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data Jurnal BK.', 'error');
+      if (!isSilent) showToast('Gagal memuat data Jurnal BK.', 'error');
     } finally {
-      setIsLoadingJurnalBK(false);
+      if (!isSilent) setIsLoadingJurnalBK(false);
     }
   }, []);
 
-  const loadSiswaATSData = useCallback(async () => {
-    setIsLoadingSiswaATS(true);
+  const loadSiswaATSData = useCallback(async (isSilent = false) => {
+    if (!isSilent) setIsLoadingSiswaATS(true);
     try {
       const res = await fetchAllSiswaATS();
       setSiswaATSItems(res.data);
       return res.isFromSupabase;
     } catch (err) {
       console.error(err);
-      showToast('Gagal memuat data Siswa ATS.', 'error');
+      if (!isSilent) showToast('Gagal memuat data Siswa ATS.', 'error');
     } finally {
-      setIsLoadingSiswaATS(false);
+      if (!isSilent) setIsLoadingSiswaATS(false);
     }
   }, []);
 
-  const refreshAllData = useCallback(async () => {
-    const results = await Promise.all([
-      loadAgendaData(),
-      loadUndanganData(),
-      loadHomeVisitData(),
-      loadRekamPermasalahanData(),
-      loadKonselingIndividuData(),
-      loadKonselingKelompokData(),
-      loadSuratPernyataanData(),
-      loadKonferensiKasusData(),
-      loadSiswaData(),
-      loadJurnalBKData(),
-      loadSiswaATSData()
-    ]);
-    
-    // Check if any load was successful from Supabase
-    const connectedCount = results.filter(r => Boolean(r)).length;
-    if (connectedCount > 0) {
-      setIsSupabaseConnected(true);
-      if (connectedCount < results.length) {
-        console.warn(`Supabase terhubung (${connectedCount}/${results.length} tabel). Tabel yang belum tersedia di Supabase otomatis menggunakan penyimpanan data lokal.`);
+  const isRefreshingRef = useRef(false);
+  const pendingRefreshRef = useRef(false);
+
+  const refreshAllData = useCallback(async (isSilent = false) => {
+    if (isRefreshingRef.current) {
+      pendingRefreshRef.current = true;
+      return;
+    }
+    isRefreshingRef.current = true;
+
+    try {
+      const results = await Promise.all([
+        loadAgendaData(isSilent),
+        loadUndanganData(isSilent),
+        loadHomeVisitData(isSilent),
+        loadRekamPermasalahanData(isSilent),
+        loadKonselingIndividuData(isSilent),
+        loadKonselingKelompokData(isSilent),
+        loadSuratPernyataanData(isSilent),
+        loadKonferensiKasusData(isSilent),
+        loadSiswaData(isSilent),
+        loadJurnalBKData(isSilent),
+        loadSiswaATSData(isSilent)
+      ]);
+      
+      // Check if any load was successful from Supabase
+      const connectedCount = results.filter(r => Boolean(r)).length;
+      if (connectedCount > 0) {
+        setIsSupabaseConnected(true);
+      } else {
+        setIsSupabaseConnected(false);
       }
-    } else {
-      setIsSupabaseConnected(false);
+    } finally {
+      isRefreshingRef.current = false;
+      if (pendingRefreshRef.current) {
+        pendingRefreshRef.current = false;
+        refreshAllData(true);
+      }
     }
   }, [
     loadAgendaData,
@@ -394,59 +408,39 @@ export default function App() {
     }
     initApp();
 
-    // Multi-User Realtime Subscription (Handphone & Laptop instant sync)
+    // Multi-User Realtime Subscription (Handphone, PC & Laptop instant sync)
     const config = getSavedSupabaseConfig();
     const client = getSupabaseClient(config);
-    let dbChannel: any = null;
     let cleanupSync: (() => void) | null = null;
 
     if (client) {
-      // 1. Listen for schema changes via Postgres Changes (if replication is enabled)
-      dbChannel = client
-        .channel('schema-db-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-          },
-          (payload: any) => {
-            console.log('Realtime DB update received!', payload);
-            refreshAllData();
-          }
-        )
-        .subscribe();
-
-      // 2. Client-to-Client WebSocket Broadcast (instant deletion & update across mobile & laptop)
+      // Setup unified realtime subscription (handles broadcast & postgres changes)
       cleanupSync = setupMultiuserSync(client, (payload: any) => {
-        console.log('Multiuser broadcast update received from another device!', payload);
-        refreshAllData();
+        console.log('Multiuser realtime update received from cloud:', payload);
+        refreshAllData(true);
       });
     }
 
-    // 3. Auto-sync whenever user switches back to this tab or app on handphone/laptop
+    // Auto-sync whenever user switches back to this tab or app on handphone/laptop
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        refreshAllData();
+        refreshAllData(true);
       }
     };
     const handleFocus = () => {
-      refreshAllData();
+      refreshAllData(true);
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('focus', handleFocus);
 
-    // 4. Background auto-sync interval (every 15 seconds if active)
+    // Background auto-sync interval (every 4 seconds when active for immediate multi-user sync)
     const syncInterval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        refreshAllData();
+        refreshAllData(true);
       }
-    }, 15000);
+    }, 4000);
 
     return () => {
-      if (dbChannel) {
-        client?.removeChannel(dbChannel);
-      }
       if (cleanupSync) {
         cleanupSync();
       }

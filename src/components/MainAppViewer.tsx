@@ -804,14 +804,14 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-600">Database Cloud:</span>
+                    <span className="font-semibold text-slate-600">Sistem Multiuser:</span>
                     <strong className="text-emerald-800 font-extrabold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Terhubung Supabase SMPN 7 Pasuruan (Realtime Multiuser)
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Supabase Cloud Realtime Aktif (Multi-User)
                     </strong>
                   </div>
-                  <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Data tersimpan langsung di Cloud & otomatis tersinkronisasi antar-pengguna / multi-user.
+                  <p className="text-[11px] text-slate-600 font-medium mt-0.5">
+                    Data langsung tersimpan di Supabase Cloud & otomatis tersinkronisasi seketika antar-pengguna tanpa perlu sinkronisasi manual.
                   </p>
                 </div>
               </div>
@@ -821,10 +821,10 @@ export const MainAppViewer: React.FC<MainAppViewerProps> = ({
                   onClick={onRefreshData}
                   disabled={isLoadingAgenda || isLoadingUndangan}
                   className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
-                  title="Muat data terbaru langsung dari database Supabase"
+                  title="Muat ulang data terbaru langsung dari database Supabase Cloud"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${(isLoadingAgenda || isLoadingUndangan) ? 'animate-spin text-blue-600' : 'text-blue-600'}`} />
-                  <span>Sinkronkan Cloud</span>
+                  <span>Segarkan Data</span>
                 </button>
 
                 <button

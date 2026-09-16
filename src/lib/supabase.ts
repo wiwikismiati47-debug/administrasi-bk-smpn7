@@ -247,7 +247,7 @@ export async function testSupabaseConnection(customConfig?: SupabaseConfig): Pro
 }
 
 /**
- * Shared Realtime Sync Channel for Multi-User Sync (Laptop & Handphone)
+ * Shared Realtime Sync Channel for Multi-User Sync (Laptop, PC & Handphone)
  */
 let sharedSyncChannel: any = null;
 const syncListeners = new Set<(payload: any) => void>();
@@ -262,21 +262,39 @@ export function setupMultiuserSync(client: any, onUpdate: (payload: any) => void
       config: { broadcast: { self: false } }
     });
 
-    sharedSyncChannel.on(
-      'broadcast',
-      { event: 'db_update' },
-      (msg: any) => {
-        const payload = msg.payload || msg;
-        console.log('Realtime broadcast payload received from other device:', payload);
-        syncListeners.forEach((fn) => {
-          try {
-            fn(payload);
-          } catch (e) {
-            console.error('Error in sync listener:', e);
-          }
-        });
-      }
-    );
+    sharedSyncChannel
+      .on(
+        'broadcast',
+        { event: 'db_update' },
+        (msg: any) => {
+          const payload = msg.payload || msg;
+          console.log('Realtime broadcast payload received from other user:', payload);
+          syncListeners.forEach((fn) => {
+            try {
+              fn(payload);
+            } catch (e) {
+              console.error('Error in sync listener:', e);
+            }
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+        },
+        (payload: any) => {
+          console.log('Realtime postgres_changes received from Supabase:', payload);
+          syncListeners.forEach((fn) => {
+            try {
+              fn({ type: 'postgres_changes', table: payload.table, payload });
+            } catch (e) {
+              console.error('Error in sync listener:', e);
+            }
+          });
+        }
+      );
 
     sharedSyncChannel.subscribe((status: string) => {
       console.log('Multiuser sync channel status:', status);
@@ -315,9 +333,10 @@ export async function broadcastDatabaseChange(table: string, action: 'upsert' | 
         event: 'db_update',
         payload: { table, action, recordId, timestamp: Date.now() }
       });
+      console.log(`[Multiuser Sync] Broadcast sent: ${table} ${action} ${recordId || ''}`);
     }
-  } catch {
-    // Non-blocking broadcast
+  } catch (err) {
+    console.warn('[Multiuser Sync] Non-blocking broadcast warning:', err);
   }
 }
 
@@ -3502,6 +3521,76 @@ create index if not exists idx_${jurnalBKTableName}_tanggal on public.${jurnalBK
 create index if not exists idx_${siswaATSTableName}_tanggal on public.${siswaATSTableName}(tanggal);
 create index if not exists idx_${siswaATSTableName}_siswa on public.${siswaATSTableName}(nama_siswa);
 create index if not exists idx_signatures_bk_record on public.signatures_bk(record_id);
+
+--------------------------------------------------------------------------------
+-- 4. AKTIFKAN REALTIME REPLICATION UNTUK MULTIUSER (INSTANT SYNC ACROSS DEVICES)
+--------------------------------------------------------------------------------
+-- Set replica identity full agar perubahan update & delete terkirim lengkap ke seluruh pengguna
+alter table if exists public.signatures_bk replica identity full;
+alter table if exists public.${tableName} replica identity full;
+alter table if exists public.${undanganTableName} replica identity full;
+alter table if exists public.${homeVisitTableName} replica identity full;
+alter table if exists public.${rekamPermasalahanTableName} replica identity full;
+alter table if exists public.${konselingIndividuTableName} replica identity full;
+alter table if exists public.${konselingKelompokTableName} replica identity full;
+alter table if exists public.${suratPernyataanTableName} replica identity full;
+alter table if exists public.${konferensiKasusTableName} replica identity full;
+alter table if exists public.${siswaTableName} replica identity full;
+alter table if exists public.${jurnalBKTableName} replica identity full;
+alter table if exists public.${siswaATSTableName} replica identity full;
+
+-- Tambahkan semua tabel ke publication supabase_realtime secara aman
+do $$
+begin
+  begin
+    alter publication supabase_realtime add table public.signatures_bk;
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${tableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${undanganTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${homeVisitTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${rekamPermasalahanTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${konselingIndividuTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${konselingKelompokTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${suratPernyataanTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${konferensiKasusTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${siswaTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${jurnalBKTableName};
+  exception when others then null;
+  end;
+  begin
+    alter publication supabase_realtime add table public.${siswaATSTableName};
+  exception when others then null;
+  end;
+end $$;
 `;
 }
 
