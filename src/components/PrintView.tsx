@@ -25,7 +25,8 @@ import {
   downloadSuratPernyataanWord,
   downloadBulkSuratPernyataanWord,
   downloadJurnalBKWord,
-  downloadBulkJurnalBKWord
+  downloadBulkJurnalBKWord,
+  downloadAgendaKerjaWord
 } from '../lib/wordExporter';
 
 interface PrintViewProps {
@@ -135,119 +136,155 @@ export const PrintView: React.FC<PrintViewProps> = ({
   const currentJurnalBK = selectedJurnalBK || (jurnalBKItems.length > 0 ? jurnalBKItems[0] : null);
   const currentSiswaATS = selectedSiswaATS || (siswaATSItems.length > 0 ? siswaATSItems[0] : null);
 
+  const [isPrinting, setIsPrinting] = React.useState(false);
+
   const handleTriggerPrint = () => {
+    setIsPrinting(true);
     try {
+      // First try standard window.print()
       window.print();
+      setTimeout(() => setIsPrinting(false), 1500);
     } catch (e) {
       console.warn('Direct print failed, using print iframe fallback:', e);
       handlePrintIframeFallback();
+      setTimeout(() => setIsPrinting(false), 2000);
     }
   };
 
   const handlePrintIframeFallback = () => {
     const el = document.getElementById('printable-sheet');
-    if (!el) return;
+    if (!el) {
+      window.print();
+      return;
+    }
 
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '0px';
-    iframe.style.height = '0px';
-    iframe.style.border = 'none';
-    document.body.appendChild(iframe);
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0px';
+      iframe.style.height = '0px';
+      iframe.style.border = 'none';
+      iframe.style.zIndex = '-9999';
+      document.body.appendChild(iframe);
 
-    const frameDoc = iframe.contentWindow?.document || iframe.contentDocument;
-    if (!frameDoc) return;
+      const frameDoc = iframe.contentWindow?.document || iframe.contentDocument;
+      if (!frameDoc || !iframe.contentWindow) {
+        window.print();
+        return;
+      }
 
-    const printStyles = `
-      @page { size: A4 portrait; margin: 8mm 10mm; }
-      * {
-        color: #000000 !important;
-        border-color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        text-rendering: geometricPrecision !important;
-      }
-      body {
-        font-family: 'Times New Roman', Times, Georgia, serif, -apple-system, BlinkMacSystemFont, sans-serif;
-        color: #000000 !important;
-        background: #ffffff !important;
-        margin: 0;
-        padding: 0;
-        font-size: 11pt;
-        line-height: 1.4;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        color: #000000 !important;
-        border-color: #000000 !important;
-        break-inside: auto !important;
-        page-break-inside: auto !important;
-      }
-      thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
-      tbody { break-inside: auto !important; page-break-inside: auto !important; }
-      tr { break-inside: avoid !important; page-break-inside: avoid !important; }
-      th, td {
-        border-color: #000000 !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-      }
-      h1, h2, h3, h4, h5, h6 {
-        break-after: avoid !important;
-        page-break-after: avoid !important;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000 !important;
-      }
-      .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
-      .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
-    `;
+      // Collect existing styles and fonts
+      const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+        .map(tag => tag.outerHTML)
+        .join('\n');
 
-    frameDoc.open();
-    frameDoc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Dokumen Cetak SMPN 7 Pasuruan</title>
-          <style>${printStyles}</style>
-          <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body class="p-4 bg-white text-black">
-          ${el.innerHTML}
-          <script>
-            setTimeout(() => {
-              window.focus();
-              window.print();
-            }, 600);
-          </script>
-        </body>
-      </html>
-    `);
-    frameDoc.close();
+      const printStyles = `
+        @page { size: A4 portrait; margin: 8mm 10mm; }
+        * {
+          color: #000000 !important;
+          border-color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+          text-rendering: geometricPrecision !important;
+        }
+        body {
+          font-family: 'Times New Roman', Times, Georgia, serif, -apple-system, BlinkMacSystemFont, sans-serif;
+          color: #000000 !important;
+          background: #ffffff !important;
+          margin: 0;
+          padding: 10px;
+          font-size: 11pt;
+          line-height: 1.4;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          color: #000000 !important;
+          border-color: #000000 !important;
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+        }
+        thead { display: table-header-group !important; break-inside: avoid !important; page-break-inside: avoid !important; }
+        tbody { break-inside: auto !important; page-break-inside: auto !important; }
+        tr { break-inside: avoid !important; page-break-inside: avoid !important; }
+        th, td {
+          border-color: #000000 !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+        h1, h2, h3, h4, h5, h6 {
+          break-after: avoid !important;
+          page-break-after: avoid !important;
+          color: #000000 !important;
+          -webkit-text-fill-color: #000000 !important;
+        }
+        .overflow-x-auto, .overflow-y-auto { overflow: visible !important; }
+        .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
+      `;
 
-    setTimeout(() => {
-      try {
-        document.body.removeChild(iframe);
-      } catch (err) {}
-    }, 4000);
+      frameDoc.open();
+      frameDoc.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Dokumen Cetak SMPN 7 Pasuruan</title>
+            ${headStyles}
+            <style>${printStyles}</style>
+          </head>
+          <body class="p-4 bg-white text-black">
+            ${el.innerHTML}
+          </body>
+        </html>
+      `);
+      frameDoc.close();
+
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (err) {
+          console.warn('Iframe print error, falling back to window.print', err);
+          window.print();
+        }
+        setTimeout(() => {
+          try {
+            document.body.removeChild(iframe);
+          } catch {}
+        }, 3000);
+      }, 350);
+    } catch (err) {
+      console.error('Fallback error, invoking direct print', err);
+      window.print();
+    }
   };
 
   const handleOpenNewPrintTab = () => {
     const el = document.getElementById('printable-sheet');
-    if (!el) return;
-
-    const printWin = window.open('', '_blank');
-    if (!printWin) {
-      alert('Pop-up terhalang browser. Silakan izinkan pop-up untuk mencetak.');
+    if (!el) {
+      window.print();
       return;
     }
 
-    const printStyles = `
-      @page { size: A4 portrait; margin: 8mm 10mm; }
-      * {
-        color: #000000 !important;
+    try {
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        // If popup blocked, run standard print immediately
+        window.print();
+        return;
+      }
+
+      const headStyles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+        .map(tag => tag.outerHTML)
+        .join('\n');
+
+      const printStyles = `
+        @page { size: A4 portrait; margin: 8mm 10mm; }
+        * {
+          color: #000000 !important;
         border-color: #000000 !important;
         -webkit-text-fill-color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
@@ -289,7 +326,7 @@ export const PrintView: React.FC<PrintViewProps> = ({
       .print\\:break-inside-avoid { break-inside: avoid !important; page-break-inside: avoid !important; }
     `;
 
-    printWin.document.write(`
+      printWin.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
@@ -308,7 +345,11 @@ export const PrintView: React.FC<PrintViewProps> = ({
         </body>
       </html>
     `);
-    printWin.document.close();
+      printWin.document.close();
+    } catch (err) {
+      console.warn('handleOpenNewPrintTab failed, running window.print():', err);
+      window.print();
+    }
   };
 
   const handleDownloadWordCurrent = () => {
@@ -372,6 +413,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
       } else {
         downloadBulkJurnalBKWord(jurnalBKItems);
       }
+    } else if (docType === 'agenda') {
+      downloadAgendaKerjaWord(agendaItems);
     }
   };
 
@@ -390,7 +433,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
           </button>
 
           <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-end">
-            {(docType === 'surat_undangan' ||
+            {(docType === 'agenda' ||
+              docType === 'surat_undangan' ||
               docType === 'laporan_konsultasi' ||
               docType === 'surat_tugas_home_visit' ||
               docType === 'laporan_home_visit' ||
@@ -402,7 +446,9 @@ export const PrintView: React.FC<PrintViewProps> = ({
               docType === 'konseling_kelompok_dokumen' ||
               docType === 'konseling_kelompok_tabel' ||
               docType === 'surat_pernyataan_dokumen' ||
-              docType === 'surat_pernyataan_tabel') && (
+              docType === 'surat_pernyataan_tabel' ||
+              docType === 'jurnal_bk_dokumen' ||
+              docType === 'jurnal_bk_tabel') && (
               <button
                 onClick={handleDownloadWordCurrent}
                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-bold rounded-lg shadow transition-colors"
@@ -415,8 +461,8 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
             <button
               onClick={handleOpenNewPrintTab}
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition-colors"
-              title="Buka di tab baru jika tombol cetak terhalang iframe"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-700 hover:bg-slate-800 active:scale-95 text-white text-xs sm:text-sm font-bold rounded-lg shadow transition-all cursor-pointer"
+              title="Buka dokumen di tab baru khusus cetak/PDF jika browser memblokir dialog cetak di frame utama"
             >
               <ExternalLink className="w-4 h-4 text-slate-300" />
               <span>Tab Baru</span>
@@ -424,10 +470,12 @@ export const PrintView: React.FC<PrintViewProps> = ({
 
             <button
               onClick={handleTriggerPrint}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-purple-700 hover:bg-purple-800 text-white text-sm font-bold rounded-lg shadow transition-colors w-full sm:w-auto justify-center"
+              disabled={isPrinting}
+              className="inline-flex items-center gap-2 px-6 py-2 bg-purple-700 hover:bg-purple-800 active:scale-95 disabled:opacity-75 text-white text-sm font-bold rounded-lg shadow-md transition-all w-full sm:w-auto justify-center cursor-pointer"
+              title="Cetak langsung atau simpan sebagai dokumen PDF melalui dialog cetak browser"
             >
-              <Printer className="w-4 h-4 text-amber-300" />
-              <span>Cetak / Simpan PDF</span>
+              <Printer className={`w-4 h-4 text-amber-300 ${isPrinting ? 'animate-bounce' : ''}`} />
+              <span>{isPrinting ? 'Menyiapkan Cetak...' : 'Cetak / Simpan PDF'}</span>
             </button>
           </div>
         </div>

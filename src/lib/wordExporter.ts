@@ -1,5 +1,5 @@
 import { getActiveGuruBK } from './guruBk';
-import { UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JurnalBK } from '../types';
+import { AgendaKerja, UndanganOrangTua, HomeVisit, RekamPermasalahan, KonselingIndividu, KonselingKelompok, SuratPernyataan, JurnalBK } from '../types';
 import { LOGO_SMPN7_BASE64 } from './logoSMPN7';
 import { LOGO_PASURUAN_BASE64 } from './logoPasuruan';
 
@@ -1975,6 +1975,127 @@ export function downloadBulkJurnalBKWord(items: JurnalBK[]) {
   const combinedHTML = items.map(generateJurnalBKHTML).join('<div style="page-break-before: always;"></div>');
   triggerWordDownload(combinedHTML, `Kumpulan_Jurnal_Layanan_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
 }
+
+export function generateAgendaKerjaHTML(items: AgendaKerja[]): string {
+  const todayIndo = formatTanggalIndo(new Date().toISOString().slice(0, 10));
+  const guruBk = DEFAULT_GURU_BK;
+  const nipGuruBk = DEFAULT_NIP_GURU_BK;
+  const kepalaSekolah = DEFAULT_KEPALA_SEKOLAH;
+  const nipKepalaSekolah = DEFAULT_NIP_KEPALA_SEKOLAH;
+
+  const rows = items.length === 0
+    ? `<tr><td colspan="7" style="text-align: center; padding: 20px; font-style: italic;">Belum ada data agenda kerja.</td></tr>`
+    : items.map((item, idx) => {
+        const isSameDateAsPrevious = idx > 0 &&
+          items[idx - 1].tanggal === item.tanggal &&
+          items[idx - 1].bulan === item.bulan &&
+          items[idx - 1].tahun === item.tahun &&
+          items[idx - 1].hari === item.hari;
+
+        const dateContent = !isSameDateAsPrevious
+          ? `<strong>${item.hari}</strong><br/><span style="font-size: 8.5pt;">${item.tanggal} (${item.bulan} ${item.tahun})</span>`
+          : `<span style="font-weight: bold; font-size: 11pt;">〃</span>`;
+
+        const fotoContent = item.link_foto_kegiatan
+          ? `<img src="${item.link_foto_kegiatan}" width="80" height="60" style="object-fit: cover;" alt="Foto" />`
+          : '-';
+
+        return `
+          <tr>
+            <td style="text-align: center; padding: 5px; border: 1px solid #000000;">${idx + 1}</td>
+            <td style="text-align: center; padding: 5px; border: 1px solid #000000;">${dateContent}</td>
+            <td style="text-align: center; padding: 5px; border: 1px solid #000000;">${item.waktu || '-'}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">${item.uraian_kegiatan || '-'}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">${item.sasaran || '-'}</td>
+            <td style="text-align: center; padding: 5px; border: 1px solid #000000;">${fotoContent}</td>
+            <td style="padding: 5px; border: 1px solid #000000;">${item.keterangan || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+
+  return `
+  <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head>
+    <meta charset="utf-8">
+    <title>Agenda Kerja BK SMPN 7 Pasuruan</title>
+    <style>
+      @page {
+        size: 8.5in 11in;
+        margin: 0.6in 0.6in 0.6in 0.6in;
+      }
+      body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 10pt;
+        line-height: 1.3;
+        color: #000000;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        background-color: #f2f2f2;
+        border: 1px solid #000000;
+        padding: 6px 4px;
+        font-size: 9pt;
+        font-weight: bold;
+        text-align: center;
+      }
+      td {
+        border: 1px solid #000000;
+        padding: 5px 4px;
+        font-size: 9pt;
+      }
+    </style>
+  </head>
+  <body>
+    ${getKopSuratWordHTML()}
+    <h3 style="text-align: center; font-size: 12pt; font-weight: bold; margin: 10px 0 15px 0; text-decoration: underline;">
+      AGENDA KERJA BIMBINGAN KONSELING (BK)
+    </h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 5%;">NO</th>
+          <th style="width: 16%;">HARI / TANGGAL</th>
+          <th style="width: 12%;">WAKTU</th>
+          <th style="width: 30%;">URAIAN KEGIATAN</th>
+          <th style="width: 14%;">SASARAN</th>
+          <th style="width: 13%;">FOTO</th>
+          <th style="width: 10%;">KET</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <table style="width: 100%; margin-top: 25px; border: none; font-family: 'Times New Roman', Times, serif;">
+      <tr>
+        <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+          Mengetahui,<br/>
+          <b>Kepala SMP Negeri 7 Pasuruan</b><br/><br/><br/><br/><br/>
+          <b><u>${kepalaSekolah}</u></b><br/>
+          NIP. ${nipKepalaSekolah}
+        </td>
+        <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+          Pasuruan, ${todayIndo}<br/>
+          <b>Guru Bimbingan dan Konseling</b><br/><br/><br/><br/><br/>
+          <b><u>${guruBk}</u></b><br/>
+          NIP. ${nipGuruBk}
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+}
+
+export function downloadAgendaKerjaWord(items: AgendaKerja[]) {
+  const html = generateAgendaKerjaHTML(items);
+  triggerWordDownload(html, `Agenda_Kerja_BK_SMPN7_${new Date().toISOString().slice(0, 10)}.doc`);
+}
+
 
 
 
